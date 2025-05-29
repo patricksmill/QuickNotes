@@ -1,0 +1,574 @@
+[
+  {
+    "keyword": "todo",
+    "tag": "task"
+  },
+  {
+    "keyword": "task",
+    "tag": "task"
+  },
+  {
+    "keyword": "checklist",
+    "tag": "task"
+  },
+  {
+    "keyword": "item",
+    "tag": "task"
+  },
+  {
+    "keyword": "chore",
+    "tag": "task"
+  },
+  {
+    "keyword": "assignment",
+    "tag": "task"
+  },
+  {
+    "keyword": "urgent",
+    "tag": "priority"
+  },
+  {
+    "keyword": "asap",
+    "tag": "priority"
+  },
+  {
+    "keyword": "important",
+    "tag": "priority"
+  },
+  {
+    "keyword": "critical",
+    "tag": "priority"
+  },
+  {
+    "keyword": "high-priority",
+    "tag": "priority"
+  },
+  {
+    "keyword": "top-priority",
+    "tag": "priority"
+  },
+  {
+    "keyword": "meeting",
+    "tag": "work"
+  },
+  {
+    "keyword": "conference",
+    "tag": "work"
+  },
+  {
+    "keyword": "deadline",
+    "tag": "work"
+  },
+  {
+    "keyword": "report",
+    "tag": "work"
+  },
+  {
+    "keyword": "proposal",
+    "tag": "work"
+  },
+  {
+    "keyword": "project",
+    "tag": "work"
+  },
+  {
+    "keyword": "client",
+    "tag": "work"
+  },
+  {
+    "keyword": "budget",
+    "tag": "work"
+  },
+  {
+    "keyword": "agenda",
+    "tag": "work"
+  },
+  {
+    "keyword": "brief",
+    "tag": "work"
+  },
+  {
+    "keyword": "homework",
+    "tag": "school"
+  },
+  {
+    "keyword": "exam",
+    "tag": "school"
+  },
+  {
+    "keyword": "quiz",
+    "tag": "school"
+  },
+  {
+    "keyword": "lecture",
+    "tag": "school"
+  },
+  {
+    "keyword": "lab",
+    "tag": "school"
+  },
+  {
+    "keyword": "study",
+    "tag": "school"
+  },
+  {
+    "keyword": "research",
+    "tag": "school"
+  },
+  {
+    "keyword": "syllabus",
+    "tag": "school"
+  },
+  {
+    "keyword": "thesis",
+    "tag": "school"
+  },
+  {
+    "keyword": "dissertation",
+    "tag": "school"
+  },
+  {
+    "keyword": "bill",
+    "tag": "finance"
+  },
+  {
+    "keyword": "pay",
+    "tag": "finance"
+  },
+  {
+    "keyword": "invoice",
+    "tag": "finance"
+  },
+  {
+    "keyword": "tax",
+    "tag": "finance"
+  },
+  {
+    "keyword": "loan",
+    "tag": "finance"
+  },
+  {
+    "keyword": "mortgage",
+    "tag": "finance"
+  },
+  {
+    "keyword": "investment",
+    "tag": "finance"
+  },
+  {
+    "keyword": "insurance",
+    "tag": "finance"
+  },
+  {
+    "keyword": "expense",
+    "tag": "finance"
+  },
+  {
+    "keyword": "savings",
+    "tag": "finance"
+  },
+  {
+    "keyword": "receipt",
+    "tag": "finance"
+  },
+  {
+    "keyword": "buy",
+    "tag": "shopping"
+  },
+  {
+    "keyword": "purchase",
+    "tag": "shopping"
+  },
+  {
+    "keyword": "order",
+    "tag": "shopping"
+  },
+  {
+    "keyword": "shopping",
+    "tag": "shopping"
+  },
+  {
+    "keyword": "groceries",
+    "tag": "shopping"
+  },
+  {
+    "keyword": "cart",
+    "tag": "shopping"
+  },
+  {
+    "keyword": "checkout",
+    "tag": "shopping"
+  },
+  {
+    "keyword": "doctor",
+    "tag": "health"
+  },
+  {
+    "keyword": "appointment",
+    "tag": "health"
+  },
+  {
+    "keyword": "medicine",
+    "tag": "health"
+  },
+  {
+    "keyword": "vaccine",
+    "tag": "health"
+  },
+  {
+    "keyword": "prescription",
+    "tag": "health"
+  },
+  {
+    "keyword": "checkup",
+    "tag": "health"
+  },
+  {
+    "keyword": "wellness",
+    "tag": "health"
+  },
+  {
+    "keyword": "therapy",
+    "tag": "health"
+  },
+  {
+    "keyword": "dentist",
+    "tag": "health"
+  },
+  {
+    "keyword": "workout",
+    "tag": "fitness"
+  },
+  {
+    "keyword": "exercise",
+    "tag": "fitness"
+  },
+  {
+    "keyword": "gym",
+    "tag": "fitness"
+  },
+  {
+    "keyword": "yoga",
+    "tag": "fitness"
+  },
+  {
+    "keyword": "run",
+    "tag": "fitness"
+  },
+  {
+    "keyword": "stretch",
+    "tag": "fitness"
+  },
+  {
+    "keyword": "training",
+    "tag": "fitness"
+  },
+  {
+    "keyword": "cardio",
+    "tag": "fitness"
+  },
+  {
+    "keyword": "strength",
+    "tag": "fitness"
+  },
+  {
+    "keyword": "pilates",
+    "tag": "fitness"
+  },
+  {
+    "keyword": "flight",
+    "tag": "travel"
+  },
+  {
+    "keyword": "hotel",
+    "tag": "travel"
+  },
+  {
+    "keyword": "trip",
+    "tag": "travel"
+  },
+  {
+    "keyword": "vacation",
+    "tag": "travel"
+  },
+  {
+    "keyword": "itinerary",
+    "tag": "travel"
+  },
+  {
+    "keyword": "booking",
+    "tag": "travel"
+  },
+  {
+    "keyword": "passport",
+    "tag": "travel"
+  },
+  {
+    "keyword": "cruise",
+    "tag": "travel"
+  },
+  {
+    "keyword": "tour",
+    "tag": "travel"
+  },
+  {
+    "keyword": "call",
+    "tag": "communication"
+  },
+  {
+    "keyword": "email",
+    "tag": "communication"
+  },
+  {
+    "keyword": "sms",
+    "tag": "communication"
+  },
+  {
+    "keyword": "message",
+    "tag": "communication"
+  },
+  {
+    "keyword": "chat",
+    "tag": "communication"
+  },
+  {
+    "keyword": "skype",
+    "tag": "communication"
+  },
+  {
+    "keyword": "zoom",
+    "tag": "communication"
+  },
+  {
+    "keyword": "conference-call",
+    "tag": "communication"
+  },
+  {
+    "keyword": "birthday",
+    "tag": "event"
+  },
+  {
+    "keyword": "anniversary",
+    "tag": "event"
+  },
+  {
+    "keyword": "party",
+    "tag": "event"
+  },
+  {
+    "keyword": "wedding",
+    "tag": "event"
+  },
+  {
+    "keyword": "invitation",
+    "tag": "event"
+  },
+  {
+    "keyword": "rsvp",
+    "tag": "event"
+  },
+  {
+    "keyword": "ceremony",
+    "tag": "event"
+  },
+  {
+    "keyword": "celebration",
+    "tag": "event"
+  },
+  {
+    "keyword": "gala",
+    "tag": "event"
+  },
+  {
+    "keyword": "clean",
+    "tag": "home"
+  },
+  {
+    "keyword": "cleaning",
+    "tag": "home"
+  },
+  {
+    "keyword": "maintenance",
+    "tag": "home"
+  },
+  {
+    "keyword": "repair",
+    "tag": "home"
+  },
+  {
+    "keyword": "declutter",
+    "tag": "home"
+  },
+  {
+    "keyword": "organize",
+    "tag": "home"
+  },
+  {
+    "keyword": "renovate",
+    "tag": "home"
+  },
+  {
+    "keyword": "decorate",
+    "tag": "home"
+  },
+  {
+    "keyword": "idea",
+    "tag": "brainstorm"
+  },
+  {
+    "keyword": "brainstorm",
+    "tag": "brainstorm"
+  },
+  {
+    "keyword": "plan",
+    "tag": "brainstorm"
+  },
+  {
+    "keyword": "draft",
+    "tag": "brainstorm"
+  },
+  {
+    "keyword": "concept",
+    "tag": "brainstorm"
+  },
+  {
+    "keyword": "sketch",
+    "tag": "brainstorm"
+  },
+  {
+    "keyword": "outline",
+    "tag": "brainstorm"
+  },
+  {
+    "keyword": "design",
+    "tag": "brainstorm"
+  },
+  {
+    "keyword": "prototype",
+    "tag": "brainstorm"
+  },
+  {
+    "keyword": "movie",
+    "tag": "entertainment"
+  },
+  {
+    "keyword": "music",
+    "tag": "entertainment"
+  },
+  {
+    "keyword": "game",
+    "tag": "entertainment"
+  },
+  {
+    "keyword": "show",
+    "tag": "entertainment"
+  },
+  {
+    "keyword": "concert",
+    "tag": "entertainment"
+  },
+  {
+    "keyword": "festival",
+    "tag": "entertainment"
+  },
+  {
+    "keyword": "theatre",
+    "tag": "entertainment"
+  },
+  {
+    "keyword": "opera",
+    "tag": "entertainment"
+  },
+  {
+    "keyword": "exhibition",
+    "tag": "entertainment"
+  },
+  {
+    "keyword": "recipe",
+    "tag": "cooking"
+  },
+  {
+    "keyword": "cook",
+    "tag": "cooking"
+  },
+  {
+    "keyword": "meal",
+    "tag": "cooking"
+  },
+  {
+    "keyword": "bake",
+    "tag": "cooking"
+  },
+  {
+    "keyword": "grill",
+    "tag": "cooking"
+  },
+  {
+    "keyword": "saute",
+    "tag": "cooking"
+  },
+  {
+    "keyword": "chef",
+    "tag": "cooking"
+  },
+  {
+    "keyword": "kitchen",
+    "tag": "cooking"
+  },
+  {
+    "keyword": "menu",
+    "tag": "cooking"
+  },
+  {
+    "keyword": "note",
+    "tag": "note"
+  },
+  {
+    "keyword": "reminder",
+    "tag": "note"
+  },
+  {
+    "keyword": "memo",
+    "tag": "note"
+  },
+  {
+    "keyword": "sticky",
+    "tag": "note"
+  },
+  {
+    "keyword": "jot",
+    "tag": "note"
+  },
+  {
+    "keyword": "diary",
+    "tag": "personal"
+  },
+  {
+    "keyword": "journal",
+    "tag": "personal"
+  },
+  {
+    "keyword": "wishlist",
+    "tag": "personal"
+  },
+  {
+    "keyword": "gift",
+    "tag": "personal"
+  },
+  {
+    "keyword": "hobby",
+    "tag": "personal"
+  },
+  {
+    "keyword": "meditation",
+    "tag": "personal"
+  },
+  {
+    "keyword": "reflection",
+    "tag": "personal"
+  },
+  {
+    "keyword": "goal",
+    "tag": "personal"
+  }
+]
