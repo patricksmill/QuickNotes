@@ -13,7 +13,6 @@ import com.example.quicknotes.R;
 import com.example.quicknotes.model.Notifier;
 
 public class NotificationReceiver extends BroadcastReceiver {
-    private static final String ACTION_VIEW_NOTE = "com.example.quicknotes.ACTION_VIEW_NOTE";
     private static final String ACTION_DISMISS = "com.example.quicknotes.ACTION_DISMISS";
 
     @Override
@@ -22,26 +21,6 @@ public class NotificationReceiver extends BroadcastReceiver {
         
         if (ACTION_DISMISS.equals(action)) {
             // Handle dismiss action
-            int notificationId = intent.getIntExtra("notificationId", -1);
-            if (notificationId != -1) {
-                NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-                if (manager != null) {
-                    manager.cancel(notificationId);
-                }
-            }
-            return;
-        }
-
-        if (ACTION_VIEW_NOTE.equals(action)) {
-            // Handle view note action
-            String noteTitle = intent.getStringExtra(Notifier.titleExtra);
-            Intent viewIntent = new Intent(context, ControllerActivity.class);
-            viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            viewIntent.putExtra("noteTitle", noteTitle);
-            viewIntent.putExtra("action", "viewNote");
-            context.startActivity(viewIntent);
-            
-            // Also dismiss the notification
             int notificationId = intent.getIntExtra("notificationId", -1);
             if (notificationId != -1) {
                 NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -69,12 +48,12 @@ public class NotificationReceiver extends BroadcastReceiver {
             manager.createNotificationChannel(channel);
         }
 
-        // Create intent to view the note
-        Intent viewNoteIntent = new Intent(context, NotificationReceiver.class);
-        viewNoteIntent.setAction(ACTION_VIEW_NOTE);
-        viewNoteIntent.putExtra(Notifier.titleExtra, title);
-        viewNoteIntent.putExtra("notificationId", notificationId);
-        PendingIntent viewPendingIntent = PendingIntent.getBroadcast(
+        // Create intent to view the note - directly launch activity to avoid trampoline
+        Intent viewNoteIntent = new Intent(context, ControllerActivity.class);
+        viewNoteIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        viewNoteIntent.putExtra("noteTitle", title);
+        viewNoteIntent.putExtra("action", "viewNote");
+        PendingIntent viewPendingIntent = PendingIntent.getActivity(
                 context, 
                 notificationId * 2, 
                 viewNoteIntent, 
