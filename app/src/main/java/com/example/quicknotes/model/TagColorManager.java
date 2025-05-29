@@ -56,19 +56,18 @@ public class TagColorManager {
      */
     private List<ColorOption> loadAvailableColors() {
         String[] names = ctx.getResources().getStringArray(R.array.tag_color_names);
-        try (TypedArray ta = ctx.getResources().obtainTypedArray(R.array.tag_color_resources)) {
-            try {
-                List<ColorOption> opts = new ArrayList<>();
-                for (int i = 0; i < ta.length() && i < names.length; i++) {
-                    int id = ta.getResourceId(i, 0);
-                    if (id != 0) {
-                        opts.add(new ColorOption(names[i], id));
-                    }
+        TypedArray ta = ctx.getResources().obtainTypedArray(R.array.tag_color_resources);
+        try {
+            List<ColorOption> opts = new ArrayList<>();
+            for (int i = 0; i < ta.length() && i < names.length; i++) {
+                int id = ta.getResourceId(i, 0);
+                if (id != 0) {
+                    opts.add(new ColorOption(names[i], id));
                 }
-                return Collections.unmodifiableList(opts);
-            } finally {
-                ta.recycle();
             }
+            return Collections.unmodifiableList(opts);
+        } finally {
+            ta.recycle();
         }
     }
 
