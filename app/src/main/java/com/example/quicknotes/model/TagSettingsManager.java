@@ -1,0 +1,83 @@
+package com.example.quicknotes.model;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+
+import androidx.annotation.NonNull;
+import androidx.preference.PreferenceManager;
+
+/**
+ * TagSettingsManager handles tag-related preferences and configuration settings.
+ * It provides access to user preferences for AI tagging, API keys, and tagging limits.
+ */
+public class TagSettingsManager {
+    private final SharedPreferences preferences;
+    private static final String PREF_API_KEY = "user_api_key";
+    private static final String PREF_AI_AUTO_TAG = "pref_ai_auto_tag";
+    private static final String PREF_AUTO_TAG_LIMIT = "auto_tag_limit";
+    
+    // Default values
+    private static final int DEFAULT_AUTO_TAG_LIMIT = 5;
+    private static final boolean DEFAULT_AI_MODE = false;
+
+    /**
+     * Constructs a TagSettingsManager instance.
+     *
+     * @param ctx The application context
+     */
+    public TagSettingsManager(@NonNull Context ctx) {
+        Context ctx1 = ctx.getApplicationContext();
+        this.preferences = PreferenceManager.getDefaultSharedPreferences(ctx1);
+    }
+
+    /**
+     * Gets the OpenAI API key from user preferences.
+     *
+     * @return The API key, or null if not set
+     */
+    public String getApiKey() {
+        return preferences.getString(PREF_API_KEY, null);
+    }
+
+
+
+    /**
+     * Checks if AI-powered auto-tagging is enabled.
+     *
+     * @return true if AI mode is enabled, false for keyword-based tagging
+     */
+    public boolean isAiMode() {
+        return preferences.getBoolean(PREF_AI_AUTO_TAG, DEFAULT_AI_MODE);
+    }
+
+
+    /**
+     * Gets the maximum number of tags to assign during auto-tagging.
+     *
+     * @return The auto-tag limit
+     */
+    public int getAutoTagLimit() {
+        return preferences.getInt(PREF_AUTO_TAG_LIMIT, DEFAULT_AUTO_TAG_LIMIT);
+    }
+
+
+    /**
+     * Checks if AI tagging is properly configured (has API key and is enabled).
+     *
+     * @return true if AI tagging can be used
+     */
+    public boolean isAiTaggingConfigured() {
+        return isAiMode() && hasValidApiKey();
+    }
+
+    /**
+     * Checks if a valid API key is configured.
+     *
+     * @return true if API key is set and non-empty
+     */
+    public boolean hasValidApiKey() {
+        String apiKey = getApiKey();
+        return apiKey != null && !apiKey.trim().isEmpty();
+    }
+
+} 

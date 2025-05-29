@@ -24,12 +24,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * Fragment for managing note creation and editing.
+ * Handles both new note creation and existing note modification.
+ */
 public class ManageNoteFragment extends BottomSheetDialogFragment implements NotesUI {
     private FragmentManageNoteBinding binding;
     private Listener listener;
     private Note currentNote;
     private boolean isNewNote = false;
-
 
     /**
      * Called when it's time to create the view.
@@ -54,59 +57,115 @@ public class ManageNoteFragment extends BottomSheetDialogFragment implements Not
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         bindNoteFields();
-
-        binding.tagsInputLayout.setEndIconOnClickListener(v -> new AlertDialog.Builder(requireContext())
-                .setTitle("How to enter tags")
-                .setMessage("Enter tags separated by commas, like:\n\nwork, urgent, meeting\n\nSpaces are optional but will be trimmed.")
-                .setPositiveButton("Got it", null)
-                .show());
-
-
-        // Set up save button click listener
-        binding.saveButton.setOnClickListener(v -> {
-            String title = Objects.requireNonNull(binding.noteTitleText.getText()).toString().trim();
-            String content = Objects.requireNonNull(binding.noteContentText.getText()).toString().trim();
-            String tagsString = Objects.requireNonNull(binding.noteTagsText.getText()).toString();
-
-            if (title.isEmpty() || content.isEmpty()) {
-                Snackbar.make(v, R.string.missing_item_field_error, Snackbar.LENGTH_LONG).show();
-                return;
-            }
-
-            List<String> tagNames = Arrays.stream(tagsString.split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toList());
-
-            currentNote.setTitle(title);
-            currentNote.setContent(content);
-
-            currentNote.getTags().clear();
-            tagNames.forEach(tagName -> listener.onSetTag(currentNote, tagName));
-
-            boolean enabled = binding.notificationsEnabled.isChecked();
-            Date selectedDate = getSelectedDate();
-            listener.onSetNotification(currentNote, enabled, selectedDate);
-
-            listener.onSaveNote(currentNote, isNewNote);
-            listener.onBrowseNotes();
-            dismiss(); // Close Sheet
-        });
-
-        binding.deleteButton.setOnClickListener(v -> {
-            new AlertDialog.Builder(requireContext())
-                    .setTitle("Delete Note")
-                    .setMessage("Are you sure? This will permanently erase your note.")
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .setPositiveButton(android.R.string.ok, (dlg1, which1) ->
-                            listener.onDeleteNote(currentNote)).show();
-            listener.onBrowseNotes();
-            dismiss(); // Close Sheet
-        });
+        setupListeners();
     }
 
+    /**
+     * Sets up all view listeners and event handlers.
+     */
+    private void setupListeners() {
+        binding.tagsInputLayout.setEndIconOnClickListener(v -> 
+                new AlertDialog.Builder(requireContext())
+                        .setTitle("How to enter tags")
+                        .setMessage("Enter tags separated by commas, like:\n\nwork, urgent, meeting\n\nSpaces are optional but will be trimmed.")
+                        .setPositiveButton("Got it", null)
+                        .show());
+
+        binding.saveButton.setOnClickListener(v -> saveNote());
+        binding.deleteButton.setOnClickListener(this::deleteNote);
+    }
+
+    /**
+     * Handles saving the current note.
+     */
+    private void saveNote() {
+        if (listener == null) {
+            showError("Unable to save note at this time");
+            return;
+        }
+
+        String title = getText(binding.noteTitleText).trim();
+        String content = getText(binding.noteContentText).trim();
+        String tagsString = getText(binding.noteTagsText);
+
+        if (title.isEmpty() || content.isEmpty()) {
+            showError(getString(R.string.missing_item_field_error));
+            return;
+        }
+
+        List<String> tagNames = Arrays.stream(tagsString.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+
+        currentNote.setTitle(title);
+        currentNote.setContent(content);
+        currentNote.getTags().clear();
+        tagNames.forEach(tagName -> listener.onSetTag(currentNote, tagName));
+
+        if (handleNotifications()) {
+            listener.onSaveNote(currentNote, isNewNote);
+            listener.onBrowseNotes();
+            dismiss();
+        }
+    }
+
+    /**
+     * Handles notification settings validation and setup.
+     */
+    private boolean handleNotifications() {
+        boolean enabled = binding.notificationsEnabled.isChecked();
+        Date selectedDate = null;
+
+        if (enabled) {
+            selectedDate = getSelectedDate();
+            if (listener != null && !listener.onValidateNotificationDate(selectedDate)) {
+                showError("Cannot set notification for past date/time. Please select a future time.");
+                return false;
+            }
+        }
+
+        if (listener != null) {
+            listener.onSetNotification(currentNote, enabled, selectedDate);
+        }
+        return true;
+    }
+
+    /**
+     * Handles deleting the current note.
+     */
+    private void deleteNote(View v) {
+        if (listener == null) return;
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Delete Note")
+                .setMessage("Are you sure? This will permanently erase your note.")
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(android.R.string.ok, (dlg1, which1) -> {
+                    listener.onDeleteNote(currentNote);
+                    listener.onBrowseNotes();
+                    dismiss();
+                }).show();
+    }
+
+    /**
+     * Gets text from EditText widget safely.
+     */
+    private String getText(android.widget.EditText editText) {
+        return Objects.requireNonNull(editText.getText()).toString();
+    }
+
+    /**
+     * Shows error message using Snackbar.
+     */
+    private void showError(String message) {
+        Snackbar.make(binding.getRoot(), message, Snackbar.LENGTH_LONG).show();
+    }
+
+    /**
+     * Gets the selected date and time from the date and time pickers.
+     */
     @NonNull
     private Date getSelectedDate() {
         Calendar cal = Calendar.getInstance();
@@ -115,17 +174,24 @@ public class ManageNoteFragment extends BottomSheetDialogFragment implements Not
         cal.set(Calendar.DAY_OF_MONTH, binding.datePicker.getDayOfMonth());
         cal.set(Calendar.HOUR_OF_DAY, binding.timePicker.getHour());
         cal.set(Calendar.MINUTE, binding.timePicker.getMinute());
-
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
         return cal.getTime();
     }
 
     /**
+     * Sets the listener for UI events.
+     *
      * @param listener the listener object
      */
     @Override
-    public void setListener(final Listener listener) {this.listener = listener;}
+    public void setListener(final Listener listener) {
+        this.listener = listener;
+    }
 
     /**
+     * Updates the view with a list of notes (not used in this fragment).
+     *
      * @param notes the list of notes to be displayed.
      */
     @Override
@@ -133,52 +199,79 @@ public class ManageNoteFragment extends BottomSheetDialogFragment implements Not
         // This method is not used in this fragment
     }
 
+    /**
+     * Binds note data to the UI fields.
+     */
     private void bindNoteFields() {
         if (currentNote == null) return;
 
         binding.noteTitleText.setText(currentNote.getTitle());
         binding.noteContentText.setText(currentNote.getContent());
-        binding.noteTagsText.setText(
-                TextUtils.join(", ",
-                        currentNote.getTags()
-                                .stream()
-                                .map(Tag::getName)
-                                .collect(Collectors.toList())
-                )
-        );
+        binding.noteTagsText.setText(TextUtils.join(", ", 
+                currentNote.getTags().stream().map(Tag::getName).collect(Collectors.toList())));
 
+        setupNotificationFields();
+    }
+
+    /**
+     * Sets up notification-related fields and listeners.
+     */
+    private void setupNotificationFields() {
         boolean notificationsEnabled = currentNote.isNotificationsEnabled();
         binding.notificationsEnabled.setChecked(notificationsEnabled);
-        binding.datePicker.setVisibility(notificationsEnabled ? View.VISIBLE : View.GONE);
-        binding.timePicker.setVisibility(notificationsEnabled ? View.VISIBLE : View.GONE);
+        updateNotificationVisibility(notificationsEnabled);
+        
         binding.datePicker.setMinDate(System.currentTimeMillis());
-
         binding.notificationsEnabled.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            binding.datePicker.setVisibility(isChecked ? View.VISIBLE : View.GONE);
-            binding.timePicker.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            updateNotificationVisibility(isChecked);
+            if (isChecked) setDefaultNotificationTime();
         });
 
         if (currentNote.getNotificationDate() != null) {
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(currentNote.getNotificationDate());
-
-            binding.datePicker.updateDate(
-                    cal.get(Calendar.YEAR),
-                    cal.get(Calendar.MONTH),
-                    cal.get(Calendar.DAY_OF_MONTH)
-            );
-            binding.timePicker.setHour(cal.get(Calendar.HOUR_OF_DAY));
-            binding.timePicker.setMinute(cal.get(Calendar.MINUTE));
+            setDateTimeFromNote();
+        } else if (notificationsEnabled) {
+            setDefaultNotificationTime();
         }
     }
 
+    /**
+     * Updates visibility of notification date/time pickers.
+     */
+    private void updateNotificationVisibility(boolean visible) {
+        int visibility = visible ? View.VISIBLE : View.GONE;
+        binding.datePicker.setVisibility(visibility);
+        binding.timePicker.setVisibility(visibility);
+    }
 
+    /**
+     * Sets date/time pickers from the current note's notification date.
+     */
+    private void setDateTimeFromNote() {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(currentNote.getNotificationDate());
+        binding.datePicker.updateDate(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
+        binding.timePicker.setHour(cal.get(Calendar.HOUR_OF_DAY));
+        binding.timePicker.setMinute(cal.get(Calendar.MINUTE));
+    }
+
+    /**
+     * Sets the date and time pickers to a default time (1 hour from now).
+     */
+    private void setDefaultNotificationTime() {
+        Calendar defaultTime = Calendar.getInstance();
+        defaultTime.add(Calendar.HOUR_OF_DAY, 1);
+        binding.datePicker.updateDate(defaultTime.get(Calendar.YEAR), defaultTime.get(Calendar.MONTH), defaultTime.get(Calendar.DAY_OF_MONTH));
+        binding.timePicker.setHour(defaultTime.get(Calendar.HOUR_OF_DAY));
+        binding.timePicker.setMinute(defaultTime.get(Calendar.MINUTE));
+    }
+
+    /**
+     * Sets the note to be edited in this fragment.
+     */
     public void setNoteToEdit(Note note) {
         this.currentNote = note;
         this.isNewNote = currentNote.getTitle().isEmpty() && currentNote.getContent().isEmpty();
-        if (binding != null) {
-            bindNoteFields();
-        }
+        if (binding != null) bindNoteFields();
     }
 }
 

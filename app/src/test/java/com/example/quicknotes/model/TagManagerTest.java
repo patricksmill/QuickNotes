@@ -2,7 +2,7 @@ package com.example.quicknotes.model;
 
 import org.junit.jupiter.api.Test;
 
-class ManageTagsTest {
+class TagManagerTest {
 
     @Test
     void getAvailableColors() {

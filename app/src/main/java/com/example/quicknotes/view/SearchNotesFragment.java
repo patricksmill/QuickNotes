@@ -1,6 +1,5 @@
 package com.example.quicknotes.view;
 
-
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -26,35 +25,34 @@ import com.example.quicknotes.model.Note;
 import com.example.quicknotes.model.Tag;
 import com.google.android.material.snackbar.Snackbar;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Fragment responsible for displaying and managing the main notes view.
+ * Provides functionality for searching, filtering, sorting, and managing notes.
+ * Follows MVC pattern by delegating all business logic to the controller.
+ */
 public class SearchNotesFragment extends Fragment implements NotesUI {
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault());
+    
     private FragmentSearchNotesBinding binding;
     private Listener listener;
-
     private final TagListAdapter tagAdapter = new TagListAdapter();
     private final NotesListAdapter notesListAdapter = new NotesListAdapter();
     private final Set<String> activeTagFilters = new LinkedHashSet<>();
-
-    private List<Note> baseNotes;
-    private String currentSortBy = "date"; // Default sort by date
-
+    private List<Note> baseNotes = new ArrayList<>();
+    private String currentSortBy = "date";
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentSearchNotesBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -62,59 +60,70 @@ public class SearchNotesFragment extends Fragment implements NotesUI {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        setupRecyclerViews();
+        setupSearchView();
+        setupClickListeners();
+        setupSwipeToDelete();
+        if (listener != null) updateView(listener.onGetNotes());
+    }
 
-        // Setup Notes RecyclerView.
+    private void setupRecyclerViews() {
         binding.notesRecyclerView.setAdapter(notesListAdapter);
         binding.notesRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        // Setup Tag RecyclerView
         binding.tagRecyclerView.setAdapter(tagAdapter);
         binding.tagRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+    }
 
-        // Setup SearchView
+    private void setupSearchView() {
         SearchView searchView = binding.searchBar;
-        // When the close (X) button is pressed, clear the query and show all notes.
         searchView.setOnCloseListener(() -> {
             searchView.setQuery("", false);
-            if (listener != null) {
-                listener.onSearchNotes("", true, true, true);
-            }
+            if (listener != null) listener.onSearchNotes("", true, true, true);
             return false;
         });
 
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener(){
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                if (listener != null) {
-                    listener.onSearchNotes(query, true, true, true);
-                }
-                return true;
+                return handleSearch(query);
             }
+
             @Override
             public boolean onQueryTextChange(String newText) {
-                if (listener != null) {
-                    listener.onSearchNotes(newText, true, true, true);
-                }
+                return handleSearch(newText);
+            }
+
+            private boolean handleSearch(String query) {
+                if (listener != null) listener.onSearchNotes(query, true, true, true);
                 return true;
             }
         });
+    }
 
-        // Set up sort button click listener
+    private void setupClickListeners() {
         binding.sortButton.setOnClickListener(v -> showSortDialog());
+        binding.addNoteFab.setOnClickListener(v -> { if (listener != null) listener.onNewNote(); });
+        binding.addNoteFab.setOnLongClickListener(v -> {
+            if (listener != null) {
+                listener.onAddDemoNotes();
+                updateView(listener.onGetNotes());
+            }
+            return true;
+        });
+        binding.settingsButton.setOnClickListener(v -> { if (listener != null) listener.onOpenSettings(); });
+    }
 
-        // Set up swipe to delete
+    private void setupSwipeToDelete() {
         new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
             @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView,
-                                  @NonNull RecyclerView.ViewHolder viewHolder,
-                                  @NonNull RecyclerView.ViewHolder target) {
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
                 return false;
             }
 
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 int position = viewHolder.getBindingAdapterPosition();
-                if (position == RecyclerView.NO_POSITION) return;
+                if (position == RecyclerView.NO_POSITION || listener == null) return;
 
                 Note noteToDelete = notesListAdapter.listNotes.get(position);
                 listener.onDeleteNote(noteToDelete);
@@ -123,57 +132,23 @@ public class SearchNotesFragment extends Fragment implements NotesUI {
                         .show();
             }
         }).attachToRecyclerView(binding.notesRecyclerView);
-
-
-        // Set up FAB click listener
-        this.binding.addNoteFab.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onNewNote();
-            }
-        });
-
-        this.binding.addNoteFab.setOnLongClickListener(v -> {
-            if (listener != null) {
-                listener.onAddDemoNotes();
-                updateView(listener.onGetNotes());
-            }
-            return true;
-        });
-
-        // Set up Settings Cog click listener
-        this.binding.settingsButton.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onOpenSettings();
-            }
-        });
-
-        // Initial load of notes
-        if (listener != null) {
-            updateView(listener.onGetNotes());
-
-        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        updateView(listener.onGetNotes());
+        if (listener != null) updateView(listener.onGetNotes());
     }
 
     @Override
     public void setListener(Listener listener) {
         this.listener = listener;
-        if (listener != null && binding != null) {
-            updateView(listener.onGetNotes());
-        }
+        if (listener != null && binding != null) updateView(listener.onGetNotes());
     }
 
-
+    @Override
     public void updateView(List<Note> notes) {
-        baseNotes = notes != null
-                ? new ArrayList<>(notes)
-                : new ArrayList<>();
-        
+        baseNotes = notes != null ? new ArrayList<>(notes) : new ArrayList<>();
         if (binding != null && listener != null) {
             tagAdapter.updateData(listener.onManageTags().getAllTags());
             tagAdapter.setSelectedTags(activeTagFilters);
@@ -182,53 +157,43 @@ public class SearchNotesFragment extends Fragment implements NotesUI {
     }
 
     private void displayNotes() {
-        if (binding == null) return;
+        if (binding == null || listener == null) return;
 
-        List<Note> notes = activeTagFilters.isEmpty()
-                ? new ArrayList<>(baseNotes)
+        List<Note> notes = activeTagFilters.isEmpty() ? new ArrayList<>(baseNotes)
                 : baseNotes.stream()
-                        .filter(n -> listener.onManageTags()
-                                .filterNotesByTags(activeTagFilters)
-                                .contains(n))
-                        .collect(Collectors.toList());
+                .filter(n -> listener.onManageTags().filterNotesByTags(activeTagFilters).contains(n))
+                .collect(Collectors.toList());
 
         notes.sort((a, b) -> {
             int pinCmp = Boolean.compare(b.isPinned(), a.isPinned());
             if (pinCmp != 0) return pinCmp;
-
-            if ("title".equals(currentSortBy)) {
-                return a.getTitle()
-                        .compareToIgnoreCase(b.getTitle());
-            } else { // date
-                return b.getLastModified()
-                        .compareTo(a.getLastModified());
-            }
+            return "title".equals(currentSortBy) 
+                    ? a.getTitle().compareToIgnoreCase(b.getTitle())
+                    : b.getLastModified().compareTo(a.getLastModified());
         });
 
         notesListAdapter.updateData(notes);
-        binding.emptyState.setVisibility(notes.isEmpty() ? View.VISIBLE : View.GONE);
-        binding.notesRecyclerView.setVisibility(notes.isEmpty() ? View.GONE : View.VISIBLE);
+        boolean isEmpty = notes.isEmpty();
+        binding.emptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+        binding.notesRecyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
     }
 
     private void setupPins(ImageView pinIcon, Note note) {
         pinIcon.setSelected(note.isPinned());
         pinIcon.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onTogglePin(note);
-                v.setSelected(note.isPinned());
-                String msg = note.isPinned() ? "pinned" : "unpinned";
-                Snackbar.make(binding.getRoot(), "Note " + msg, Snackbar.LENGTH_SHORT).show();
-            }
+            if (listener == null) return;
+            listener.onTogglePin(note);
+            v.setSelected(note.isPinned());
+            Snackbar.make(binding.getRoot(), "Note " + (note.isPinned() ? "pinned" : "unpinned"), Snackbar.LENGTH_SHORT).show();
         });
     }
 
     private void showSortDialog() {
-        String[] sortOptions = {"Sort by Date", "Sort by Title"};
         new AlertDialog.Builder(requireContext())
                 .setTitle("Sort Notes")
-                .setItems(sortOptions, (dialog, which) -> {
+                .setItems(new String[]{"Sort by Date", "Sort by Title"}, (dialog, which) -> {
                     currentSortBy = (which == 1) ? "title" : "date";
-                    displayNotes();                // re-run filter+sort pipeline
+                    displayNotes();
                 })
                 .show();
     }
@@ -240,10 +205,7 @@ public class SearchNotesFragment extends Fragment implements NotesUI {
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            TagChipBinding binding = TagChipBinding.inflate(
-                    LayoutInflater.from(parent.getContext()), parent, false
-            );
-            return new ViewHolder(binding);
+            return new ViewHolder(TagChipBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
         }
 
         @Override
@@ -252,9 +214,7 @@ public class SearchNotesFragment extends Fragment implements NotesUI {
         }
 
         @Override
-        public int getItemCount() {
-            return listTags.size();
-        }
+        public int getItemCount() { return listTags.size(); }
 
         public void updateData(@NonNull Collection<Tag> tags) {
             this.listTags = new ArrayList<>(tags);
@@ -277,35 +237,19 @@ public class SearchNotesFragment extends Fragment implements NotesUI {
 
             public void bind(Tag tag, boolean isSelected) {
                 binding.tagName.setText(tag.getName());
-
-                int colorInt = ContextCompat.getColor(
-                        requireContext(),
-                        tag.getColorResId()
-                );
-
-                binding.getRoot().setStrokeColor(colorInt);
-                binding.getRoot().setStrokeWidth(
-                        isSelected
-                                ? getResources().getDimensionPixelSize(R.dimen.chip_stroke_width)
-                                : 0
-                );
-
+                binding.getRoot().setStrokeColor(ContextCompat.getColor(requireContext(), tag.getColorResId()));
+                binding.getRoot().setStrokeWidth(isSelected ? getResources().getDimensionPixelSize(R.dimen.chip_stroke_width) : 0);
                 binding.getRoot().setOnClickListener(v -> {
                     selectedTags.clear();
                     if (!isSelected) selectedTags.add(tag.getName());
-
                     activeTagFilters.clear();
                     activeTagFilters.addAll(selectedTags);
-
                     displayNotes();
-
                     notifyDataSetChanged();
                 });
             }
         }
     }
-
-
 
     private class NotesListAdapter extends RecyclerView.Adapter<NotesListAdapter.ViewHolder> {
         List<Note> listNotes = new LinkedList<>();
@@ -313,8 +257,7 @@ public class SearchNotesFragment extends Fragment implements NotesUI {
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            ListNoteBinding binding = ListNoteBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
-            return new ViewHolder(binding);
+            return new ViewHolder(ListNoteBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
         }
 
         @Override
@@ -323,7 +266,7 @@ public class SearchNotesFragment extends Fragment implements NotesUI {
         }
 
         @Override
-        public int getItemCount() {return listNotes.size();}
+        public int getItemCount() { return listNotes.size(); }
 
         public void updateData(@NonNull List<Note> notes) {
             this.listNotes = new ArrayList<>(notes);
@@ -332,6 +275,7 @@ public class SearchNotesFragment extends Fragment implements NotesUI {
 
         private class ViewHolder extends RecyclerView.ViewHolder {
             private final ListNoteBinding binding;
+
             public ViewHolder(@NonNull final ListNoteBinding binding) {
                 super(binding.getRoot());
                 this.binding = binding;
@@ -340,20 +284,12 @@ public class SearchNotesFragment extends Fragment implements NotesUI {
             public void bind(Note note) {
                 binding.noteNameText.setText(note.getTitle());
                 binding.noteContentText.setText(note.getContent());
-                binding.noteDateText.setText(note.getLastModified().toString().substring(0, 16)); // Cuts off the year and EDT
+                binding.noteDateText.setText(DATE_FORMAT.format(note.getLastModified()));
                 binding.noteTagsText.setText(TextUtils.join(", ", note.getTagNames()));
                 setupPins(binding.notePinIcon, note);
                 binding.noteNotificationIcon.setVisibility(
-                        note.isNotificationsEnabled() && note.getNotificationDate() != null && note.getNotificationDate().after(new Date())
-                                ? View.VISIBLE
-                                : View.GONE
-                );
-
-                binding.getRoot().setOnClickListener(v -> {
-                    if (listener != null) {
-                        listener.onManageNotes(note);
-                    }
-                });
+                        (listener != null && listener.onShouldShowNotificationIcon(note)) ? View.VISIBLE : View.GONE);
+                binding.getRoot().setOnClickListener(v -> { if (listener != null) listener.onManageNotes(note); });
             }
         }
     }
