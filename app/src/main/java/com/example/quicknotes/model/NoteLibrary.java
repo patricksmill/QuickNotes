@@ -18,7 +18,7 @@ public class NoteLibrary {
     private final Context ctx;
     private final List<Note> notes;
     private Note recentlyDeletedNote;
-    private final ManageTags manageTags;
+    private final TagManager tagManager;
 
     /**
      * Constructs a NoteLibrary instance with the given context.
@@ -28,7 +28,7 @@ public class NoteLibrary {
     public NoteLibrary(@NonNull Context ctx) {
         this.ctx = ctx.getApplicationContext();
         this.notes = new ArrayList<>(Persistence.loadNotes(this.ctx));
-        this.manageTags = new ManageTags(this);
+        this.tagManager = new TagManager(this);
     }
 
     /**
@@ -45,8 +45,8 @@ public class NoteLibrary {
      *
      * @return The ManageTags instance
      */
-    public ManageTags getManageTags() {
-        return manageTags;
+    public TagManager getManageTags() {
+        return tagManager;
     }
 
     /**
@@ -71,10 +71,10 @@ public class NoteLibrary {
             return;
         }
         updateNoteDate(note);
-        if (manageTags.isAiMode()) {
-            manageTags.aiAutoTag(note, manageTags.getAutoTagLimit());
+        if (tagManager.isAiMode()) {
+            tagManager.aiAutoTag(note, tagManager.getAutoTagLimit());
         } else {
-            manageTags.simpleAutoTag(note, manageTags.getAutoTagLimit());
+            tagManager.simpleAutoTag(note, tagManager.getAutoTagLimit());
         }
         notes.add(note);
         Persistence.saveNotes(ctx, notes);
@@ -152,6 +152,29 @@ public class NoteLibrary {
      */
     public void togglePin(@NonNull Note note) {
         note.setPinned(!note.isPinned());
+        Persistence.saveNotes(ctx, notes);
+    }
+
+    /**
+     * Deletes all notes from the library.
+     * This operation cannot be undone.
+     */
+    public void deleteAllNotes() {
+        notes.clear();
+        recentlyDeletedNote = null;
+        tagManager.cleanupUnusedTags();
+        Persistence.saveNotes(ctx, notes);
+    }
+
+    /**
+     * Updates notification settings for a note and persists the changes.
+     * @param note The note to update
+     * @param enabled Whether notifications are enabled
+     * @param date The notification date/time
+     */
+    public void updateNoteNotificationSettings(@NonNull Note note, boolean enabled, Date date) {
+        note.setNotificationsEnabled(enabled);
+        note.setNotificationDate(date);
         Persistence.saveNotes(ctx, notes);
     }
 

@@ -2,80 +2,111 @@ package com.example.quicknotes.view;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
-import android.widget.Toast;
+import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 import androidx.preference.SeekBarPreference;
-import androidx.preference.SwitchPreferenceCompat;
 
 import com.example.quicknotes.R;
+import com.example.quicknotes.controller.ControllerActivity;
+import com.google.android.material.snackbar.Snackbar;
 
-import java.io.File;
+/**
+ * Fragment for managing application settings and preferences.
+ */
+public class SettingsFragment extends PreferenceFragmentCompat implements NotesUI {
+    private NotesUI.Listener listener;
 
-public class SettingsFragment extends PreferenceFragmentCompat {
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey);
+        setupApiKeyPreference();
+        setupAutoTagLimitPreference();
+        setupDeleteAllPreference();
+    }
 
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        if (getActivity() instanceof ControllerActivity) {
+            setListener((NotesUI.Listener) getActivity());
+        }
+    }
 
-        // OpenAI API Plugin
+    private void setupApiKeyPreference() {
         EditTextPreference apiKeyPref = findPreference("openai_api_key");
         if (apiKeyPref != null) {
             apiKeyPref.setSummaryProvider(EditTextPreference.SimpleSummaryProvider.getInstance());
         }
+    }
 
-        // Auto-tag limit preference
+    private void setupAutoTagLimitPreference() {
         SeekBarPreference limitPref = findPreference("auto_tag_limit");
-        if (limitPref != null) {
-            int current = PreferenceManager
-                    .getDefaultSharedPreferences(requireContext())
-                    .getInt("auto_tag_limit", 3);
-            limitPref.setSummary(current + " tags per note");
+        if (limitPref == null) return;
 
-            limitPref.setOnPreferenceChangeListener((pref, newValue) -> {
-                int limit = (Integer) newValue;
-                pref.setSummary(limit + " tags per note");
-                return true;
-            });
-        }
+        int current = PreferenceManager.getDefaultSharedPreferences(requireContext()).getInt("auto_tag_limit", 3);
+        limitPref.setSummary(current + " tags per note");
+        limitPref.setOnPreferenceChangeListener((pref, newValue) -> {
+            pref.setSummary(newValue + " tags per note");
+            return true;
+        });
+    }
 
-        //Allow notifications preference
-
-        SwitchPreferenceCompat notificationPref = findPreference("pref_noti");
-        if (notificationPref != null){
-
-        }
-
-
-        // Delete all notes preference
+    private void setupDeleteAllPreference() {
         Preference deleteAll = findPreference("pref_delete_all");
-        if (deleteAll != null) {
-            deleteAll.setOnPreferenceClickListener(pref -> {
-                new AlertDialog.Builder(requireContext())
-                        .setTitle("Delete All Notes")
-                        .setMessage("Are you sure? This will permanently erase all your notes.")
-                        .setNegativeButton(android.R.string.cancel, null)
-                        .setPositiveButton(android.R.string.ok, (dlg1, which1) -> {
-                            File file = new File(requireContext().getFilesDir(), "notes.json");
-                            boolean deleted = file.delete();
-                            if (deleted) {
-                                new AlertDialog.Builder(requireContext())
-                                        .setTitle("Notes Deleted")
-                                        .setMessage("All notes have been deleted. The app will now exit.")
-                                        .setPositiveButton(android.R.string.ok, (dlg2, which2) ->
-                                                requireActivity().finishAffinity()).show();
-                            } else {
-                                Toast.makeText(requireContext(),
-                                                "Failed to delete notes",
-                                                Toast.LENGTH_SHORT).show();
-                            }
-                        }).show();
-                return true;
-            });
+        if (deleteAll == null) return;
+
+        deleteAll.setOnPreferenceClickListener(pref -> {
+            showDeleteConfirmation();
+            return true;
+        });
+    }
+
+    private void showDeleteConfirmation() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Delete All Notes")
+                .setMessage("Are you sure? This will permanently erase all your notes.")
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(android.R.string.ok, (dlg1, which1) -> {
+                    if (listener != null) {
+                        listener.onDeleteAllNotes();
+                        showExitDialog();
+                    } else {
+                        showError();
+                    }
+                }).show();
+    }
+
+    private void showExitDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Notes Deleted")
+                .setMessage("All notes have been deleted. The app will now exit.")
+                .setPositiveButton(android.R.string.ok, (dlg2, which2) -> requireActivity().finishAffinity())
+                .show();
+    }
+
+    /**
+     * Shows an error message using Snackbar
+     */
+    private void showError() {
+        View view = getView();
+        if (view != null) {
+            Snackbar.make(view, "Unable to delete notes at this time", Snackbar.LENGTH_SHORT).show();
         }
     }
 
+    @Override
+    public void setListener(NotesUI.Listener listener) {
+        this.listener = listener;
+    }
+
+    @Override
+    public void updateView(java.util.List<com.example.quicknotes.model.Note> notes) {
+        // This method is not used in this fragment
+    }
 }

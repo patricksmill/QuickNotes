@@ -1,13 +1,16 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory android:title="Notifications">
+    <PreferenceCategory 
+        android:title="Notifications">
 
         <SwitchPreferenceCompat
             android:key="pref_noti"
             android:title="Allow Notifications"
+            android:summary="Get reminded about your notes"
             app:defaultValue="false" />
     </PreferenceCategory>
+    
     <PreferenceCategory
         android:key="pref_category_tags"
         android:title="Tagging">
@@ -20,45 +23,53 @@
             android:min="0"
             android:max="5" />
 
-
         <Preference
             android:key="pref_edit_tag_colors"
             android:title="Edit Tag Colors"
             android:fragment="com.example.quicknotes.view.TagColorSettingsFragment"
-            android:summary="Change the color for each tag" />
-
+            android:summary="Customize the appearance of your tags" />
 
     </PreferenceCategory>
 
     <PreferenceCategory
         android:key="pref_category_AI"
-        android:title="AI" >
+        android:title="AI Features">
 
         <SwitchPreferenceCompat
             android:key="pref_ai_auto_tag"
-            android:title="Use AI-powered Auto-Tagging"
-            android:summaryOff="Keyword-based tagging"
-            android:summaryOn="GPT-4.1 Nano tagging"
+            android:title="AI-powered Auto-Tagging"
+            android:summaryOff="Using keyword-based tagging"
+            android:summaryOn="Using GPT-4.1 Nano tagging"
             android:defaultValue="false" />
 
         <EditTextPreference
-            android:key="user_api_key"
+            android:key="openai_api_key"
             android:title="OpenAI API Key"
-            android:summary="Enter your OpenAI API key"
-            android:dialogTitle="OpenAI API Key"
+            android:summary="Required for AI features"
+            android:dialogTitle="Enter OpenAI API Key"
             android:inputType="textPassword" />
-
 
     </PreferenceCategory>
 
     <PreferenceCategory
         android:key="pref_category_danger"
-        android:title="Danger!">
+        android:title="Danger Zone">
 
         <Preference
             android:key="pref_delete_all"
             android:title="Delete All Notes"
-            android:summary="Permanently remove all notes (CANNOT UNDO)" />
+            android:summary="Permanently remove all notes (CANNOT BE UNDONE)" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="About">
+
+        <Preference
+            android:key="app_version"
+            android:title="QuickNotes"
+            android:summary="Version 1.0.0 - Your intelligent note companion"
+            android:selectable="false" />
 
     </PreferenceCategory>
 

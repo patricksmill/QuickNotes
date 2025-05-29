@@ -1,7 +1,10 @@
 package com.example.quicknotes.view;
 
 import androidx.annotation.NonNull;
-import com.example.quicknotes.model.ManageTags;
+
+import com.example.quicknotes.model.Tag;
+import com.example.quicknotes.model.TagColorManager;
+import com.example.quicknotes.model.TagManager;
 import com.example.quicknotes.model.Note;
 import java.util.Date;
 import java.util.List;
@@ -48,10 +51,10 @@ public interface NotesUI {
 
         /**
          * Deletes a note from the library.
+         *
          * @param note the note to be deleted
-         * @return the deleted note, or null if not found
          */
-        Note onDeleteNote(@NonNull Note note);
+        void onDeleteNote(@NonNull Note note);
 
         /**
          * Restores the most recently deleted note.
@@ -69,7 +72,7 @@ public interface NotesUI {
          * Gets the tag management system.
          * @return the tag management instance
          */
-        ManageTags onManageTags();
+        TagManager onManageTags();
 
         /**
          * Searches notes by various criteria.
@@ -103,6 +106,44 @@ public interface NotesUI {
          * @param date the notification date/time
          */
         void onSetNotification(@NonNull Note note, boolean enabled, Date date);
+
+        /**
+         * Deletes all notes from the library.
+         */
+        void onDeleteAllNotes();
+
+        /**
+         * Gets all available tags.
+         * @return set of all tags
+         */
+        java.util.Set<Tag> onGetAllTags();
+
+        /**
+         * Gets available color options for tags.
+         * @return list of color options
+         */
+        java.util.List<TagColorManager.ColorOption> onGetAvailableColors();
+
+        /**
+         * Sets the color for a specific tag.
+         * @param tagName the name of the tag
+         * @param colorResId the resource ID of the color
+         */
+        void onSetTagColor(@NonNull String tagName, int colorResId);
+
+        /**
+         * Validates if a notification date is valid (not in the past).
+         * @param date the date to validate
+         * @return true if the date is valid, false otherwise
+         */
+        boolean onValidateNotificationDate(@NonNull Date date);
+
+        /**
+         * Checks if a note should display a notification icon.
+         * @param note the note to check
+         * @return true if the notification icon should be visible, false otherwise
+         */
+        boolean onShouldShowNotificationIcon(@NonNull Note note);
     }
 
     /**
