@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
+import androidx.security.crypto.EncryptedSharedPreferences;
+import androidx.security.crypto.MasterKeys;
 
 /**
  * TagSettingsManager handles tag-related preferences and configuration settings.
@@ -12,12 +14,13 @@ import androidx.preference.PreferenceManager;
  */
 public class TagSettingsManager {
     private final SharedPreferences preferences;
+    private SharedPreferences securePreferences;
     private static final String PREF_API_KEY = "openai_api_key";
     private static final String PREF_AI_AUTO_TAG = "pref_ai_auto_tag";
     private static final String PREF_AUTO_TAG_LIMIT = "auto_tag_limit";
     
     // Default values
-    private static final int DEFAULT_AUTO_TAG_LIMIT = 5;
+    private static final int DEFAULT_AUTO_TAG_LIMIT = 3;
     private static final boolean DEFAULT_AI_MODE = false;
 
     /**
@@ -28,6 +31,18 @@ public class TagSettingsManager {
     public TagSettingsManager(@NonNull Context ctx) {
         Context ctx1 = ctx.getApplicationContext();
         this.preferences = PreferenceManager.getDefaultSharedPreferences(ctx1);
+        try {
+            String masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC);
+            this.securePreferences = EncryptedSharedPreferences.create(
+                    "quicknotes_secure_prefs",
+                    masterKeyAlias,
+                    ctx1,
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            );
+        } catch (Exception e) {
+            this.securePreferences = this.preferences; // fallback
+        }
     }
 
     /**
@@ -36,7 +51,7 @@ public class TagSettingsManager {
      * @return The API key, or null if not set
      */
     public String getApiKey() {
-        return preferences.getString(PREF_API_KEY, null);
+        return securePreferences.getString(PREF_API_KEY, null);
     }
 
 
