@@ -102,7 +102,7 @@ public class ManageNoteFragment extends BottomSheetDialogFragment implements Not
         currentNote.setTitle(title);
         currentNote.setContent(content);
         currentNote.getTags().clear();
-        tagNames.forEach(tagName -> listener.onSetTag(currentNote, tagName));
+        listener.onSetTags(currentNote, tagNames);
 
         if (handleNotifications()) {
             listener.onSaveNote(currentNote, isNewNote);

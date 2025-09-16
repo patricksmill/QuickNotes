@@ -1,10 +1,13 @@
 package com.example.quicknotes.controller;
 
+import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -38,7 +41,10 @@ public class ControllerActivity extends AppCompatActivity implements NotesUI.Lis
     private Notifier notifier;
     private OnboardingManager onboardingManager;
     private boolean wasWaitingForPermission = false;
+    private boolean wasWaitingForNotificationPermission = false;
     private boolean isOnboardingActive = false;
+
+    private static final int REQUEST_CODE_POST_NOTIFICATIONS = 1001;
 
     /**
      * Called when the activity is starting.
@@ -109,6 +115,11 @@ public class ControllerActivity extends AppCompatActivity implements NotesUI.Lis
             wasWaitingForPermission = false;
             Snackbar.make(mainUI.getRootView(), "Alarm permission granted! You can now set note reminders.", 
                          Snackbar.LENGTH_LONG).show();
+        }
+
+        if (wasWaitingForNotificationPermission && hasPostNotificationsPermission()) {
+            wasWaitingForNotificationPermission = false;
+            Snackbar.make(mainUI.getRootView(), "Notification permission granted!", Snackbar.LENGTH_LONG).show();
         }
     }
 
@@ -309,7 +320,29 @@ public class ControllerActivity extends AppCompatActivity implements NotesUI.Lis
     }
 
     @Override
+    public void onSetTags(@NonNull Note note, @NonNull java.util.List<String> tags) {
+        noteLibrary.getManageTags().setTags(note, tags);
+        updateNotesView();
+    }
+
+    @Override
     public void onSetNotification(@NonNull Note note, boolean enabled, Date date) {
+        // Android 13+ requires runtime POST_NOTIFICATIONS permission
+        if (enabled && !hasPostNotificationsPermission()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Notifications Permission Required")
+                    .setMessage("To show reminders, QuickNotes needs notification permission.")
+                    .setPositiveButton("Allow", (dialog, which) -> {
+                        wasWaitingForNotificationPermission = true;
+                        requestPostNotificationsPermission();
+                    })
+                    .setNegativeButton("Cancel", (dialog, which) -> Snackbar.make(mainUI.getRootView(), "Notification not set - permission required",
+                                     Snackbar.LENGTH_SHORT).show())
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+            return;
+        }
+
         // Check alarm permission before setting notification
         if (enabled && !notifier.canScheduleExactAlarms()) {
             new AlertDialog.Builder(this)
@@ -430,6 +463,44 @@ public class ControllerActivity extends AppCompatActivity implements NotesUI.Lis
     public void startOnboardingTutorial() {
         if (onboardingManager != null) {
             onboardingManager.forceStartOnboarding(this, (ViewGroup) mainUI.getRootView());
+        }
+    }
+
+    private boolean hasPostNotificationsPermission() {
+        if (android.os.Build.VERSION.SDK_INT < 33) return true;
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                == android.content.pm.PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestPostNotificationsPermission() {
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                    REQUEST_CODE_POST_NOTIFICATIONS);
+        }
+    }
+
+    /**
+     * Exposed for settings screen to trigger a notification permission request when the user
+     * enables notifications from preferences on Android 13+.
+     */
+    public void requestNotificationPermissionFromSettings() {
+        if (android.os.Build.VERSION.SDK_INT >= 33 && !hasPostNotificationsPermission()) {
+            wasWaitingForNotificationPermission = true;
+            requestPostNotificationsPermission();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CODE_POST_NOTIFICATIONS) {
+            boolean granted = hasPostNotificationsPermission();
+            if (granted) {
+                Snackbar.make(mainUI.getRootView(), "Notification permission granted!", Snackbar.LENGTH_LONG).show();
+            } else {
+                Snackbar.make(mainUI.getRootView(), "Notification permission denied - notifications may not appear.", Snackbar.LENGTH_LONG).show();
+            }
         }
     }
 }

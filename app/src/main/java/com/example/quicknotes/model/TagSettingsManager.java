@@ -12,7 +12,7 @@ import androidx.preference.PreferenceManager;
  */
 public class TagSettingsManager {
     private final SharedPreferences preferences;
-    private static final String PREF_API_KEY = "user_api_key";
+    private static final String PREF_API_KEY = "openai_api_key";
     private static final String PREF_AI_AUTO_TAG = "pref_ai_auto_tag";
     private static final String PREF_AUTO_TAG_LIMIT = "auto_tag_limit";
     
