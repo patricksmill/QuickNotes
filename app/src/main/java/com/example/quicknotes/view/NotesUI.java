@@ -69,6 +69,13 @@ public interface NotesUI {
         void onSetTag(@NonNull Note note, @NonNull String tag);
 
         /**
+         * Adds multiple tags to a note in a single operation.
+         * @param note the note to tag
+         * @param tags list of tag names to add
+         */
+        void onSetTags(@NonNull Note note, @NonNull java.util.List<String> tags);
+
+        /**
          * Gets the tag management system.
          * @return the tag management instance
          */

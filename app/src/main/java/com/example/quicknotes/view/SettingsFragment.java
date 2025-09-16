@@ -29,6 +29,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
         setupAutoTagLimitPreference();
         setupDeleteAllPreference();
         setupReplayTutorialPreference();
+        setupNotificationPermissionRequest();
     }
 
     @Override
@@ -42,7 +43,13 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
     private void setupApiKeyPreference() {
         EditTextPreference apiKeyPref = findPreference("openai_api_key");
         if (apiKeyPref != null) {
-            apiKeyPref.setSummaryProvider(EditTextPreference.SimpleSummaryProvider.getInstance());
+            apiKeyPref.setSummaryProvider(preference -> {
+                String value = ((EditTextPreference) preference).getText();
+                if (value == null || value.trim().isEmpty()) {
+                    return "Not set";
+                }
+                return "Set";
+            });
         }
     }
 
@@ -124,5 +131,17 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
     @Override
     public void updateView(java.util.List<com.example.quicknotes.model.Note> notes) {
         // This method is not used in this fragment
+    }
+
+    private void setupNotificationPermissionRequest() {
+        Preference allowNotiPref = findPreference("pref_noti");
+        if (allowNotiPref == null) return;
+        allowNotiPref.setOnPreferenceChangeListener((pref, newValue) -> {
+            boolean enabled = Boolean.TRUE.equals(newValue);
+            if (enabled && getActivity() instanceof ControllerActivity) {
+                ((ControllerActivity) getActivity()).requestNotificationPermissionFromSettings();
+            }
+            return true;
+        });
     }
 }

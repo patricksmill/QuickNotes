@@ -67,6 +67,15 @@ public class TagManager {
     }
 
     /**
+     * Sets multiple tags for the given note in a single operation.
+     * @param note The note to tag
+     * @param names List of tag names
+     */
+    public void setTags(@NonNull Note note, @NonNull java.util.List<String> names) {
+        operationsManager.setTags(note, names);
+    }
+
+    /**
      * Returns all tags used in the note library.
      *
      * @return Set of Tag objects

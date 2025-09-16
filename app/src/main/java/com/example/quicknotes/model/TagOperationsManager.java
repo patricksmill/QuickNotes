@@ -51,6 +51,30 @@ public class TagOperationsManager {
     }
 
     /**
+     * Adds multiple tags to the given note and persists once.
+     * @param note The note to tag
+     * @param names List of tag names
+     */
+    public void setTags(@NonNull Note note, @NonNull java.util.List<String> names) {
+        boolean changed = false;
+        for (String name : names) {
+            if (name == null) continue;
+            String trimmed = name.trim();
+            if (trimmed.isEmpty()) continue;
+            int colorRes = colorManager.getTagColorRes(trimmed);
+            Tag tag = new Tag(trimmed, colorRes);
+            int before = note.getTags().size();
+            note.setTag(tag);
+            if (note.getTags().size() != before) {
+                changed = true;
+            }
+        }
+        if (changed) {
+            Persistence.saveNotes(ctx, noteLibrary.getNotes());
+        }
+    }
+
+    /**
      * Returns all tags used in the note library.
      *
      * @return Set of Tag objects
