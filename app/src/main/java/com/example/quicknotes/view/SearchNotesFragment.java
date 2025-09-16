@@ -24,6 +24,7 @@ import com.example.quicknotes.databinding.TagChipBinding;
 import com.example.quicknotes.model.Note;
 import com.example.quicknotes.model.Tag;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.chip.Chip;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -236,10 +237,12 @@ public class SearchNotesFragment extends Fragment implements NotesUI {
             }
 
             public void bind(Tag tag, boolean isSelected) {
-                binding.tagName.setText(tag.getName());
-                binding.getRoot().setStrokeColor(ContextCompat.getColor(requireContext(), tag.getColorResId()));
-                binding.getRoot().setStrokeWidth(isSelected ? getResources().getDimensionPixelSize(R.dimen.chip_stroke_width) : 0);
-                binding.getRoot().setOnClickListener(v -> {
+                Chip chip = binding.tagChip;
+                chip.setText(tag.getName());
+                chip.setChecked(isSelected);
+                chip.setChipStrokeColor(ContextCompat.getColorStateList(requireContext(), tag.getColorResId()));
+                chip.setChipStrokeWidth(getResources().getDimensionPixelSize(R.dimen.chip_stroke_width));
+                chip.setOnClickListener(v -> {
                     selectedTags.clear();
                     if (!isSelected) selectedTags.add(tag.getName());
                     activeTagFilters.clear();

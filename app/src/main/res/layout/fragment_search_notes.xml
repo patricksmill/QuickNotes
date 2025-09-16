@@ -22,8 +22,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp">
+                android:padding="@dimen/spacing_sm">
 
                 <androidx.appcompat.widget.SearchView
                     android:id="@+id/search_bar"
@@ -37,9 +36,9 @@
                     android:layout_height="wrap_content"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/sort"
-                    android:padding="8dp"
+                    android:padding="@dimen/spacing_sm"
                     android:src="@drawable/ic_sort"
-                    app:tint="?attr/colorControlNormal" />
+                    app:tint="?attr/colorOnSurfaceVariant" />
 
                 <ImageButton
                     android:id="@+id/settingsButton"
@@ -47,16 +46,17 @@
                     android:layout_height="wrap_content"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/settings"
-                    android:padding="8dp"
+                    android:padding="@dimen/spacing_sm"
                     android:src="@drawable/ic_settings"
-                    app:tint="?attr/colorControlNormal" />
+                    app:tint="?attr/colorOnSurfaceVariant" />
 
             </LinearLayout>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/tagRecyclerView"
                 android:layout_width="match_parent"
-                android:layout_margin="16dp"
+                android:layout_marginHorizontal="@dimen/spacing_lg"
+                android:layout_marginVertical="@dimen/spacing_xs"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:clipToPadding="true"
@@ -69,9 +69,10 @@
             android:id="@+id/empty_state"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="16dp"
+            android:padding="@dimen/spacing_lg"
             android:text="@string/no_notes_msg"
-            android:textAppearance="?attr/textAppearanceBody1"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="?attr/colorOnSurfaceVariant"
             android:gravity="center"
             android:visibility="gone" />
 
@@ -81,7 +82,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:clipToPadding="true"
-            android:padding="8dp"
+            android:padding="@dimen/spacing_sm"
             android:fadingEdgeLength="40dp"
             android:requiresFadingEdge="vertical"
             tools:itemCount="7" />
@@ -90,10 +91,11 @@
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/addNoteFab"
+        style="@style/Widget.Material3.FloatingActionButton.Primary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
+        android:layout_margin="@dimen/spacing_lg"
         android:contentDescription="@string/add"
         app:srcCompat="@android:drawable/ic_input_add" />
 

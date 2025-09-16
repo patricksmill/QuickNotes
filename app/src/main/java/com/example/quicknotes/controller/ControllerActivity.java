@@ -2,6 +2,7 @@ package com.example.quicknotes.controller;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -13,6 +14,7 @@ import com.example.quicknotes.model.TagManager;
 import com.example.quicknotes.model.Note;
 import com.example.quicknotes.model.NoteLibrary;
 import com.example.quicknotes.model.Notifier;
+import com.example.quicknotes.model.OnboardingManager;
 import com.example.quicknotes.view.MainUI;
 import com.example.quicknotes.view.ManageNoteFragment;
 import com.example.quicknotes.view.NotesUI;
@@ -29,12 +31,14 @@ import java.util.List;
  * It mediates between the NoteLibrary (Model) and the various UI Fragments (View),
  * handling user actions and updating the model or view as appropriate.
  */
-public class ControllerActivity extends AppCompatActivity implements NotesUI.Listener {
+public class ControllerActivity extends AppCompatActivity implements NotesUI.Listener, OnboardingManager.OnboardingListener {
     private MainUI mainUI;
     private NoteLibrary noteLibrary;
     private SearchNotesFragment currentSearchFragment;
     private Notifier notifier;
+    private OnboardingManager onboardingManager;
     private boolean wasWaitingForPermission = false;
+    private boolean isOnboardingActive = false;
 
     /**
      * Called when the activity is starting.
@@ -48,15 +52,34 @@ public class ControllerActivity extends AppCompatActivity implements NotesUI.Lis
         super.onCreate(savedInstanceState);
         this.noteLibrary = new NoteLibrary(getApplicationContext());
         this.notifier = new Notifier(this);
+        this.onboardingManager = new OnboardingManager(this);
         this.mainUI = new MainUI(this);
         setContentView(this.mainUI.getRootView());
         
         // Provide root view to notifier for Snackbar display
         this.notifier.setRootView(this.mainUI.getRootView());
+        
+        // Set up onboarding listener
+        this.onboardingManager.setListener(this);
 
         setupFragments(savedInstanceState);
         handleNotificationIntent(getIntent());
         checkAlarmPermission();
+        
+        // Start onboarding for first-time users (after UI is set up)
+        checkAndStartOnboarding();
+    }
+
+    /**
+     * Checks if onboarding should be shown and starts it if needed.
+     */
+    private void checkAndStartOnboarding() {
+        if (onboardingManager.shouldShowOnboarding()) {
+            // Delay onboarding slightly to ensure UI is fully loaded
+            mainUI.getRootView().post(() -> {
+                onboardingManager.startOnboarding(this, (ViewGroup) mainUI.getRootView());
+            });
+        }
     }
 
     /**
@@ -181,6 +204,16 @@ public class ControllerActivity extends AppCompatActivity implements NotesUI.Lis
         if (isNewNote) {
             noteLibrary.addNote(note);
             noteLibrary.getManageTags().cleanupUnusedTags();
+            
+            // If onboarding is active and this is the user's first note, advance to next step
+            if (isOnboardingActive && noteLibrary.getNotes().size() == 1) {
+                // Small delay to let the note save animation complete
+                mainUI.getRootView().postDelayed(() -> {
+                    if (onboardingManager != null) {
+                        onboardingManager.nextStep(this, (ViewGroup) mainUI.getRootView());
+                    }
+                }, 500);
+            }
         }
         updateNotesView();
     }
@@ -362,6 +395,41 @@ public class ControllerActivity extends AppCompatActivity implements NotesUI.Lis
     private void updateNotesView() {
         if (currentSearchFragment != null) {
             currentSearchFragment.updateView(noteLibrary.getNotes());
+        }
+    }
+
+    // OnboardingListener implementation
+    @Override
+    public void onOnboardingStarted() {
+        isOnboardingActive = true;
+    }
+
+    @Override
+    public void onOnboardingCompleted() {
+        isOnboardingActive = false;
+        // Onboarding finished - user can now use the app normally
+        Snackbar.make(mainUI.getRootView(), "Tutorial complete! You're ready to start taking notes.", 
+                     Snackbar.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onCreateFirstNote() {
+        // Trigger note creation from onboarding
+        onNewNote();
+    }
+
+    @Override
+    public void onShowDemoNotes() {
+        // Show demo notes from onboarding
+        onAddDemoNotes();
+    }
+
+    /**
+     * Triggers onboarding manually (for settings menu)
+     */
+    public void startOnboardingTutorial() {
+        if (onboardingManager != null) {
+            onboardingManager.forceStartOnboarding(this, (ViewGroup) mainUI.getRootView());
         }
     }
 }

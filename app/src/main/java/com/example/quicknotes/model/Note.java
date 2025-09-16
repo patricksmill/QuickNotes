@@ -11,7 +11,7 @@ import java.util.Set;
 public class Note implements INote {
     private String title;
     private String content;
-    private Set<Tag> tags;
+    private final Set<Tag> tags;
     private Date lastModified;
     private boolean notificationsEnabled;
     private Date notificationDate;
@@ -113,6 +113,18 @@ public class Note implements INote {
         this.notificationDate = notificationDate;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Note note = (Note) o;
+        return java.util.Objects.equals(title, note.title);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(title);
+    }
 }
     
 

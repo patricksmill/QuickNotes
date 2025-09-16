@@ -10,17 +10,36 @@ import android.content.Intent;
 import androidx.core.app.NotificationCompat;
 
 import com.example.quicknotes.R;
+import com.example.quicknotes.model.NoteLibrary;
 import com.example.quicknotes.model.Notifier;
 
 public class NotificationReceiver extends BroadcastReceiver {
     private static final String ACTION_DISMISS = "com.example.quicknotes.ACTION_DISMISS";
+    private static final String ACTION_DELETE = "com.example.quicknotes.ACTION_DELETE";
 
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
-        
+
         if (ACTION_DISMISS.equals(action)) {
             // Handle dismiss action
+            int notificationId = intent.getIntExtra("notificationId", -1);
+            if (notificationId != -1) {
+                NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                if (manager != null) {
+                    manager.cancel(notificationId);
+                }
+            }
+            return;
+        } else if (ACTION_DELETE.equals(action)) {
+            String noteTitle = intent.getStringExtra(Notifier.titleExtra);
+            if (noteTitle != null) {
+                NoteLibrary noteLibrary = new NoteLibrary(context);
+                noteLibrary.getNotes().stream()
+                        .filter(note -> note.getTitle().equals(noteTitle))
+                        .findFirst()
+                        .ifPresent(noteLibrary::deleteNote);
+            }
             int notificationId = intent.getIntExtra("notificationId", -1);
             if (notificationId != -1) {
                 NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -54,9 +73,21 @@ public class NotificationReceiver extends BroadcastReceiver {
         viewNoteIntent.putExtra("noteTitle", title);
         viewNoteIntent.putExtra("action", "viewNote");
         PendingIntent viewPendingIntent = PendingIntent.getActivity(
-                context, 
-                notificationId * 2, 
-                viewNoteIntent, 
+                context,
+                notificationId * 2,
+                viewNoteIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        // Create intent to delete the note
+        Intent deleteIntent = new Intent(context, NotificationReceiver.class);
+        deleteIntent.setAction(ACTION_DELETE);
+        deleteIntent.putExtra("notificationId", notificationId);
+        deleteIntent.putExtra(Notifier.titleExtra, title);
+        PendingIntent deletePendingIntent = PendingIntent.getBroadcast(
+                context,
+                notificationId * 3,
+                deleteIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
@@ -65,9 +96,9 @@ public class NotificationReceiver extends BroadcastReceiver {
         dismissIntent.setAction(ACTION_DISMISS);
         dismissIntent.putExtra("notificationId", notificationId);
         PendingIntent dismissPendingIntent = PendingIntent.getBroadcast(
-                context, 
-                notificationId * 2 + 1, 
-                dismissIntent, 
+                context,
+                notificationId * 2 + 1,
+                dismissIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
@@ -77,9 +108,9 @@ public class NotificationReceiver extends BroadcastReceiver {
         mainIntent.putExtra("noteTitle", title);
         mainIntent.putExtra("action", "viewNote");
         PendingIntent mainPendingIntent = PendingIntent.getActivity(
-                context, 
-                notificationId, 
-                mainIntent, 
+                context,
+                notificationId,
+                mainIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
@@ -91,6 +122,7 @@ public class NotificationReceiver extends BroadcastReceiver {
                 .setContentIntent(mainPendingIntent)
                 .setAutoCancel(true)
                 .addAction(R.drawable.ic_visibility, "View Note", viewPendingIntent)
+                .addAction(R.drawable.ic_delete, "Delete", deletePendingIntent)
                 .addAction(R.drawable.ic_close, "Dismiss", dismissPendingIntent)
                 .setStyle(new NotificationCompat.BigTextStyle()
                         .bigText(content)
