@@ -1,20 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
+<com.google.android.material.chip.Chip
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/tagChip"
+    style="@style/Widget.Material3.Chip.Filter"
     android:layout_width="wrap_content"
-    android:layout_height="32dp"
+    android:layout_height="wrap_content"
     android:layout_marginEnd="8dp"
-    app:cardCornerRadius="16dp"
-    app:cardPreventCornerOverlap="false"
-    app:strokeWidth="2dp"
-    app:cardElevation="2dp">
-
-    <TextView
-        android:id="@+id/tagName"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:paddingHorizontal="12dp"
-        android:textColor="?attr/colorOnSurface" />
-</com.google.android.material.card.MaterialCardView>
+    android:checkable="true"
+    android:text="Tag Name"
+    android:textAppearance="?attr/textAppearanceLabelMedium"
+    app:chipMinHeight="32dp"
+    app:ensureMinTouchTargetSize="true"
+    app:rippleColor="?attr/colorOnSurfaceVariant" />

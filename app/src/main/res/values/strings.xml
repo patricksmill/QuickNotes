@@ -43,6 +43,24 @@
     <string name="date">Date</string>
     <string name="time">Time</string>
     <string name="notification">Notification:</string>
+    
+    <!-- Onboarding strings -->
+    <string name="onboarding_welcome_title">Welcome to QuickNotes!</string>
+    <string name="onboarding_welcome_description">Your intelligent note companion. Let\'s get you started with a quick tour of the key features.</string>
+    <string name="onboarding_create_note_title">Create Your First Note</string>
+    <string name="onboarding_create_note_description">Tap the + button to create a new note. You can add a title, content, and tags to organize your thoughts.</string>
+    <string name="onboarding_search_title">Search Your Notes</string>
+    <string name="onboarding_search_description">Use the search bar to quickly find notes by title, content, or tags. As you create more notes, this becomes invaluable!</string>
+    <string name="onboarding_tags_title">Filter with Tags</string>
+    <string name="onboarding_tags_description">Tags appear here when you add them to notes. Tap any tag to filter your notes and stay organized.</string>
+    <string name="onboarding_demo_title">Try Demo Notes</string>
+    <string name="onboarding_demo_description">Want to see the app in action? Long-press the + button to add some example notes you can play with.</string>
+    <string name="onboarding_settings_title">Explore Advanced Features</string>
+    <string name="onboarding_settings_description">Visit Settings to enable AI-powered auto-tagging, customize tag colors, and set up note reminders!</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_try_it">Try it!</string>
+    <string name="onboarding_replay">Replay Tutorial</string>
     <string name="alarm_permission_request">Please grant permission to schedule exact alarms for notifications</string>
     <string name="alarm_permission_error">Unable to schedule exact alarms. Please grant permission in system settings.</string>
     <string name="alarm_service_error">Unable to access alarm service</string>

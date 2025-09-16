@@ -28,6 +28,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
         setupApiKeyPreference();
         setupAutoTagLimitPreference();
         setupDeleteAllPreference();
+        setupReplayTutorialPreference();
     }
 
     @Override
@@ -65,6 +66,21 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
             showDeleteConfirmation();
             return true;
         });
+    }
+
+    private void setupReplayTutorialPreference() {
+        Preference replayTutorialPref = findPreference("pref_replay_tutorial");
+        if (replayTutorialPref != null && getActivity() instanceof ControllerActivity) {
+            replayTutorialPref.setOnPreferenceClickListener(preference -> {
+                ControllerActivity activity = (ControllerActivity) getActivity();
+                activity.startOnboardingTutorial();
+                // Navigate back to main screen for the tutorial
+                if (listener != null) {
+                    listener.onBrowseNotes();
+                }
+                return true;
+            });
+        }
     }
 
     private void showDeleteConfirmation() {

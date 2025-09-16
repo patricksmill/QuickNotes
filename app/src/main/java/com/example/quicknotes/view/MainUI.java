@@ -13,6 +13,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.example.quicknotes.R;
 import com.example.quicknotes.databinding.MainBinding;
 
 /**
@@ -47,6 +48,12 @@ public class MainUI {
      */
     public void displayFragment(@NonNull Fragment frag, boolean addToBackStack) {
         FragmentTransaction ftrans = this.fmanager.beginTransaction();
+        ftrans.setCustomAnimations(
+            R.anim.slide_in_right, 
+            R.anim.slide_out_left, 
+            R.anim.slide_in_left, 
+            R.anim.slide_out_right
+        );
         ftrans.replace(this.binding.fragmentContainerView.getId(), frag);
         if (addToBackStack) {
             ftrans.addToBackStack(null);
