@@ -110,7 +110,7 @@ public class Notifier {
             Intent intent = new Intent(ctx, NotificationReceiver.class);
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
                     ctx,
-                    note.hashCode(),
+                    note.getId().hashCode(),
                     intent,
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
@@ -155,10 +155,11 @@ public class Notifier {
             Intent intent = new Intent(ctx, NotificationReceiver.class);
             intent.putExtra(titleExtra, note.getTitle());
             intent.putExtra(messageExtra, note.getContent());
+            intent.putExtra("noteId", note.getId());
 
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
                     ctx,
-                    note.hashCode(),
+                    note.getId().hashCode(),
                     intent,
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );

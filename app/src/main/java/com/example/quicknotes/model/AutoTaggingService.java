@@ -82,7 +82,19 @@ public class AutoTaggingService {
         executor.execute(() -> {
             try {
                 String tagCsv = requestAiTags(note, limit, apiKey, existingTags);
-                processAiTagResponse(tagCsv, callback, uiHandler);
+                String[] tagNames = tagCsv.split("\\s*,\\s*");
+                java.util.List<String> cleaned = new java.util.ArrayList<>();
+                for (String raw : tagNames) {
+                    String t = raw.trim();
+                    if (!t.isEmpty()) cleaned.add(t);
+                }
+                if (!cleaned.isEmpty()) {
+                    tagOperations.setTags(note, cleaned);
+                    for (String t : cleaned) {
+                        String tagName = t;
+                        uiHandler.post(() -> callback.onTagAssigned(tagName));
+                    }
+                }
             } catch (Exception e) {
                 handleAiTaggingError(e, uiHandler);
             } finally {
@@ -124,15 +136,19 @@ public class AutoTaggingService {
     private void assignTagsFromDictionary(@NonNull Note note, @NonNull Set<String> words, 
                                         @NonNull Map<String, String> dictionary, int limit) {
         int count = 0;
+        java.util.List<String> toAssign = new java.util.ArrayList<>();
         for (String word : words) {
             String tagName = dictionary.get(word);
             if (tagName != null && !hasTag(note, tagName)) {
-                tagOperations.setTag(note, tagName);
+                toAssign.add(tagName);
                 count++;
                 if (count >= limit) {
                     break;
                 }
             }
+        }
+        if (!toAssign.isEmpty()) {
+            tagOperations.setTags(note, toAssign);
         }
     }
 
@@ -213,25 +229,6 @@ public class AutoTaggingService {
         return sb.toString().trim();
     }
 
-    /**
-     * Processes AI tag response and assigns tags.
-     *
-     * @param tagCsv Comma-separated tag string
-     * @param callback Callback for tag assignment
-     * @param uiHandler Handler for UI thread operations
-     */
-    private void processAiTagResponse(@NonNull String tagCsv, @NonNull TagAssignmentCallback callback, 
-                                    @NonNull Handler uiHandler) {
-        if (tagCsv.isEmpty()) return;
-
-        String[] tagNames = tagCsv.split("\\s*,\\s*");
-        for (String rawTag : tagNames) {
-            String tag = rawTag.trim();
-            if (!tag.isEmpty()) {
-                uiHandler.post(() -> callback.onTagAssigned(tag));
-            }
-        }
-    }
 
     /**
      * Handles errors during AI tagging.

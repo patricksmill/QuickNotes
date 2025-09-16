@@ -163,11 +163,11 @@ public class ControllerActivity extends AppCompatActivity implements NotesUI.Lis
     private void handleNotificationIntent(Intent intent) {
         if (intent == null || !"viewNote".equals(intent.getStringExtra("action"))) return;
 
-        String noteTitle = intent.getStringExtra("noteTitle");
-        if (noteTitle == null) return;
+        String noteId = intent.getStringExtra("noteId");
+        if (noteId == null) return;
 
         Note noteToView = noteLibrary.getNotes().stream()
-                .filter(note -> note.getTitle().equals(noteTitle))
+                .filter(note -> noteId.equals(note.getId()))
                 .findFirst()
                 .orElse(null);
 
@@ -175,7 +175,7 @@ public class ControllerActivity extends AppCompatActivity implements NotesUI.Lis
             onBrowseNotes();
             onManageNotes(noteToView);
         } else {
-            Snackbar.make(mainUI.getRootView(), "Note not found: " + noteTitle, Snackbar.LENGTH_LONG).show();
+            Snackbar.make(mainUI.getRootView(), "Note not found", Snackbar.LENGTH_LONG).show();
         }
     }
 

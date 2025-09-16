@@ -18,6 +18,7 @@ junitJupiter = "5.12.2"
 espressoContrib = "3.6.1"
 testRules = "1.6.1"
 media3Common = "1.6.1"
+securityCrypto = "1.0.0"
 
 
 [libraries]
@@ -41,6 +42,7 @@ androidx-espresso-contrib = { group = "androidx.test.espresso", name = "espresso
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "testRules" }
 androidx-media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3Common" }
 junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junitJupiter" }
+androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

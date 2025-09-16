@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 public class Note implements INote {
+    private String id;
     private String title;
     private String content;
     private final Set<Tag> tags;
@@ -20,6 +21,7 @@ public class Note implements INote {
     private boolean pinned;
 
     public Note(String title, String content, Set<Tag> tags) {
+        this.id = java.util.UUID.randomUUID().toString();
         this.title = title;
         this.content = content;
         this.tags = tags != null
@@ -55,6 +57,14 @@ public class Note implements INote {
     @Override
     public String toString() {
         return title + ": " + content;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     @Override
@@ -118,12 +128,12 @@ public class Note implements INote {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Note note = (Note) o;
-        return java.util.Objects.equals(title, note.title);
+        return java.util.Objects.equals(id, note.id);
     }
 
     @Override
     public int hashCode() {
-        return java.util.Objects.hash(title);
+        return java.util.Objects.hash(id);
     }
 }
     
