@@ -85,15 +85,12 @@ public class NoteLibrary {
      * Deletes a note from the library.
      *
      * @param note The note to delete
-     * @return The deleted note, or null if the note was not found
      */
-    public Note deleteNote(@NonNull Note note) {
+    public void deleteNote(@NonNull Note note) {
         if (notes.remove(note)) {
             recentlyDeletedNote = note;
             Persistence.saveNotes(ctx, notes);
-            return note;
         }
-        return null;
     }
 
     /**
