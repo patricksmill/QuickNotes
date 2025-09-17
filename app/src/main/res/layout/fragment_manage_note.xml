@@ -7,7 +7,6 @@
     android:padding="16dp">
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/titleInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingBottom="16dp"
@@ -78,7 +77,6 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/notificationLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/notification"

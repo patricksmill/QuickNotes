@@ -55,8 +55,8 @@ public class TagColorSettingsFragment extends PreferenceFragmentCompat implement
         colorNames = new String[colorOptions.size()];
         for (int i = 0; i < colorOptions.size(); i++) {
             TagColorManager.ColorOption option = colorOptions.get(i);
-            colorResIds[i] = option.resId;
-            colorNames[i] = option.name;
+            colorResIds[i] = option.resId();
+            colorNames[i] = option.name();
         }
 
         PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(ctx);
@@ -87,15 +87,15 @@ public class TagColorSettingsFragment extends PreferenceFragmentCompat implement
      */
     @NonNull
     private Preference editTagColor(Tag tag, Context ctx, List<TagColorManager.ColorOption> colorOptions) {
-        String tagName = tag.getName();
+        String tagName = tag.name();
         Preference pref = new Preference(ctx);
         pref.setKey("tag_color_" + tagName);
         pref.setTitle(tagName);
-        int currentColorRes = tag.getColorResId();
+        int currentColorRes = tag.colorResId();
         String currentColorName = "Default";
         for (TagColorManager.ColorOption opt : colorOptions) {
-            if (opt.resId == currentColorRes) {
-                currentColorName = opt.name;
+            if (opt.resId() == currentColorRes) {
+                currentColorName = opt.name();
                 break;
             }
         }

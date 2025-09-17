@@ -26,9 +26,6 @@ public class ManageNoteFragmentTest {
     public ActivityScenarioRule<ControllerActivity> activityRule =
             new ActivityScenarioRule<>(ControllerActivity.class);
 
-    private final String noteName = "Test Note";
-    private final String noteContent = "This is a test note";
-
     @Before
     public void clearData() {
         Context ctx = InstrumentationRegistry
@@ -47,7 +44,9 @@ public class ManageNoteFragmentTest {
                 .check(ViewAssertions.matches(ViewMatchers.isDisplayed()));
 
         //Add Note
+        String noteName = "Test Note";
         typeText(R.id.noteTitleText, noteName);
+        String noteContent = "This is a test note";
         typeText(R.id.noteContentText, noteContent);
         Espresso.onView(ViewMatchers.withId(R.id.saveButton))
                 .perform(ViewActions.click());

@@ -53,6 +53,7 @@
                 android:id="@+id/notePinIcon"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
+                android:contentDescription="@string/pin_icon"
                 android:padding="1dp"
                 android:src="@drawable/pin_selector"
                 app:tint="?attr/colorOnSurfaceVariant"
@@ -72,34 +73,18 @@
             android:maxLines="2"
             android:ellipsize="end" />
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/noteTagsText"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp">
-
-            <ImageView
-                android:id="@+id/noteNotificationIcon"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_gravity="center_vertical"
-                android:contentDescription="@string/notification_icon"
-                android:src="@drawable/ic_bell"
-                android:visibility="gone"
-                app:tint="?attr/colorOnSurfaceVariant" />
-
-            <TextView
-                android:id="@+id/noteTagsText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:ellipsize="end"
-                android:gravity="end"
-                android:maxLines="1"
-                android:textAppearance="?attr/textAppearanceLabelMedium"
-                android:textColor="?attr/colorSecondary"
-                android:textStyle="italic" />
-        </LinearLayout>
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:ellipsize="end"
+            android:gravity="end"
+            android:maxLines="1"
+            android:textAppearance="?attr/textAppearanceLabelMedium"
+            android:textColor="?attr/colorSecondary"
+            android:textStyle="italic"
+            android:drawablePadding="8dp" />
 
     </LinearLayout>
 

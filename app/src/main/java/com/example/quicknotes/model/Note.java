@@ -31,23 +31,19 @@ public class Note implements INote {
         this.pinned = false;
     }
 
-    @Override
     public String getTitle() {
         return title;
     }
 
-    @Override
     public void setTitle(String title) {
         this.title = title;
         this.lastModified = new Date();
     }
 
-    @Override
     public String getContent() {
         return content;
     }
 
-    @Override
     public void setContent(String content) {
         this.content = content;
         this.lastModified = new Date();
@@ -67,13 +63,11 @@ public class Note implements INote {
         this.id = id;
     }
 
-    @Override
     public Set<Tag> getTags() {
         return tags;
     }
 
 
-    @Override
     public void setTag(Tag tag) {
         tags.add(tag);
         this.lastModified = new Date();
@@ -83,13 +77,12 @@ public class Note implements INote {
         return lastModified;
     }
 
-    @Override
     public List<String> getTagNames() {
         Set<Tag> tags = getTags();
         List<String> tagNames = new ArrayList<>();
         if (tags != null) {
             for (Tag tag : tags) {
-                tagNames.add(tag.getName());
+                tagNames.add(tag.name());
             }
         }
         return tagNames;

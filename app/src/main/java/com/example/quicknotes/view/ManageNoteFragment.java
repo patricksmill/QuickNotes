@@ -208,7 +208,7 @@ public class ManageNoteFragment extends BottomSheetDialogFragment implements Not
         binding.noteTitleText.setText(currentNote.getTitle());
         binding.noteContentText.setText(currentNote.getContent());
         binding.noteTagsText.setText(TextUtils.join(", ", 
-                currentNote.getTags().stream().map(Tag::getName).collect(Collectors.toList())));
+                currentNote.getTags().stream().map(Tag::name).collect(Collectors.toList())));
 
         setupNotificationFields();
     }

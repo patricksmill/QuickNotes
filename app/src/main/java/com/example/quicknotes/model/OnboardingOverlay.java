@@ -2,14 +2,12 @@ package com.example.quicknotes.model;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -18,11 +16,9 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import com.example.quicknotes.R;
@@ -55,8 +51,8 @@ public class OnboardingOverlay {
      * Shows the onboarding overlay
      */
     public void show() {
-        if (step.targetViewId != -1) {
-            targetView = rootView.findViewById(step.targetViewId);
+        if (step.targetViewId() != -1) {
+            targetView = rootView.findViewById(step.targetViewId());
         }
 
         createOverlay();
@@ -101,27 +97,27 @@ public class OnboardingOverlay {
      */
     private void createTutorialCard() {
         LayoutInflater inflater = LayoutInflater.from(activity);
-        tutorialCard = inflater.inflate(R.layout.onboarding_card, null);
+        tutorialCard = inflater.inflate(R.layout.onboarding_card, overlayView, false);
         
         TextView titleText = tutorialCard.findViewById(R.id.onboarding_title);
         TextView descriptionText = tutorialCard.findViewById(R.id.onboarding_description);
         Button nextButton = tutorialCard.findViewById(R.id.onboarding_next);
         Button skipButton = tutorialCard.findViewById(R.id.onboarding_skip);
         
-        titleText.setText(step.title);
-        descriptionText.setText(step.description);
+        titleText.setText(step.title());
+        descriptionText.setText(step.description());
         
         // Set button text based on step
-        if (step.requiresUserAction) {
+        if (step.requiresUserAction()) {
             nextButton.setText("Try it!");
             nextButton.setOnClickListener(v -> {
-                onboardingManager.executeStepAction(step.action);
+                onboardingManager.executeStepAction(step.action());
                 // Don't advance automatically for user action steps
             });
         } else {
             nextButton.setText("Next");
             nextButton.setOnClickListener(v -> {
-                onboardingManager.executeStepAction(step.action);
+                onboardingManager.executeStepAction(step.action());
                 onboardingManager.nextStep(activity, rootView);
             });
         }
@@ -214,8 +210,8 @@ public class OnboardingOverlay {
      * Custom view that creates the spotlight overlay effect
      */
     private class OverlayView extends FrameLayout {
-        private Paint backgroundPaint;
-        private Paint clearPaint;
+        private final Paint backgroundPaint;
+        private final Paint clearPaint;
         private RectF spotlightRect;
 
         public OverlayView(Context context) {
@@ -269,7 +265,7 @@ public class OnboardingOverlay {
         }
 
         @Override
-        protected void onDraw(Canvas canvas) {
+        protected void onDraw(@NonNull Canvas canvas) {
             super.onDraw(canvas);
             
             // Draw semi-transparent background

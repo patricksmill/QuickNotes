@@ -125,7 +125,7 @@ public class TagOperationsManager {
     private Set<String> extractAllTagNames() {
         return noteLibrary.getNotes().stream()
                 .flatMap(note -> note.getTags().stream())
-                .map(Tag::getName)
+                .map(Tag::name)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
@@ -168,6 +168,6 @@ public class TagOperationsManager {
      */
     private boolean noteHasAnyTag(@NonNull Note note, @NonNull Set<String> tagNames) {
         return note.getTags().stream()
-                .anyMatch(tag -> tagNames.contains(tag.getName()));
+                .anyMatch(tag -> tagNames.contains(tag.name()));
     }
 } 
