@@ -1,4 +1,5 @@
 # QuickNotes - Android App
+[![Android CI (Build Debug APK)](https://github.com/patricksmill/QuickNotes/actions/workflows/android.yml/badge.svg)](https://github.com/patricksmill/QuickNotes/actions/workflows/android.yml)
 
 ## Overview
 
