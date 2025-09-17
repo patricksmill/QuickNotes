@@ -305,18 +305,6 @@ public class ControllerActivity extends AppCompatActivity implements NotesUI.Lis
         return noteLibrary.getManageTags();
     }
 
-    /**
-     * Sets a tag for the specified note.
-     *
-     * @param note The note to tag
-     * @param tag  The tag to add
-     */
-    @Override
-    public void onSetTag(@NonNull Note note, @NonNull String tag) {
-        noteLibrary.getManageTags().setTag(note, tag);
-        updateNotesView();
-    }
-
     @Override
     public void onSetTags(@NonNull Note note, @NonNull java.util.List<String> tags) {
         noteLibrary.getManageTags().setTags(note, tags);

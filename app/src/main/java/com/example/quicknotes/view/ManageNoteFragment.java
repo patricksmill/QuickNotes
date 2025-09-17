@@ -14,6 +14,8 @@ import com.example.quicknotes.R;
 import com.example.quicknotes.databinding.FragmentManageNoteBinding;
 import com.example.quicknotes.model.Note;
 import com.example.quicknotes.model.Tag;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -57,8 +59,33 @@ public class ManageNoteFragment extends BottomSheetDialogFragment implements Not
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        if (getDialog() != null && getDialog().getWindow() != null) {
+            getDialog().getWindow().setSoftInputMode(
+                android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+            );
+        }
         bindNoteFields();
         setupListeners();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (getDialog() instanceof BottomSheetDialog dialog) {
+            android.widget.FrameLayout bottomSheet = dialog.findViewById(
+                com.google.android.material.R.id.design_bottom_sheet
+            );
+            if (bottomSheet != null) {
+                BottomSheetBehavior<android.widget.FrameLayout> behavior = BottomSheetBehavior.from(bottomSheet);
+                android.view.ViewGroup.LayoutParams lp = bottomSheet.getLayoutParams();
+                lp.height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+                bottomSheet.setLayoutParams(lp);
+                behavior.setFitToContents(true);
+                behavior.setPeekHeight(BottomSheetBehavior.PEEK_HEIGHT_AUTO);
+                behavior.setSkipCollapsed(true);
+                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            }
+        }
     }
 
     /**
@@ -73,7 +100,12 @@ public class ManageNoteFragment extends BottomSheetDialogFragment implements Not
                         .show());
 
         binding.saveButton.setOnClickListener(v -> saveNote());
-        binding.deleteButton.setOnClickListener(this::deleteNote);
+        // Cancel at top just dismisses
+        assert getView() != null;
+        android.view.View cancel = getView().findViewById(R.id.cancelButton);
+        if (cancel != null) {
+            cancel.setOnClickListener(v -> dismiss());
+        }
     }
 
     /**
@@ -133,23 +165,6 @@ public class ManageNoteFragment extends BottomSheetDialogFragment implements Not
     }
 
     /**
-     * Handles deleting the current note.
-     */
-    private void deleteNote(View v) {
-        if (listener == null) return;
-
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Delete Note")
-                .setMessage("Are you sure? This will permanently erase your note.")
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(android.R.string.ok, (dlg1, which1) -> {
-                    listener.onDeleteNote(currentNote);
-                    listener.onBrowseNotes();
-                    dismiss();
-                }).show();
-    }
-
-    /**
      * Gets text from EditText widget safely.
      */
     private String getText(android.widget.EditText editText) {
@@ -184,19 +199,8 @@ public class ManageNoteFragment extends BottomSheetDialogFragment implements Not
      *
      * @param listener the listener object
      */
-    @Override
     public void setListener(final Listener listener) {
         this.listener = listener;
-    }
-
-    /**
-     * Updates the view with a list of notes (not used in this fragment).
-     *
-     * @param notes the list of notes to be displayed.
-     */
-    @Override
-    public void updateView(List<Note> notes) {
-        // This method is not used in this fragment
     }
 
     /**

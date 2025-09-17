@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -142,13 +143,11 @@ public class SearchNotesFragment extends Fragment implements NotesUI {
         if (listener != null) updateView(listener.onGetNotes());
     }
 
-    @Override
     public void setListener(Listener listener) {
         this.listener = listener;
         if (listener != null && binding != null) updateView(listener.onGetNotes());
     }
 
-    @Override
     public void updateView(List<Note> notes) {
         baseNotes = notes != null ? new ArrayList<>(notes) : new ArrayList<>();
         if (binding != null && listener != null) {
@@ -286,7 +285,14 @@ public class SearchNotesFragment extends Fragment implements NotesUI {
                 Chip chip = binding.tagChip;
                 chip.setText(tag.name());
                 chip.setChecked(isSelected);
-                chip.setChipStrokeColor(ContextCompat.getColorStateList(requireContext(), tag.colorResId()));
+                int baseColor = ContextCompat.getColor(requireContext(), tag.colorResId());
+                chip.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(baseColor));
+                // Choose readable text color based on luminance
+                int textColor = ColorUtils.calculateLuminance(baseColor) > 0.5 ?
+                        ContextCompat.getColor(requireContext(), android.R.color.black) :
+                        ContextCompat.getColor(requireContext(), android.R.color.white);
+                chip.setTextColor(textColor);
+                chip.setChipStrokeColor(android.content.res.ColorStateList.valueOf(ColorUtils.blendARGB(baseColor, 0xFF000000, 0.2f)));
                 chip.setChipStrokeWidth(getResources().getDimensionPixelSize(R.dimen.chip_stroke_width));
                 chip.setOnClickListener(v -> {
                     String previouslySelected = selectedTags.isEmpty() ? null : selectedTags.iterator().next();

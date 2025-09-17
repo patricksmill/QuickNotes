@@ -3,11 +3,13 @@ package com.example.quicknotes.view;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.graphics.drawable.ColorDrawable;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.Preference;
+import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceScreen;
 
@@ -42,13 +44,14 @@ public class TagColorSettingsFragment extends PreferenceFragmentCompat implement
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-        if (listener == null) {
-            return; // Cannot proceed without controller
+        Context ctx = requireContext();
+        if (listener == null && getActivity() instanceof ControllerActivity) {
+            setListener((NotesUI.Listener) getActivity());
         }
 
-        Context ctx = requireContext();
-        List<TagColorManager.ColorOption> colorOptions = listener.onGetAvailableColors();
-        Set<Tag> allTags = listener.onGetAllTags();
+        List<TagColorManager.ColorOption> colorOptions =
+                (listener != null) ? listener.onGetAvailableColors() : new TagColorManager(ctx).getAvailableColors();
+        Set<Tag> allTags = (listener != null) ? listener.onGetAllTags() : java.util.Collections.emptySet();
 
         // Initialize color arrays for the dialog
         colorResIds = new int[colorOptions.size()];
@@ -92,6 +95,9 @@ public class TagColorSettingsFragment extends PreferenceFragmentCompat implement
         pref.setKey("tag_color_" + tagName);
         pref.setTitle(tagName);
         int currentColorRes = tag.colorResId();
+        int currentColor = ContextCompat.getColor(ctx, currentColorRes);
+        pref.setIcon(new ColorDrawable(currentColor));
+        pref.setIconSpaceReserved(true);
         String currentColorName = "Default";
         for (TagColorManager.ColorOption opt : colorOptions) {
             if (opt.resId() == currentColorRes) {
@@ -108,6 +114,7 @@ public class TagColorSettingsFragment extends PreferenceFragmentCompat implement
                         if (listener != null) {
                             listener.onSetTagColor(tagName, chosen);
                             pref.setSummary(colorNames[which]);
+                            pref.setIcon(new ColorDrawable(ContextCompat.getColor(ctx, chosen)));
                             showSuccessMessage();
                         }
                     })
@@ -127,13 +134,8 @@ public class TagColorSettingsFragment extends PreferenceFragmentCompat implement
         }
     }
 
-    @Override
-    public void setListener(NotesUI.Listener listener) {
+    private void setListener(NotesUI.Listener listener) {
         this.listener = listener;
     }
 
-    @Override
-    public void updateView(List<com.example.quicknotes.model.Note> notes) {
-        // This method is not used in this fragment
-    }
 }
