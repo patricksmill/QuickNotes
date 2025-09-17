@@ -13,7 +13,6 @@ import java.util.List;
  * Interface that defines the methods that the program's user interface should contain.
  */
 public interface NotesUI {
-    void updateView(List<Note> notes);
 
     /**
      * Interface that classes interested in being notified of events happening
@@ -60,13 +59,6 @@ public interface NotesUI {
          * Restores the most recently deleted note.
          */
         void onUndoDelete();
-
-        /**
-         * Adds a tag to a note.
-         * @param note the note to tag
-         * @param tag the tag to add
-         */
-        void onSetTag(@NonNull Note note, @NonNull String tag);
 
         /**
          * Adds multiple tags to a note in a single operation.
@@ -153,9 +145,4 @@ public interface NotesUI {
         boolean onShouldShowNotificationIcon(@NonNull Note note);
     }
 
-    /**
-     * Sets the listener object to be notified of UI events.
-     * @param listener the listener object
-     */
-    void setListener(final Listener listener);
 }

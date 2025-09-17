@@ -27,6 +27,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
         setPreferencesFromResource(R.xml.root_preferences, rootKey);
         setupApiKeyPreference();
         setupAutoTagLimitPreference();
+        setupModelPreference();
         setupDeleteAllPreference();
         setupReplayTutorialPreference();
         setupNotificationPermissionRequest();
@@ -62,6 +63,15 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
         limitPref.setOnPreferenceChangeListener((pref, newValue) -> {
             pref.setSummary(newValue + " tags per note");
             return true;
+        });
+    }
+
+    private void setupModelPreference() {
+        androidx.preference.ListPreference modelPref = findPreference("pref_ai_model");
+        if (modelPref == null) return;
+        modelPref.setSummaryProvider(pref -> {
+            CharSequence entry = ((androidx.preference.ListPreference) pref).getEntry();
+            return entry != null ? entry : "GPT-4.1 Nano";
         });
     }
 
@@ -122,14 +132,8 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
         }
     }
 
-    @Override
-    public void setListener(NotesUI.Listener listener) {
+    private void setListener(NotesUI.Listener listener) {
         this.listener = listener;
-    }
-
-    @Override
-    public void updateView(java.util.List<com.example.quicknotes.model.Note> notes) {
-        // This method is not used in this fragment
     }
 
     private void setupNotificationPermissionRequest() {

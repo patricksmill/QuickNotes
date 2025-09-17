@@ -39,8 +39,16 @@
             android:key="pref_ai_auto_tag"
             android:title="AI-powered Auto-Tagging"
             android:summaryOff="Using keyword-based tagging"
-            android:summaryOn="Using GPT-4.1 Nano tagging"
+            android:summaryOn="Using AI tagging"
             android:defaultValue="false" />
+
+        <ListPreference
+            android:key="pref_ai_model"
+            android:title="AI Model"
+            android:entries="@array/ai_model_names"
+            android:entryValues="@array/ai_model_values"
+            android:defaultValue="GPT_4_1_NANO"
+            android:summary="%s" />
 
         <EditTextPreference
             android:key="openai_api_key"

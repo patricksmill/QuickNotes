@@ -241,13 +241,4 @@ public class OnboardingManager {
         return stepList;
     }
 
-    /**
-     * Resets onboarding state (useful for testing)
-     */
-    public void resetOnboarding() {
-        preferences.edit()
-                .remove(PREF_ONBOARDING_COMPLETED)
-                .remove(PREF_ONBOARDING_VERSION)
-                .apply();
-    }
-} 
+}

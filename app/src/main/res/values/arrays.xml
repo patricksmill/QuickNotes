@@ -21,6 +21,16 @@
         <item>Grey</item>
         <item>Blue Grey</item>
     </string-array>
+    <string-array name="ai_model_names">
+        <item>GPT-4.1 Nano</item>
+        <item>GPT-4.1 Mini</item>
+        <item>GPT-4.1</item>
+    </string-array>
+    <string-array name="ai_model_values">
+        <item>GPT_4_1_NANO</item>
+        <item>GPT_4_1_MINI</item>
+        <item>GPT_4_1</item>
+    </string-array>
 
     <array name="tag_color_resources">
         <item>@color/tag_color_red</item>

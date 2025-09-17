@@ -74,8 +74,8 @@ public class AutoTaggingService {
      * @param existingTags Set of existing tags to consider
      * @param callback Callback for individual tag assignments
      */
-    public void performAiAutoTag(@NonNull Note note, int limit, @NonNull String apiKey, 
-                                @NonNull Set<String> existingTags, @NonNull TagAssignmentCallback callback) {
+   public void performAiAutoTag(@NonNull Note note, int limit, @NonNull String apiKey,
+                                 @NonNull Set<String> existingTags, @NonNull TagAssignmentCallback callback) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler uiHandler = new Handler(Looper.getMainLooper());
 
@@ -172,17 +172,27 @@ public class AutoTaggingService {
      * @param existingTags Existing tags to consider
      * @return Comma-separated list of suggested tags
      */
-    private String requestAiTags(@NonNull Note note, int limit, @NonNull String apiKey, 
-                                @NonNull Set<String> existingTags) {
+    private String requestAiTags(@NonNull Note note, int limit, @NonNull String apiKey,
+                                 @NonNull Set<String> existingTags) {
         OpenAIClient client = OpenAIOkHttpClient.builder()
                 .apiKey(apiKey)
                 .build();
 
         String prompt = buildAiPrompt(note, limit, existingTags);
         
+        // Resolve model from settings
+        TagSettingsManager settings = new TagSettingsManager(ctx);
+        String key = settings.getSelectedAiModelKey();
+        ChatModel model;
+        try {
+            model = ChatModel.of(key);
+        } catch (IllegalArgumentException ex) {
+            model = ChatModel.GPT_4_1_NANO;
+        }
+
         ResponseCreateParams params = ResponseCreateParams.builder()
                 .input(prompt)
-                .model(ChatModel.GPT_4_1_NANO)
+                .model(model)
                 .build();
 
         Response response = client.responses().create(params);

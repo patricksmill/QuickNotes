@@ -109,13 +109,13 @@ public class OnboardingOverlay {
         
         // Set button text based on step
         if (step.requiresUserAction()) {
-            nextButton.setText("Try it!");
+            nextButton.setText(R.string.try_it);
             nextButton.setOnClickListener(v -> {
                 onboardingManager.executeStepAction(step.action());
                 // Don't advance automatically for user action steps
             });
         } else {
-            nextButton.setText("Next");
+            nextButton.setText(R.string.next);
             nextButton.setOnClickListener(v -> {
                 onboardingManager.executeStepAction(step.action());
                 onboardingManager.nextStep(activity, rootView);
@@ -148,8 +148,7 @@ public class OnboardingOverlay {
             
             int[] rootLocation = new int[2];
             rootView.getLocationInWindow(rootLocation);
-            
-            int targetX = targetLocation[0] - rootLocation[0];
+
             int targetY = targetLocation[1] - rootLocation[1];
             
             // Position card below target if there's space, otherwise above
@@ -197,13 +196,6 @@ public class OnboardingOverlay {
                 }
             })
             .start();
-    }
-
-    /**
-     * Public method to advance to next step (called when user completes an action)
-     */
-    public void proceedToNextStep() {
-        onboardingManager.nextStep(activity, rootView);
     }
 
     /**
