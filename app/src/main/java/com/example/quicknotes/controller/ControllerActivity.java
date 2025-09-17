@@ -82,9 +82,7 @@ public class ControllerActivity extends AppCompatActivity implements NotesUI.Lis
     private void checkAndStartOnboarding() {
         if (onboardingManager.shouldShowOnboarding()) {
             // Delay onboarding slightly to ensure UI is fully loaded
-            mainUI.getRootView().post(() -> {
-                onboardingManager.startOnboarding(this, (ViewGroup) mainUI.getRootView());
-            });
+            mainUI.getRootView().post(() -> onboardingManager.startOnboarding(this, (ViewGroup) mainUI.getRootView()));
         }
     }
 

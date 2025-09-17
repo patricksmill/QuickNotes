@@ -77,9 +77,8 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
 
     private void setupReplayTutorialPreference() {
         Preference replayTutorialPref = findPreference("pref_replay_tutorial");
-        if (replayTutorialPref != null && getActivity() instanceof ControllerActivity) {
+        if (replayTutorialPref != null && getActivity() instanceof ControllerActivity activity) {
             replayTutorialPref.setOnPreferenceClickListener(preference -> {
-                ControllerActivity activity = (ControllerActivity) getActivity();
                 activity.startOnboardingTutorial();
                 // Navigate back to main screen for the tutorial
                 if (listener != null) {

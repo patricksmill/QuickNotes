@@ -29,11 +29,10 @@ import java.util.LinkedHashSet;
 
 public class SearchNotesFragmentTest {
     @Rule
-    public ActivityScenarioRule<ControllerActivity> activityRule =
+    public final ActivityScenarioRule<ControllerActivity> activityRule =
             new ActivityScenarioRule<>(ControllerActivity.class);
 
     private final String noteName = "Test Search Note";
-    private final String noteContent = "This is a searchable test note";
     private final String secondNoteName = "Second Test Note";
     private final String secondNoteContent = "This is another searchable test note";
 
@@ -47,6 +46,7 @@ public class SearchNotesFragmentTest {
 
     private void addTestNotesToLibrary() {
         NoteLibrary noteLibrary = new NoteLibrary(ctx);
+        String noteContent = "This is a searchable test note";
         noteLibrary.addNote(new Note(noteName, noteContent, new LinkedHashSet<>()));
         noteLibrary.addNote(new Note(secondNoteName, secondNoteContent, new LinkedHashSet<>()));
         Persistence.saveNotes(ctx, noteLibrary.getNotes());

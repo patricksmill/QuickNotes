@@ -28,6 +28,7 @@ public class NoteLibrary {
     public NoteLibrary(@NonNull Context ctx) {
         this.ctx = ctx.getApplicationContext();
         this.notes = new ArrayList<>(Persistence.loadNotes(this.ctx));
+        ensureNoteIds();
         this.tagManager = new TagManager(this);
     }
 
@@ -139,7 +140,7 @@ public class NoteLibrary {
         if (tag) {
             notes.stream()
                     .filter(n -> n.getTags().stream()
-                            .anyMatch(t -> t.getName().toLowerCase().contains(lower)))
+                            .anyMatch(t -> t.name().toLowerCase().contains(lower)))
                     .forEach(results::add);
         }
         return new ArrayList<>(results);
@@ -185,5 +186,22 @@ public class NoteLibrary {
      */
     private void updateNoteDate(@NonNull Note note) {
         note.setLastModified(new Date());
+    }
+
+    /**
+     * Ensures all notes have a stable unique ID. Assigns a UUID to any note missing an ID
+     * and persists the updated list once if changes were made.
+     */
+    private void ensureNoteIds() {
+        boolean changed = false;
+        for (Note n : notes) {
+            if (n.getId() == null || n.getId().trim().isEmpty()) {
+                n.setId(java.util.UUID.randomUUID().toString());
+                changed = true;
+            }
+        }
+        if (changed) {
+            Persistence.saveNotes(ctx, notes);
+        }
     }
 }

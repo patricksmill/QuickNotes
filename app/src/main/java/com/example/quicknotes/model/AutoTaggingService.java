@@ -91,8 +91,7 @@ public class AutoTaggingService {
                 if (!cleaned.isEmpty()) {
                     tagOperations.setTags(note, cleaned);
                     for (String t : cleaned) {
-                        String tagName = t;
-                        uiHandler.post(() -> callback.onTagAssigned(tagName));
+                        uiHandler.post(() -> callback.onTagAssigned(t));
                     }
                 }
             } catch (Exception e) {
@@ -161,7 +160,7 @@ public class AutoTaggingService {
      */
     private boolean hasTag(@NonNull Note note, @NonNull String tagName) {
         return note.getTags().stream()
-                .anyMatch(t -> t.getName().equalsIgnoreCase(tagName));
+                .anyMatch(t -> t.name().equalsIgnoreCase(tagName));
     }
 
     /**

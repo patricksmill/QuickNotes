@@ -6,7 +6,7 @@ import android.content.SharedPreferences;
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
 import androidx.security.crypto.EncryptedSharedPreferences;
-import androidx.security.crypto.MasterKeys;
+import androidx.security.crypto.MasterKey;
 
 /**
  * TagSettingsManager handles tag-related preferences and configuration settings.
@@ -32,11 +32,13 @@ public class TagSettingsManager {
         Context ctx1 = ctx.getApplicationContext();
         this.preferences = PreferenceManager.getDefaultSharedPreferences(ctx1);
         try {
-            String masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC);
+            MasterKey masterKey = new MasterKey.Builder(ctx1)
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                    .build();
             this.securePreferences = EncryptedSharedPreferences.create(
-                    "quicknotes_secure_prefs",
-                    masterKeyAlias,
                     ctx1,
+                    "quicknotes_secure_prefs",
+                    masterKey,
                     EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                     EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             );

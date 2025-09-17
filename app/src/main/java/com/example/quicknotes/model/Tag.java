@@ -1,19 +1,9 @@
 package com.example.quicknotes.model;
 import androidx.annotation.ColorRes;
 
-public class Tag {
-    private final String name;
-    @ColorRes private final int colorResId;
-
-    public Tag(String name, @ColorRes int colorResId) {
-        this.name = name;
-        this.colorResId = colorResId;
-    }
-
-    public String getName() {
-        return name;
-    }
-    public int getColorResId() {
+public record Tag(String name, @ColorRes int colorResId) {
+    @Override
+    public int colorResId() {
         return colorResId;
     }
 
@@ -21,8 +11,7 @@ public class Tag {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Tag)) return false;
-        Tag other = (Tag) o;
+        if (!(o instanceof Tag other)) return false;
         return name.equalsIgnoreCase(other.name);
     }
 

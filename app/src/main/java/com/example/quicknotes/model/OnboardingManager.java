@@ -2,9 +2,7 @@ package com.example.quicknotes.model;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
@@ -22,7 +20,6 @@ public class OnboardingManager {
     private static final String PREF_ONBOARDING_VERSION = "onboarding_version";
     private static final int CURRENT_ONBOARDING_VERSION = 1;
 
-    private final Context context;
     private final SharedPreferences preferences;
     private final List<OnboardingStep> steps;
     private OnboardingOverlay currentOverlay;
@@ -40,36 +37,25 @@ public class OnboardingManager {
     }
 
     /**
-     * Represents a single step in the onboarding process
-     */
-    public static class OnboardingStep {
-        public final String title;
-        public final String description;
-        public final int targetViewId;
-        public final StepAction action;
-        public final boolean requiresUserAction;
+         * Represents a single step in the onboarding process
+         */
+        public record OnboardingStep(String title, String description, int targetViewId,
+                                     OnboardingManager.OnboardingStep.StepAction action,
+                                     boolean requiresUserAction) {
+            public enum StepAction {
+                NONE,
+                CREATE_NOTE,
+                SHOW_DEMO_NOTES,
+                OPEN_SETTINGS,
+                HIGHLIGHT_SEARCH,
+                HIGHLIGHT_TAGS
+            }
 
-        public enum StepAction {
-            NONE,
-            CREATE_NOTE,
-            SHOW_DEMO_NOTES,
-            OPEN_SETTINGS,
-            HIGHLIGHT_SEARCH,
-            HIGHLIGHT_TAGS
-        }
-
-        public OnboardingStep(String title, String description, int targetViewId, StepAction action, boolean requiresUserAction) {
-            this.title = title;
-            this.description = description;
-            this.targetViewId = targetViewId;
-            this.action = action;
-            this.requiresUserAction = requiresUserAction;
-        }
     }
 
     public OnboardingManager(@NonNull Context context) {
-        this.context = context.getApplicationContext();
-        this.preferences = PreferenceManager.getDefaultSharedPreferences(this.context);
+        Context context1 = context.getApplicationContext();
+        this.preferences = PreferenceManager.getDefaultSharedPreferences(context1);
         this.steps = createOnboardingSteps();
     }
 

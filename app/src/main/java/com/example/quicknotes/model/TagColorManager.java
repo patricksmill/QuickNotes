@@ -25,18 +25,14 @@ public class TagColorManager {
     private final Random random = new Random();
 
     /**
-     * Represents a color option for a tag.
-     */
-    public static class ColorOption {
-        public final String name;
-        @ColorRes
-        public final int resId;
-
-        public ColorOption(String name, int resId) {
-            this.name = name;
-            this.resId = resId;
+         * Represents a color option for a tag.
+         */
+        public record ColorOption(String name, @ColorRes int resId) {
+            public ColorOption(String name, int resId) {
+                this.name = name;
+                this.resId = resId;
+            }
         }
-    }
 
     /**
      * Constructs a TagColorManager instance.

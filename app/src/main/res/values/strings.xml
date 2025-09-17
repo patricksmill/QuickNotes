@@ -1,70 +1,31 @@
 <resources>
     <string name="app_name">QuickNotes</string>
-    <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
     <string name="note_name">Note Name</string>"
     <string name="note_content">Note Content</string>
     <string name="add">Add</string>
-    <string name="done">Done</string>
-    <string name="new_note_prompt">New Note</string>
     <string name="missing_item_field_error">Missing Item Field Error</string>
 
 
-    <string name="test_message">
-        This is a test message
-    </string>
-    <string name="welcome_msg_txt">Welcome to QuickNotes!</string>
     <string name="delete">Delete</string>
-    <string name="AddNotesFragment_label">AddNotesFragment\n</string>
-    <string name="search_notes">Search notes…</string>
-    <string name="note_deleted">Note deleted</string>
-    <string name="undo">Undo</string>
-    <string name="duplicate_note_name_error">Note title is already used</string>
     <!-- Preference Titles -->
-    <string name="messages_header">Messages</string>
-    <string name="sync_header">Sync</string>
-
-
-
 
 
     <string name="settings">Settings</string>
     <string name="save">Save</string>
-    <string name="cancel">Cancel</string>
     <string name="tags_comma_separated">Tags (comma separated)</string>
-    <string name="auto_tag_limit_summary">The max number of tags that can be auto assigned to a note. Minimum 0, Maximum 5</string>
     <string name="no_notes_msg">No notes, press the button in the bottom right to create a note!</string>
     <string name="sort">sort notes</string>
-    <string name="note_added_success">Note successfully added</string>
-    <string name="date">Date</string>
-    <string name="time">Time</string>
     <string name="notification">Notification:</string>
     
     <!-- Onboarding strings -->
-    <string name="onboarding_welcome_title">Welcome to QuickNotes!</string>
-    <string name="onboarding_welcome_description">Your intelligent note companion. Let\'s get you started with a quick tour of the key features.</string>
-    <string name="onboarding_create_note_title">Create Your First Note</string>
-    <string name="onboarding_create_note_description">Tap the + button to create a new note. You can add a title, content, and tags to organize your thoughts.</string>
-    <string name="onboarding_search_title">Search Your Notes</string>
-    <string name="onboarding_search_description">Use the search bar to quickly find notes by title, content, or tags. As you create more notes, this becomes invaluable!</string>
-    <string name="onboarding_tags_title">Filter with Tags</string>
-    <string name="onboarding_tags_description">Tags appear here when you add them to notes. Tap any tag to filter your notes and stay organized.</string>
-    <string name="onboarding_demo_title">Try Demo Notes</string>
-    <string name="onboarding_demo_description">Want to see the app in action? Long-press the + button to add some example notes you can play with.</string>
-    <string name="onboarding_settings_title">Explore Advanced Features</string>
-    <string name="onboarding_settings_description">Visit Settings to enable AI-powered auto-tagging, customize tag colors, and set up note reminders!</string>
-    <string name="onboarding_next">Next</string>
-    <string name="onboarding_skip">Skip</string>
-    <string name="onboarding_try_it">Try it!</string>
-    <string name="onboarding_replay">Replay Tutorial</string>
     <string name="alarm_permission_request">Please grant permission to schedule exact alarms for notifications</string>
     <string name="alarm_permission_error">Unable to schedule exact alarms. Please grant permission in system settings.</string>
     <string name="alarm_service_error">Unable to access alarm service</string>
     <string name="notification_scheduled">Notification scheduled successfully</string>
     <string name="notification_schedule_error">Failed to schedule notification</string>
-    <string name="notification_icon">Notification Enabled\n</string>
+    <string name="pin_icon">Pin Icon</string>
+    <string name="tutorial_step_title">Tutorial Step Title</string>
+    <string name="skip">Skip</string>
+    <string name="next">Next</string>
 </resources>
