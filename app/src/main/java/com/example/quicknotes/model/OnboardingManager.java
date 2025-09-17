@@ -8,6 +8,8 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 import androidx.preference.PreferenceManager;
 
+import com.example.quicknotes.view.OnboardingOverlayFragment;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +24,7 @@ public class OnboardingManager {
 
     private final SharedPreferences preferences;
     private final List<OnboardingStep> steps;
-    private OnboardingOverlay currentOverlay;
+    private OnboardingOverlayFragment currentOverlay;
     private OnboardingListener listener;
     private int currentStepIndex = 0;
 
@@ -138,7 +140,7 @@ public class OnboardingManager {
         
         if (currentStepIndex < steps.size()) {
             OnboardingStep step = steps.get(currentStepIndex);
-            currentOverlay = new OnboardingOverlay(activity, rootView, step, this);
+            currentOverlay = new OnboardingOverlayFragment(activity, rootView, step, this);
             currentOverlay.show();
         }
     }

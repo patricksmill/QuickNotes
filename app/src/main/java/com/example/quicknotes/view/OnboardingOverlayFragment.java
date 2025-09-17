@@ -1,4 +1,4 @@
-package com.example.quicknotes.model;
+package com.example.quicknotes.view;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -22,12 +22,13 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 
 import com.example.quicknotes.R;
+import com.example.quicknotes.model.OnboardingManager;
 
 /**
  * OnboardingOverlay creates a spotlight effect that highlights specific views
  * and displays tutorial information to guide users through the app.
  */
-public class OnboardingOverlay {
+public class OnboardingOverlayFragment {
     private final FragmentActivity activity;
     private final ViewGroup rootView;
     private final OnboardingManager.OnboardingStep step;
@@ -37,10 +38,10 @@ public class OnboardingOverlay {
     private View tutorialCard;
     private View targetView;
 
-    public OnboardingOverlay(@NonNull FragmentActivity activity, 
-                           @NonNull ViewGroup rootView, 
-                           @NonNull OnboardingManager.OnboardingStep step,
-                           @NonNull OnboardingManager onboardingManager) {
+    public OnboardingOverlayFragment(@NonNull FragmentActivity activity,
+                                     @NonNull ViewGroup rootView,
+                                     @NonNull OnboardingManager.OnboardingStep step,
+                                     @NonNull OnboardingManager onboardingManager) {
         this.activity = activity;
         this.rootView = rootView;
         this.step = step;
@@ -237,7 +238,7 @@ public class OnboardingOverlay {
                     targetView.getLocationInWindow(targetLocation);
                     
                     int[] overlayLocation = new int[2];
-                    OnboardingOverlay.this.rootView.getLocationInWindow(overlayLocation);
+                    OnboardingOverlayFragment.this.rootView.getLocationInWindow(overlayLocation);
                     
                     float targetX = targetLocation[0] - overlayLocation[0];
                     float targetY = targetLocation[1] - overlayLocation[1];
