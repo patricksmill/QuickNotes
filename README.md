@@ -1,4 +1,5 @@
 # QuickNotes - Android App
+
 [![Android CI (Build Debug APK)](https://github.com/patricksmill/QuickNotes/actions/workflows/android.yml/badge.svg)](https://github.com/patricksmill/QuickNotes/actions/workflows/android.yml)
 
 ## Overview
@@ -33,19 +34,6 @@ This Android application provides the following features:
 - BUG: Notifications are not disabled once a user has untoggled the notification for a note
 - Users should be able to launch QuickNotes from the notification, or delete the note right from the notification pane via a button on the notification
 
-## Testing
-
-The project includes both unit tests and instrumented tests:
-
-### Unit Tests
-
-- Located in the app/src/test/ directory
-- Tests model classes
-
-### System Tests
-
-- Located in the app/src/androidTest/ directory
-- Tests view classes
 
 ## How to Run the Application
 
