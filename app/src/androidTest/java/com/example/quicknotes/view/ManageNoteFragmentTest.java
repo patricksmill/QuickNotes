@@ -140,8 +140,8 @@ public class ManageNoteFragmentTest {
         Espresso.onView(ViewMatchers.withId(R.id.noteContentText))
                 .check(ViewAssertions.matches(ViewMatchers.withText(noteToDeleteContent)));
 
-        //Click Delete Button, navigate prompts
-        Espresso.onView(ViewMatchers.withId(R.id.deleteButton)).perform(ViewActions.click());
+        //Click Cancel Button, navigate prompts
+        Espresso.onView(ViewMatchers.withId(R.id.cancelButton)).perform(ViewActions.click());
 
         Espresso.onView(ViewMatchers.withText(android.R.string.ok))
                 .perform(ViewActions.click());

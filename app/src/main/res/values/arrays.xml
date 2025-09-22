@@ -22,14 +22,10 @@
         <item>Blue Grey</item>
     </string-array>
     <string-array name="ai_model_names">
-        <item>GPT-4.1 Nano</item>
-        <item>GPT-4.1 Mini</item>
-        <item>GPT-4.1</item>
+        <item>Auto-discover from OpenAI</item>
     </string-array>
     <string-array name="ai_model_values">
-        <item>GPT_4_1_NANO</item>
-        <item>GPT_4_1_MINI</item>
-        <item>GPT_4_1</item>
+        <item>auto</item>
     </string-array>
 
     <array name="tag_color_resources">

@@ -1,6 +1,6 @@
 package com.example.quicknotes.view;
 
-import android.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -93,19 +93,75 @@ public class ManageNoteFragment extends BottomSheetDialogFragment implements Not
      */
     private void setupListeners() {
         binding.tagsInputLayout.setEndIconOnClickListener(v -> 
-                new AlertDialog.Builder(requireContext())
+                new MaterialAlertDialogBuilder(requireContext())
                         .setTitle("How to enter tags")
                         .setMessage("Enter tags separated by commas, like:\n\nwork, urgent, meeting\n\nSpaces are optional but will be trimmed.")
                         .setPositiveButton("Got it", null)
                         .show());
 
         binding.saveButton.setOnClickListener(v -> saveNote());
+        android.view.View aiBtn = getView().findViewById(R.id.aiSuggestButton);
+        android.view.View aiProgress = getView().findViewById(R.id.aiSuggestProgress);
+        if (aiBtn != null) {
+            aiBtn.setOnClickListener(v -> suggestTagsWithLoading(aiBtn, aiProgress));
+        }
         // Cancel at top just dismisses
         assert getView() != null;
         android.view.View cancel = getView().findViewById(R.id.cancelButton);
         if (cancel != null) {
             cancel.setOnClickListener(v -> dismiss());
         }
+    }
+
+    private void suggestTagsWithLoading(android.view.View aiBtn, android.view.View progress) {
+        if (listener == null) return;
+        boolean aiConfigured = listener.onIsAiTaggingConfigured();
+        if (!aiConfigured) {
+            showError("AI tagging is not configured");
+            return;
+        }
+
+        String title = getText(binding.noteTitleText).trim();
+        String content = getText(binding.noteContentText).trim();
+        if (title.isEmpty() && content.isEmpty()) {
+            showError("Enter a title or content first");
+            return;
+        }
+
+        Note temp = new Note(title, content, new java.util.LinkedHashSet<>());
+        if (aiBtn != null) aiBtn.setEnabled(false);
+        if (progress != null) progress.setVisibility(View.VISIBLE);
+        listener.onAiSuggestTags(temp, 5, suggestions -> {
+            if (suggestions == null || suggestions.isEmpty()) {
+                showError("No suggestions");
+            } else {
+                showSuggestionDialog(suggestions);
+            }
+            if (aiBtn != null) aiBtn.setEnabled(true);
+            if (progress != null) progress.setVisibility(View.GONE);
+        }, err -> {
+            showError("Suggest failed: " + err);
+            if (aiBtn != null) aiBtn.setEnabled(true);
+            if (progress != null) progress.setVisibility(View.GONE);
+        });
+    }
+
+    private void showSuggestionDialog(java.util.List<String> suggestions) {
+        String[] items = suggestions.toArray(new String[0]);
+        boolean[] checked = new boolean[items.length];
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("AI tag suggestions")
+                .setMultiChoiceItems(items, checked, (d, which, isChecked) -> checked[which] = isChecked)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton("Apply", (d, w) -> {
+                    java.util.List<String> chosen = new java.util.ArrayList<>();
+                    for (int i = 0; i < items.length; i++) if (checked[i]) chosen.add(items[i]);
+                    if (!chosen.isEmpty() && listener != null) {
+                        listener.onSetTags(currentNote, chosen);
+                        bindNoteFields();
+                    }
+                })
+                .show();
     }
 
     /**
@@ -135,6 +191,14 @@ public class ManageNoteFragment extends BottomSheetDialogFragment implements Not
         currentNote.setContent(content);
         currentNote.getTags().clear();
         listener.onSetTags(currentNote, tagNames);
+
+        // If AI confirmation is enabled and this is a new note, show suggestions dialog instead of auto-applying
+        if (isNewNote && listener.onShouldConfirmAiSuggestions() && listener.onIsAiTaggingConfigured()) {
+            // Do not navigate away yet; show suggestions first
+            listener.onAiSuggestTags(currentNote, 5, s -> {
+                if (s != null && !s.isEmpty()) showSuggestionDialog(s);
+            }, e -> {});
+        }
 
         if (handleNotifications()) {
             listener.onSaveNote(currentNote, isNewNote);

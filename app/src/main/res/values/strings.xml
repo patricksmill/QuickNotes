@@ -16,6 +16,7 @@
     <string name="tags_comma_separated">Tags (comma separated)</string>
     <string name="no_notes_msg">No notes, press the button in the bottom right to create a note!</string>
     <string name="sort">sort notes</string>
+    <string name="manage_tags">Manage tags</string>
     <string name="notification">Notification:</string>
     
     <!-- Onboarding strings -->

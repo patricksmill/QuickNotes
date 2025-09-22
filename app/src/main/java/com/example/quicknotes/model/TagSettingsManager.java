@@ -29,11 +29,12 @@ public class TagSettingsManager {
     private static final String PREF_AI_AUTO_TAG = "pref_ai_auto_tag";
     private static final String PREF_AI_MODEL = "pref_ai_model";
     private static final String PREF_AUTO_TAG_LIMIT = "auto_tag_limit";
+    private static final String PREF_AI_CONFIRM = "pref_ai_confirm";
     
     // Default values
     private static final int DEFAULT_AUTO_TAG_LIMIT = 3;
     private static final boolean DEFAULT_AI_MODE = false;
-    private static final String DEFAULT_AI_MODEL = "GPT_4_1_NANO";
+    private static final String DEFAULT_AI_MODEL = "gpt-4o-mini";
 
     public TagSettingsManager(@NonNull Context ctx) {
         Context ctx1 = ctx.getApplicationContext();
@@ -76,6 +77,7 @@ public class TagSettingsManager {
     public String getSelectedAiModelKey() { return preferences.getString(PREF_AI_MODEL, DEFAULT_AI_MODEL); }
     public boolean isAiTaggingConfigured() { return isAiMode() && hasValidApiKey(); }
     public boolean hasValidApiKey() { String k = getApiKey(); return k != null && !k.trim().isEmpty(); }
+    public boolean isAiConfirmationEnabled() { return preferences.getBoolean(PREF_AI_CONFIRM, false); }
 
     // ===== Encryption helpers (Android Keystore AES/GCM) =====
     private static final String ANDROID_KEYSTORE = "AndroidKeyStore";
