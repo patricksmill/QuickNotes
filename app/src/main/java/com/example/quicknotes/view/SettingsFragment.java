@@ -1,6 +1,6 @@
 package com.example.quicknotes.view;
 
-import android.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import android.os.Bundle;
 import android.view.View;
 
@@ -31,6 +31,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
         setupDeleteAllPreference();
         setupReplayTutorialPreference();
         setupNotificationPermissionRequest();
+        setupManageTagsPreference();
     }
 
     @Override
@@ -100,7 +101,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
     }
 
     private void showDeleteConfirmation() {
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Delete All Notes")
                 .setMessage("Are you sure? This will permanently erase all your notes.")
                 .setNegativeButton(android.R.string.cancel, null)
@@ -115,7 +116,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
     }
 
     private void showExitDialog() {
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Notes Deleted")
                 .setMessage("All notes have been deleted. The app will now exit.")
                 .setPositiveButton(android.R.string.ok, (dlg2, which2) -> requireActivity().finishAffinity())
@@ -143,6 +144,20 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
             boolean enabled = Boolean.TRUE.equals(newValue);
             if (enabled && getActivity() instanceof ControllerActivity) {
                 ((ControllerActivity) getActivity()).requestNotificationPermissionFromSettings();
+            }
+            return true;
+        });
+    }
+
+    private void setupManageTagsPreference() {
+        Preference manageTags = findPreference("pref_manage_tags");
+        if (manageTags == null) return;
+        manageTags.setOnPreferenceClickListener(pref -> {
+            if (getActivity() instanceof ControllerActivity) {
+                getParentFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainerView, new ManageTagsFragment())
+                        .addToBackStack(null)
+                        .commit();
             }
             return true;
         });

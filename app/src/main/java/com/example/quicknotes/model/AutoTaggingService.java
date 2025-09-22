@@ -30,12 +30,19 @@ import java.util.stream.Collectors;
 public class AutoTaggingService {
     private final Context ctx;
     private final TagOperationsManager tagOperations;
+    private static final String TAG = "AutoTagging";
 
     /**
      * Functional interface for tag assignment callback.
      */
     public interface TagAssignmentCallback {
         void onTagAssigned(String tagName);
+    }
+
+    /** Callback for AI tag suggestions (does not mutate the note). */
+    public interface TagSuggestionsCallback {
+        void onSuggestions(@NonNull java.util.List<String> suggestions);
+        default void onError(@NonNull String message) {}
     }
 
     /**
@@ -57,11 +64,11 @@ public class AutoTaggingService {
      */
     public void performSimpleAutoTag(@NonNull Note note, int limit) {
         if (limit <= 0) return;
-
+        android.util.Log.d(TAG, "Starting simple auto-tag for note: " + note.getTitle() + ", limit=" + limit);
         String combined = extractTextContent(note);
         Set<String> words = extractWords(combined);
         Map<String, String> dictionary = KeywordTagDictionary.loadTagMap(ctx);
-
+        android.util.Log.d(TAG, "Simple auto-tag extracted words=" + words.size() + ", dictionary size=" + (dictionary != null ? dictionary.size() : 0));
         assignTagsFromDictionary(note, words, dictionary, limit);
     }
 
@@ -89,13 +96,43 @@ public class AutoTaggingService {
                     if (!t.isEmpty()) cleaned.add(t);
                 }
                 if (!cleaned.isEmpty()) {
+                    android.util.Log.d(TAG, "AI suggested tags: " + cleaned);
                     tagOperations.setTags(note, cleaned);
                     for (String t : cleaned) {
                         uiHandler.post(() -> callback.onTagAssigned(t));
                     }
+                    uiHandler.post(() -> Toast.makeText(ctx, "AI tagged: " + String.join(", ", cleaned), Toast.LENGTH_SHORT).show());
                 }
             } catch (Exception e) {
                 handleAiTaggingError(e, uiHandler);
+            } finally {
+                executor.shutdown();
+            }
+        });
+    }
+
+    /**
+     * Produces AI tag suggestions without modifying the note.
+     * Suggestions are delivered on the main thread.
+     */
+    public void performAiSuggest(@NonNull Note note, int limit, @NonNull String apiKey,
+                                 @NonNull Set<String> existingTags, @NonNull TagSuggestionsCallback callback) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler uiHandler = new Handler(Looper.getMainLooper());
+
+        executor.execute(() -> {
+            try {
+                String tagCsv = requestAiTags(note, limit, apiKey, existingTags);
+                String[] tagNames = tagCsv.split("\\s*,\\s*");
+                java.util.List<String> cleaned = new java.util.ArrayList<>();
+                for (String raw : tagNames) {
+                    String t = raw.trim();
+                    if (!t.isEmpty()) cleaned.add(t);
+                }
+                uiHandler.post(() -> callback.onSuggestions(cleaned));
+            } catch (Exception e) {
+                String msg = e.getMessage() != null ? e.getMessage() : "Unknown AI error";
+                uiHandler.post(() -> callback.onError(msg));
             } finally {
                 executor.shutdown();
             }
@@ -147,7 +184,9 @@ public class AutoTaggingService {
             }
         }
         if (!toAssign.isEmpty()) {
+            android.util.Log.d(TAG, "Simple auto-tag will assign: " + toAssign);
             tagOperations.setTags(note, toAssign);
+            Toast.makeText(ctx, "Auto-tagged: " + String.join(", ", toAssign), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -180,23 +219,46 @@ public class AutoTaggingService {
 
         String prompt = buildAiPrompt(note, limit, existingTags);
         
-        // Resolve model from settings
+        // Resolve model dynamically: if settings uses "auto", fetch first chat model from OpenAI; otherwise honor selected key
         TagSettingsManager settings = new TagSettingsManager(ctx);
         String key = settings.getSelectedAiModelKey();
-        ChatModel model;
-        try {
-            model = ChatModel.of(key);
-        } catch (IllegalArgumentException ex) {
-            model = ChatModel.GPT_4_1_NANO;
+
+        String modelId;
+        if ("auto".equalsIgnoreCase(key)) {
+            try {
+                // Fetch models and pick a viable chat model id
+                java.util.List<String> ids = fetchChatModelIds(client);
+                modelId = ids.isEmpty() ? "gpt-4o-mini" : ids.get(0);
+            } catch (Exception ex) {
+                modelId = "gpt-4o-mini";
+            }
+        } else {
+            modelId = key;
         }
 
         ResponseCreateParams params = ResponseCreateParams.builder()
                 .input(prompt)
-                .model(model)
+                .model(modelId)
                 .build();
 
         Response response = client.responses().create(params);
         return extractResponseText(response);
+    }
+
+    // Fetch list of available chat-capable model ids from OpenAI client
+    private java.util.List<String> fetchChatModelIds(OpenAIClient client) {
+        java.util.List<String> ids = new java.util.ArrayList<>();
+        try {
+            // New OpenAI SDK: list models via client.models().list()
+            var list = client.models().list();
+            for (var m : list.data()) {
+                String id = m.id();
+                if (id != null && (id.startsWith("gpt-") || id.contains("chat"))) {
+                    ids.add(id);
+                }
+            }
+        } catch (Exception ignored) { }
+        return ids;
     }
 
     /**
@@ -247,6 +309,7 @@ public class AutoTaggingService {
      */
     private void handleAiTaggingError(@NonNull Exception e, @NonNull Handler uiHandler) {
         e.printStackTrace();
+        android.util.Log.e(TAG, "AI tagging error", e);
         uiHandler.post(() ->
                 Toast.makeText(ctx, "Auto-tag error: " + e.getMessage(),
                         Toast.LENGTH_LONG).show()

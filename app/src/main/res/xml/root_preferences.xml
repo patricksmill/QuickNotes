@@ -29,6 +29,11 @@
             android:fragment="com.example.quicknotes.view.TagColorSettingsFragment"
             android:summary="Customize the appearance of your tags" />
 
+        <Preference
+            android:key="pref_manage_tags"
+            android:title="Manage Tags"
+            android:summary="Rename, delete, and merge tags" />
+
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -40,6 +45,12 @@
             android:title="AI-powered Auto-Tagging"
             android:summaryOff="Using keyword-based tagging"
             android:summaryOn="Using AI tagging"
+            android:defaultValue="false" />
+
+        <SwitchPreferenceCompat
+            android:key="pref_ai_confirm"
+            android:title="Confirm AI tag suggestions"
+            android:summary="Show suggestions before applying tags"
             android:defaultValue="false" />
 
         <ListPreference

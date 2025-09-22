@@ -15,6 +15,15 @@
         android:paddingBottom="8dp">
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/cancelButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="@android:string/cancel" />
+
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/saveButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -22,13 +31,6 @@
             android:layout_marginEnd="8dp"
             android:text="@string/save" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/cancelButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:text="@android:string/cancel" />
 
     </LinearLayout>
 
@@ -78,21 +80,51 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tagsInputLayout"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="16dp"
-                app:endIconMode="custom">
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingBottom="16dp">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/noteTagsText"
-                    android:layout_width="match_parent"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tagsInputLayout"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:hint="@string/tags_comma_separated"
-                    android:inputType="text" />
+                    android:layout_weight="1"
+                    app:endIconMode="custom">
 
-            </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/noteTagsText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/tags_comma_separated"
+                        android:inputType="text" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <ImageButton
+                    android:id="@+id/aiSuggestButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="AI suggest tags"
+                    android:padding="8dp"
+                    android:layout_marginStart="@dimen/spacing_sm"
+                    android:src="@drawable/ic_sparkles"
+                    app:tint="?attr/colorOnSurfaceVariant" />
+
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/aiSuggestProgress"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="@dimen/spacing_sm"
+                    android:visibility="gone"
+                    app:indicatorSize="24dp"
+                    app:trackCornerRadius="8dp" />
+
+            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/notificationLayout"

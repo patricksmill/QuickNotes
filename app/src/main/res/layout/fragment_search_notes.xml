@@ -41,6 +41,16 @@
                     app:tint="?attr/colorOnSurfaceVariant" />
 
                 <ImageButton
+                    android:id="@+id/manageTagsButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/manage_tags"
+                    android:padding="@dimen/spacing_sm"
+                    android:src="@drawable/ic_label"
+                    app:tint="?attr/colorOnSurfaceVariant" />
+
+                <ImageButton
                     android:id="@+id/settingsButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

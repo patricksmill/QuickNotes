@@ -105,6 +105,14 @@ public class SearchNotesFragment extends Fragment implements NotesUI {
 
     private void setupClickListeners() {
         binding.sortButton.setOnClickListener(v -> showSortDialog());
+        binding.manageTagsButton.setOnClickListener(v -> {
+            if (getActivity() instanceof com.example.quicknotes.controller.ControllerActivity) {
+                getParentFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainerView, new ManageTagsFragment())
+                        .addToBackStack(null)
+                        .commit();
+            }
+        });
         binding.addNoteFab.setOnClickListener(v -> { if (listener != null) listener.onNewNote(); });
         binding.addNoteFab.setOnLongClickListener(v -> {
             if (listener != null) {
@@ -190,7 +198,7 @@ public class SearchNotesFragment extends Fragment implements NotesUI {
     }
 
     private void showSortDialog() {
-        new AlertDialog.Builder(requireContext())
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Sort Notes")
                 .setItems(new String[]{"Sort by Date", "Sort by Title"}, (dialog, which) -> {
                     currentSortBy = (which == 1) ? "title" : "date";

@@ -114,9 +114,127 @@ public class TagOperationsManager {
         return extractAllTagNames();
     }
 
+    /**
+     * Renames a tag across all notes and updates the color mapping key.
+     * The new tag will retain the color of the old tag (or assigned if missing).
+     *
+     * @param oldName Existing tag name
+     * @param newName New tag name
+     */
+    public void renameTag(@NonNull String oldName, @NonNull String newName) {
+        String from = oldName.trim();
+        String to = newName.trim();
+        if (from.isEmpty() || to.isEmpty() || from.equalsIgnoreCase(to)) return;
 
+        int colorRes = colorManager.getTagColorRes(from);
+        Tag newTag = new Tag(to, colorRes);
 
+        boolean changed = false;
+        for (Note note : noteLibrary.getNotes()) {
+            // Collect matches to remove to avoid ConcurrentModification
+            java.util.List<Tag> toRemove = new java.util.ArrayList<>();
+            for (Tag t : note.getTags()) {
+                if (t.name().equalsIgnoreCase(from)) {
+                    toRemove.add(t);
+                }
+            }
+            if (!toRemove.isEmpty()) {
+                note.getTags().removeAll(toRemove);
+                note.setTag(newTag);
+                changed = true;
+            }
+        }
 
+        // Move color key mapping if needed
+        if (!from.equals(to)) {
+            colorManager.setTagColor(to, colorRes);
+        }
+        // Clean up unused colors after rename
+        cleanupUnusedTags();
+
+        if (changed) {
+            Persistence.saveNotes(ctx, noteLibrary.getNotes());
+        }
+    }
+
+    /**
+     * Deletes a tag from all notes and removes its color mapping.
+     *
+     * @param tagName Tag to delete
+     */
+    public void deleteTag(@NonNull String tagName) {
+        String key = tagName.trim();
+        if (key.isEmpty()) return;
+
+        boolean changed = false;
+        for (Note note : noteLibrary.getNotes()) {
+            java.util.List<Tag> toRemove = new java.util.ArrayList<>();
+            for (Tag t : note.getTags()) {
+                if (t.name().equalsIgnoreCase(key)) {
+                    toRemove.add(t);
+                }
+            }
+            if (!toRemove.isEmpty()) {
+                note.getTags().removeAll(toRemove);
+                changed = true;
+            }
+        }
+
+        // Remove color mapping if now unused
+        cleanupUnusedTags();
+
+        if (changed) {
+            Persistence.saveNotes(ctx, noteLibrary.getNotes());
+        }
+    }
+
+    /**
+     * Merges multiple source tags into a single target tag across all notes.
+     * Retains the color of the target tag (assigns if not present yet).
+     *
+     * @param sourceNames Tags to merge
+     * @param targetName Target tag name
+     */
+    public void mergeTags(@NonNull java.util.Collection<String> sourceNames, @NonNull String targetName) {
+        if (sourceNames.isEmpty()) return;
+        String target = targetName.trim();
+        if (target.isEmpty()) return;
+
+        // Ensure target color exists
+        int targetColor = colorManager.getTagColorRes(target);
+        Tag targetTag = new Tag(target, targetColor);
+
+        java.util.Set<String> sources = sourceNames.stream()
+                .filter(java.util.Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty() && !s.equalsIgnoreCase(target))
+                .collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new));
+        if (sources.isEmpty()) return;
+
+        boolean changed = false;
+        for (Note note : noteLibrary.getNotes()) {
+            boolean noteChanged = false;
+            java.util.List<Tag> toRemove = new java.util.ArrayList<>();
+            for (Tag t : note.getTags()) {
+                if (sources.contains(t.name())) {
+                    toRemove.add(t);
+                }
+            }
+            if (!toRemove.isEmpty()) {
+                note.getTags().removeAll(toRemove);
+                note.setTag(targetTag);
+                noteChanged = true;
+            }
+            if (noteChanged) changed = true;
+        }
+
+        // Clean up unused colors for removed tags
+        cleanupUnusedTags();
+
+        if (changed) {
+            Persistence.saveNotes(ctx, noteLibrary.getNotes());
+        }
+    }
     /**
      * Extracts all unique tag names from the note library.
      *

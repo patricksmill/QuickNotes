@@ -8,7 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
@@ -74,6 +74,28 @@ public class ControllerActivity extends AppCompatActivity implements NotesUI.Lis
         
         // Start onboarding for first-time users (after UI is set up)
         checkAndStartOnboarding();
+
+        // Notify if offline and AI tagging enabled: fallback will be used
+        notifyOfflineIfAiEnabled();
+    }
+
+    private void notifyOfflineIfAiEnabled() {
+        try {
+            boolean aiEnabled = noteLibrary.getManageTags().isAiMode();
+            boolean hasKey = new com.example.quicknotes.model.TagSettingsManager(this).hasValidApiKey();
+            if (aiEnabled && hasKey && !isOnline()) {
+                Snackbar.make(mainUI.getRootView(), "You're offline. AI tagging will use keyword matching.", Snackbar.LENGTH_LONG).show();
+            }
+        } catch (Exception ignored) { }
+    }
+
+    private boolean isOnline() {
+        android.net.ConnectivityManager cm = (android.net.ConnectivityManager) getSystemService(android.content.Context.CONNECTIVITY_SERVICE);
+        if (cm == null) return false;
+        android.net.Network network = cm.getActiveNetwork();
+        if (network == null) return false;
+        android.net.NetworkCapabilities caps = cm.getNetworkCapabilities(network);
+        return caps != null && caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET);
     }
 
     /**
@@ -91,7 +113,7 @@ public class ControllerActivity extends AppCompatActivity implements NotesUI.Lis
      */
     private void checkAlarmPermission() {
         if (!notifier.canScheduleExactAlarms()) {
-            new AlertDialog.Builder(this)
+            new MaterialAlertDialogBuilder(this)
                     .setTitle("Notification Permission Required")
                     .setMessage("QuickNotes needs permission to schedule exact alarms for note reminders. " +
                                "This allows you to get notified at the exact time you set for your notes.")
@@ -315,7 +337,7 @@ public class ControllerActivity extends AppCompatActivity implements NotesUI.Lis
     public void onSetNotification(@NonNull Note note, boolean enabled, Date date) {
         // Android 13+ requires runtime POST_NOTIFICATIONS permission
         if (enabled && !hasPostNotificationsPermission()) {
-            new AlertDialog.Builder(this)
+            new MaterialAlertDialogBuilder(this)
                     .setTitle("Notifications Permission Required")
                     .setMessage("To show reminders, QuickNotes needs notification permission.")
                     .setPositiveButton("Allow", (dialog, which) -> {
@@ -331,7 +353,7 @@ public class ControllerActivity extends AppCompatActivity implements NotesUI.Lis
 
         // Check alarm permission before setting notification
         if (enabled && !notifier.canScheduleExactAlarms()) {
-            new AlertDialog.Builder(this)
+            new MaterialAlertDialogBuilder(this)
                     .setTitle("Permission Required")
                     .setMessage("To set note reminders, QuickNotes needs permission to schedule exact alarms.")
                     .setPositiveButton("Grant Permission", (dialog, which) -> {
@@ -372,6 +394,43 @@ public class ControllerActivity extends AppCompatActivity implements NotesUI.Lis
     @Override
     public void onSetTagColor(@NonNull String tagName, int colorResId) {
         noteLibrary.getManageTags().setTagColor(tagName, colorResId);
+    }
+
+    // ===== Tag management operations =====
+    @Override
+    public void onRenameTag(@NonNull String oldName, @NonNull String newName) {
+        noteLibrary.getManageTags().renameTag(oldName, newName);
+        updateNotesView();
+    }
+
+    @Override
+    public void onDeleteTag(@NonNull String tagName) {
+        noteLibrary.getManageTags().deleteTag(tagName);
+        updateNotesView();
+    }
+
+    @Override
+    public void onMergeTags(@NonNull java.util.List<String> sources, @NonNull String target) {
+        noteLibrary.getManageTags().mergeTags(sources, target);
+        updateNotesView();
+    }
+
+    // ===== AI suggestion controls =====
+    @Override
+    public boolean onIsAiTaggingConfigured() {
+        return noteLibrary.getManageTags().isAiMode() && new com.example.quicknotes.model.TagSettingsManager(this).hasValidApiKey();
+    }
+
+    @Override
+    public boolean onShouldConfirmAiSuggestions() {
+        return new com.example.quicknotes.model.TagSettingsManager(this).isAiConfirmationEnabled();
+    }
+
+    @Override
+    public void onAiSuggestTags(@NonNull Note note, int limit,
+                                @NonNull java.util.function.Consumer<java.util.List<String>> onSuggestions,
+                                @NonNull java.util.function.Consumer<String> onError) {
+        noteLibrary.getManageTags().aiSuggestTags(note, limit, onSuggestions, onError);
     }
 
     @Override

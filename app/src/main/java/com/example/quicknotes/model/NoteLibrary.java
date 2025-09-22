@@ -72,9 +72,20 @@ public class NoteLibrary {
             return;
         }
         updateNoteDate(note);
-        if (tagManager.isAiMode()) {
-            tagManager.aiAutoTag(note, tagManager.getAutoTagLimit());
+        boolean aiMode = tagManager.isAiMode();
+        boolean confirmAi = new TagSettingsManager(ctx).isAiConfirmationEnabled();
+        if (aiMode) {
+            if (confirmAi) {
+                // If AI confirmation is enabled but we're offline, fall back to simple tagging now
+                if (!isOnline()) {
+                    tagManager.simpleAutoTag(note, tagManager.getAutoTagLimit());
+                }
+                // Otherwise, suggestions UI will handle user confirmation; do not auto-apply here
+            } else {
+                tagManager.aiAutoTag(note, tagManager.getAutoTagLimit());
+            }
         } else {
+            // Always run simple tagging when AI mode is off
             tagManager.simpleAutoTag(note, tagManager.getAutoTagLimit());
         }
         notes.add(note);
@@ -200,5 +211,14 @@ public class NoteLibrary {
         if (changed) {
             Persistence.saveNotes(ctx, notes);
         }
+    }
+
+    private boolean isOnline() {
+        android.net.ConnectivityManager cm = (android.net.ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) return false;
+        android.net.Network network = cm.getActiveNetwork();
+        if (network == null) return false;
+        android.net.NetworkCapabilities caps = cm.getNetworkCapabilities(network);
+        return caps != null && caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET);
     }
 }

@@ -13,6 +13,7 @@ import java.util.Set;
  * to provide a unified interface for tag management in the NoteLibrary.
  */
 public class TagManager {
+    private final android.content.Context ctx;
     private final TagColorManager colorManager;
     private final TagOperationsManager operationsManager;
     private final AutoTaggingService autoTaggingService;
@@ -25,6 +26,7 @@ public class TagManager {
      */
     public TagManager(@NonNull NoteLibrary noteLibrary) {
         Context ctx = noteLibrary.getContext();
+        this.ctx = ctx;
         
         // Initialize component managers
         this.colorManager = new TagColorManager(ctx);
@@ -102,6 +104,27 @@ public class TagManager {
     }
 
     /**
+     * Renames a tag across all notes.
+     */
+    public void renameTag(@NonNull String oldName, @NonNull String newName) {
+        operationsManager.renameTag(oldName, newName);
+    }
+
+    /**
+     * Deletes a tag from all notes.
+     */
+    public void deleteTag(@NonNull String tagName) {
+        operationsManager.deleteTag(tagName);
+    }
+
+    /**
+     * Merges source tags into a target tag across all notes.
+     */
+    public void mergeTags(@NonNull java.util.Collection<String> sources, @NonNull String target) {
+        operationsManager.mergeTags(sources, target);
+    }
+
+    /**
      * Checks if AI-powered auto-tagging is enabled.
      *
      * @return true if AI mode is enabled, false for keyword-based tagging
@@ -127,6 +150,7 @@ public class TagManager {
      * @param limit The maximum number of tags to assign
      */
     public void simpleAutoTag(@NonNull Note note, int limit) {
+        android.util.Log.d("AutoTagging", "Invoking simpleAutoTag, limit=" + limit + ", note=" + note.getTitle());
         autoTaggingService.performSimpleAutoTag(note, limit);
     }
 
@@ -139,7 +163,16 @@ public class TagManager {
     public void aiAutoTag(@NonNull Note note, int limit) {
         if (!settingsManager.isAiTaggingConfigured()) {
             // Fall back to simple tagging if AI is not configured
+            android.util.Log.d("AutoTagging", "AI not configured. Falling back to simple tagging.");
             simpleAutoTag(note, limit);
+            return;
+        }
+        if (!isOnline()) {
+            // Offline fallback to simple tagging with user notification
+            android.util.Log.d("AutoTagging", "Offline detected. Falling back to simple tagging.");
+            simpleAutoTag(note, limit);
+            android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
+            h.post(() -> android.widget.Toast.makeText(ctx, "Offline: using keyword tagging", android.widget.Toast.LENGTH_SHORT).show());
             return;
         }
 
@@ -148,6 +181,45 @@ public class TagManager {
         
         autoTaggingService.performAiAutoTag(note, limit, apiKey, existingTagNames, 
             tagName -> operationsManager.setTag(note, tagName));
+    }
+
+    /**
+     * Requests AI tag suggestions without applying them.
+     */
+    public void aiSuggestTags(@NonNull Note note, int limit, @NonNull java.util.function.Consumer<java.util.List<String>> onSuggestions,
+                              @NonNull java.util.function.Consumer<String> onError) {
+        if (!settingsManager.isAiTaggingConfigured()) {
+            onSuggestions.accept(java.util.Collections.emptyList());
+            return;
+        }
+        if (!isOnline()) {
+            android.util.Log.d("AutoTagging", "Offline detected. Suggest will return error.");
+            onError.accept("Offline");
+            return;
+        }
+        String apiKey = settingsManager.getApiKey();
+        Set<String> existingTagNames = operationsManager.getAllTagNames();
+        autoTaggingService.performAiSuggest(note, limit, apiKey, existingTagNames,
+                new AutoTaggingService.TagSuggestionsCallback() {
+                    @Override
+                    public void onSuggestions(@NonNull java.util.List<String> suggestions) {
+                        onSuggestions.accept(suggestions);
+                    }
+
+                    @Override
+                    public void onError(@NonNull String message) {
+                        onError.accept(message);
+                    }
+                });
+    }
+
+    private boolean isOnline() {
+        android.net.ConnectivityManager cm = (android.net.ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) return false;
+        android.net.Network network = cm.getActiveNetwork();
+        if (network == null) return false;
+        android.net.NetworkCapabilities caps = cm.getNetworkCapabilities(network);
+        return caps != null && caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET);
     }
 
     /**

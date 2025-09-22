@@ -143,6 +143,18 @@ public interface NotesUI {
          * @return true if the notification icon should be visible, false otherwise
          */
         boolean onShouldShowNotificationIcon(@NonNull Note note);
+
+        // ===== Tag management operations =====
+        void onRenameTag(@NonNull String oldName, @NonNull String newName);
+        void onDeleteTag(@NonNull String tagName);
+        void onMergeTags(@NonNull java.util.List<String> sources, @NonNull String target);
+
+        // ===== AI suggestion controls =====
+        boolean onIsAiTaggingConfigured();
+        boolean onShouldConfirmAiSuggestions();
+        void onAiSuggestTags(@NonNull Note note, int limit,
+                             @NonNull java.util.function.Consumer<java.util.List<String>> onSuggestions,
+                             @NonNull java.util.function.Consumer<String> onError);
     }
 
 }
