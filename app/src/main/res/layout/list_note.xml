@@ -54,7 +54,7 @@
                 android:layout_height="24dp"
                 android:contentDescription="@string/pin_icon"
                 android:padding="1dp"
-                android:src="@drawable/pin_selector"
+                android:src="@drawable/ic_pin_outline"
                 app:tint="?attr/colorOnSurfaceVariant"
                 android:clickable="true"
                 android:focusable="true"
