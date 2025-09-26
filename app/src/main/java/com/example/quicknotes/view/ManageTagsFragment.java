@@ -10,11 +10,13 @@ import android.widget.EditText;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceScreen;
 
-import com.example.quicknotes.controller.ControllerActivity;
+import com.example.quicknotes.model.NoteViewModel;
 import com.example.quicknotes.model.Tag;
 import com.example.quicknotes.model.TagColorManager;
 
@@ -23,33 +25,25 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * ManageTagsFragment provides a dedicated screen to view and manage all tags:
- * rename, delete, merge, and change colors.
- */
-public class ManageTagsFragment extends PreferenceFragmentCompat implements NotesUI {
-    private NotesUI.Listener listener;
+public class ManageTagsFragment extends PreferenceFragmentCompat {
+    private NoteViewModel noteViewModel;
     private int[] colorResIds;
     private String[] colorNames;
 
     @Override
     public void onViewCreated(@NonNull android.view.View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        if (getActivity() instanceof ControllerActivity) {
-            setListener((NotesUI.Listener) getActivity());
-        }
+        noteViewModel = new ViewModelProvider(requireActivity()).get(NoteViewModel.class);
+        NavHostFragment.findNavController(this);
     }
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         Context ctx = requireContext();
-        if (listener == null && getActivity() instanceof ControllerActivity) {
-            setListener((NotesUI.Listener) getActivity());
-        }
+        noteViewModel = new ViewModelProvider(requireActivity()).get(NoteViewModel.class);
 
-        List<TagColorManager.ColorOption> colorOptions =
-                (listener != null) ? listener.onGetAvailableColors() : new TagColorManager(ctx).getAvailableColors();
-        Set<Tag> allTags = (listener != null) ? listener.onGetAllTags() : java.util.Collections.emptySet();
+        List<TagColorManager.ColorOption> colorOptions = noteViewModel.getTagManager().getAvailableColors();
+        Set<Tag> allTags = noteViewModel.getTagManager().getAllTags();
 
         colorResIds = new int[colorOptions.size()];
         colorNames = new String[colorOptions.size()];
@@ -97,13 +91,13 @@ public class ManageTagsFragment extends PreferenceFragmentCompat implements Note
         pref.setIconSpaceReserved(true);
         pref.setSummary("Tap to rename, delete, or change color");
         pref.setOnPreferenceClickListener(p -> {
-            showTagOptionsDialog(tagName, currentColorRes, pref);
+            showTagOptionsDialog(tagName, pref);
             return true;
         });
         return pref;
     }
 
-    private void showTagOptionsDialog(String tagName, int currentColorRes, Preference pref) {
+    private void showTagOptionsDialog(String tagName, Preference pref) {
         String[] options = new String[]{"Rename", "Delete", "Change Color"};
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Manage '" + tagName + "'")
@@ -127,8 +121,8 @@ public class ManageTagsFragment extends PreferenceFragmentCompat implements Note
                 .setNegativeButton(android.R.string.cancel, null)
                 .setPositiveButton(android.R.string.ok, (d, w) -> {
                     String newName = input.getText() != null ? input.getText().toString().trim() : "";
-                    if (!newName.isEmpty() && listener != null) {
-                        listener.onRenameTag(oldName, newName);
+                    if (!newName.isEmpty()) {
+                        noteViewModel.getTagManager().renameTag(oldName, newName);
                         refreshScreen();
                     }
                 })
@@ -141,10 +135,8 @@ public class ManageTagsFragment extends PreferenceFragmentCompat implements Note
                 .setMessage("Remove tag '" + tagName + "' from all notes?")
                 .setNegativeButton(android.R.string.cancel, null)
                 .setPositiveButton(android.R.string.ok, (d, w) -> {
-                    if (listener != null) {
-                        listener.onDeleteTag(tagName);
-                        refreshScreen();
-                    }
+                    noteViewModel.getTagManager().deleteTag(tagName);
+                    refreshScreen();
                 })
                 .show();
     }
@@ -154,18 +146,15 @@ public class ManageTagsFragment extends PreferenceFragmentCompat implements Note
                 .setTitle("Select color for '" + tagName + "'")
                 .setItems(colorNames, (d, which) -> {
                     int chosen = colorResIds[which];
-                    if (listener != null) {
-                        listener.onSetTagColor(tagName, chosen);
-                        int color = ContextCompat.getColor(requireContext(), chosen);
-                        pref.setIcon(new ColorDrawable(color));
-                    }
+                    noteViewModel.getTagManager().setTagColor(tagName, chosen);
+                    int color = ContextCompat.getColor(requireContext(), chosen);
+                    pref.setIcon(new ColorDrawable(color));
                 })
                 .show();
     }
 
     private void showMergeDialog() {
-        if (listener == null) return;
-        Set<Tag> allTags = listener.onGetAllTags();
+        Set<Tag> allTags = noteViewModel.getTagManager().getAllTags();
         if (allTags.isEmpty()) return;
         List<String> names = new ArrayList<>();
         for (Tag t : allTags) names.add(t.name());
@@ -195,25 +184,17 @@ public class ManageTagsFragment extends PreferenceFragmentCompat implements Note
                 .setNegativeButton(android.R.string.cancel, null)
                 .setPositiveButton("Merge", (d, w) -> {
                     String target = input.getText() != null ? input.getText().toString().trim() : "";
-                    if (target.isEmpty() || listener == null) return;
-                    // De-duplicate sources and remove target if present
+                    if (target.isEmpty()) return;
                     Set<String> unique = new LinkedHashSet<>(sources);
                     unique.removeIf(s -> s.equalsIgnoreCase(target));
                     if (unique.isEmpty()) return;
-                    listener.onMergeTags(new ArrayList<>(unique), target);
+                    noteViewModel.getTagManager().mergeTags(new ArrayList<>(unique), target);
                     refreshScreen();
                 })
                 .show();
     }
 
     private void refreshScreen() {
-        // Rebuild preferences to reflect latest tag set/colors
         onCreatePreferences(null, null);
     }
-
-    private void setListener(NotesUI.Listener listener) {
-        this.listener = listener;
-    }
 }
-
-

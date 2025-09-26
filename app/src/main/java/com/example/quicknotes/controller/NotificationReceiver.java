@@ -69,7 +69,7 @@ public class NotificationReceiver extends BroadcastReceiver {
         }
 
         // Create intent to view the note - directly launch activity to avoid trampoline
-        Intent viewNoteIntent = new Intent(context, ControllerActivity.class);
+        Intent viewNoteIntent = new Intent(context, MainActivity.class);
         viewNoteIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         viewNoteIntent.putExtra("noteId", noteId);
         viewNoteIntent.putExtra("action", "viewNote");
@@ -105,7 +105,7 @@ public class NotificationReceiver extends BroadcastReceiver {
         );
 
         // Create the main tap intent to open the app
-        Intent mainIntent = new Intent(context, ControllerActivity.class);
+        Intent mainIntent = new Intent(context, MainActivity.class);
         mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         mainIntent.putExtra("noteId", noteId);
         mainIntent.putExtra("action", "viewNote");

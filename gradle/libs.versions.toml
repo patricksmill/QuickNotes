@@ -8,10 +8,10 @@ espressoCore = "3.7.0"
 appcompat = "1.7.1"
 material = "1.13.0"
 constraintlayout = "2.2.1"
-navigationFragmentKtx = "2.9.4"
-navigationUiKtxVersion = "2.9.4"
+navigationFragmentKtx = "2.9.5"
+navigationUiKtxVersion = "2.9.5"
 legacySupportV4 = "1.0.0"
-openaiJava = "3.5.3"
+openaiJava = "3.6.1"
 preference = "1.2.1"
 recyclerview = "1.4.0"
 junitJupiter = "5.13.4"
@@ -19,6 +19,8 @@ espressoContrib = "3.7.0"
 testRules = "1.7.0"
 media3Common = "1.8.0"
 securityCrypto = "1.1.0"
+lifecycle = "2.9.4"
+navigationSafeArgs = "2.9.5"
 
 
 [libraries]
@@ -43,8 +45,10 @@ androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "
 androidx-media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3Common" }
 junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junitJupiter" }
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
+androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+navigation-safe-args = { id = "androidx.navigation.safeargs", version.ref = "navigationSafeArgs" }
 

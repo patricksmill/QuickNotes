@@ -1,45 +1,53 @@
 package com.example.quicknotes.view;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 import androidx.preference.SeekBarPreference;
+import androidx.preference.SwitchPreferenceCompat;
 
 import com.example.quicknotes.R;
-import com.example.quicknotes.controller.ControllerActivity;
-import com.google.android.material.snackbar.Snackbar;
+// import com.example.quicknotes.controller.MainActivity; // No longer directly needed for these actions
+import com.example.quicknotes.model.NoteViewModel;
+import com.example.quicknotes.viewmodel.MainViewModel; // Added MainViewModel import
 
-/**
- * Fragment for managing application settings and preferences.
- */
-public class SettingsFragment extends PreferenceFragmentCompat implements NotesUI {
-    private NotesUI.Listener listener;
+public class SettingsFragment extends PreferenceFragmentCompat {
+    private NoteViewModel noteViewModel;
+    private MainViewModel mainViewModel; // Added MainViewModel field
+    private SharedPreferences prefs;
+    private NavController navController;
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey);
+        prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
         setupApiKeyPreference();
         setupAutoTagLimitPreference();
         setupModelPreference();
         setupDeleteAllPreference();
         setupReplayTutorialPreference();
         setupNotificationPermissionRequest();
-        setupManageTagsPreference();
+        setupAiToggleDependency();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        if (getActivity() instanceof ControllerActivity) {
-            setListener((NotesUI.Listener) getActivity());
-        }
+        // Initialize ViewModels scoped to the Activity
+        noteViewModel = new ViewModelProvider(requireActivity()).get(NoteViewModel.class);
+        mainViewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
+        navController = NavHostFragment.findNavController(this);
     }
 
     private void setupApiKeyPreference() {
@@ -59,10 +67,22 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
         SeekBarPreference limitPref = findPreference("auto_tag_limit");
         if (limitPref == null) return;
 
-        int current = PreferenceManager.getDefaultSharedPreferences(requireContext()).getInt("auto_tag_limit", 3);
+        int current = prefs != null ? prefs.getInt("auto_tag_limit", 3) : 3;
         limitPref.setSummary(current + " tags per note");
         limitPref.setOnPreferenceChangeListener((pref, newValue) -> {
-            pref.setSummary(newValue + " tags per note");
+            Integer value = null;
+            if (newValue instanceof Integer) {
+                value = (Integer) newValue;
+            } else if (newValue instanceof String) {
+                try {
+                    value = Integer.parseInt((String) newValue);
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            if (value == null) {
+                return false;
+            }
+            pref.setSummary(value + " tags per note");
             return true;
         });
     }
@@ -72,7 +92,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
         if (modelPref == null) return;
         modelPref.setSummaryProvider(pref -> {
             CharSequence entry = ((androidx.preference.ListPreference) pref).getEntry();
-            return entry != null ? entry : "GPT-4.1 Nano";
+            return entry != null ? entry : "Auto";
         });
     }
 
@@ -88,13 +108,10 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
 
     private void setupReplayTutorialPreference() {
         Preference replayTutorialPref = findPreference("pref_replay_tutorial");
-        if (replayTutorialPref != null && getActivity() instanceof ControllerActivity activity) {
+        if (replayTutorialPref != null && mainViewModel != null) { // Check mainViewModel
             replayTutorialPref.setOnPreferenceClickListener(preference -> {
-                activity.startOnboardingTutorial();
-                // Navigate back to main screen for the tutorial
-                if (listener != null) {
-                    listener.onBrowseNotes();
-                }
+                mainViewModel.forceStartOnboarding(); // Use MainViewModel to start onboarding
+                navController.navigateUp();
                 return true;
             });
         }
@@ -106,12 +123,8 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
                 .setMessage("Are you sure? This will permanently erase all your notes.")
                 .setNegativeButton(android.R.string.cancel, null)
                 .setPositiveButton(android.R.string.ok, (dlg1, which1) -> {
-                    if (listener != null) {
-                        listener.onDeleteAllNotes();
-                        showExitDialog();
-                    } else {
-                        showError();
-                    }
+                    noteViewModel.deleteAllNotes();
+                    showExitDialog();
                 }).show();
     }
 
@@ -123,43 +136,40 @@ public class SettingsFragment extends PreferenceFragmentCompat implements NotesU
                 .show();
     }
 
-    /**
-     * Shows an error message using Snackbar
-     */
-    private void showError() {
-        View view = getView();
-        if (view != null) {
-            Snackbar.make(view, "Unable to delete notes at this time", Snackbar.LENGTH_SHORT).show();
-        }
-    }
-
-    private void setListener(NotesUI.Listener listener) {
-        this.listener = listener;
-    }
-
     private void setupNotificationPermissionRequest() {
         Preference allowNotiPref = findPreference("pref_noti");
         if (allowNotiPref == null) return;
         allowNotiPref.setOnPreferenceChangeListener((pref, newValue) -> {
             boolean enabled = Boolean.TRUE.equals(newValue);
-            if (enabled && getActivity() instanceof ControllerActivity) {
-                ((ControllerActivity) getActivity()).requestNotificationPermissionFromSettings();
+            if (enabled && mainViewModel != null) {
+                mainViewModel.userWantsToRequestPostNotificationsPermission(requireActivity()); // Pass Activity context
             }
+
             return true;
         });
     }
 
-    private void setupManageTagsPreference() {
-        Preference manageTags = findPreference("pref_manage_tags");
-        if (manageTags == null) return;
-        manageTags.setOnPreferenceClickListener(pref -> {
-            if (getActivity() instanceof ControllerActivity) {
-                getParentFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainerView, new ManageTagsFragment())
-                        .addToBackStack(null)
-                        .commit();
-            }
+    private void setupAiToggleDependency() {
+        SwitchPreferenceCompat aiToggle = findPreference("pref_ai_auto_tag");
+        if (aiToggle == null) {
+            return;
+        }
+        aiToggle.setOnPreferenceChangeListener((pref, newValue) -> {
+            boolean enabled = Boolean.TRUE.equals(newValue);
+            setAiPreferencesEnabled(enabled);
             return true;
         });
+        setAiPreferencesEnabled(aiToggle.isChecked());
+    }
+
+    private void setAiPreferencesEnabled(boolean enabled) {
+        Preference modelPref = findPreference("pref_ai_model");
+        Preference apiPref = findPreference("openai_api_key");
+        if (modelPref != null) {
+            modelPref.setEnabled(enabled);
+        }
+        if (apiPref != null) {
+            apiPref.setEnabled(enabled);
+        }
     }
 }

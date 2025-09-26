@@ -58,15 +58,17 @@ public class TagManager {
         colorManager.setTagColor(tagName, resId);
     }
 
-    /**
-     * Sets a tag for the given note, creating the tag if necessary.
-     *
-     * @param note The note to tag
-     * @param name The tag name
-     */
-    public void setTag(@NonNull Note note, @NonNull String name) {
-        operationsManager.setTag(note, name);
-    }
+// --Commented out by Inspection START (9/25/25, 12:38 PM):
+//    /**
+//     * Sets a tag for the given note, creating the tag if necessary.
+//     *
+//     * @param note The note to tag
+//     * @param name The tag name
+//     */
+//    public void setTag(@NonNull Note note, @NonNull String name) {
+//        operationsManager.setTag(note, name);
+//    }
+// --Commented out by Inspection STOP (9/25/25, 12:38 PM)
 
     /**
      * Sets multiple tags for the given note in a single operation.
@@ -167,7 +169,7 @@ public class TagManager {
             simpleAutoTag(note, limit);
             return;
         }
-        if (!isOnline()) {
+        if (isOnline()) {
             // Offline fallback to simple tagging with user notification
             android.util.Log.d("AutoTagging", "Offline detected. Falling back to simple tagging.");
             simpleAutoTag(note, limit);
@@ -192,7 +194,7 @@ public class TagManager {
             onSuggestions.accept(java.util.Collections.emptyList());
             return;
         }
-        if (!isOnline()) {
+        if (isOnline()) {
             android.util.Log.d("AutoTagging", "Offline detected. Suggest will return error.");
             onError.accept("Offline");
             return;
@@ -215,11 +217,11 @@ public class TagManager {
 
     private boolean isOnline() {
         android.net.ConnectivityManager cm = (android.net.ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm == null) return false;
+        if (cm == null) return true;
         android.net.Network network = cm.getActiveNetwork();
-        if (network == null) return false;
+        if (network == null) return true;
         android.net.NetworkCapabilities caps = cm.getNetworkCapabilities(network);
-        return caps != null && caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        return caps == null || !caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET);
     }
 
     /**

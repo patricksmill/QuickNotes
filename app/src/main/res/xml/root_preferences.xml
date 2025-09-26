@@ -23,17 +23,6 @@
             android:min="0"
             android:max="5" />
 
-        <Preference
-            android:key="pref_edit_tag_colors"
-            android:title="Edit Tag Colors"
-            android:fragment="com.example.quicknotes.view.TagColorSettingsFragment"
-            android:summary="Customize the appearance of your tags" />
-
-        <Preference
-            android:key="pref_manage_tags"
-            android:title="Manage Tags"
-            android:summary="Rename, delete, and merge tags" />
-
     </PreferenceCategory>
 
     <PreferenceCategory

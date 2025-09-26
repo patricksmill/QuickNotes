@@ -16,7 +16,7 @@ import java.util.Map;
 
 public class KeywordTagDictionary {
     private static final String FILE_NAME = "keyword_tags.json";
-    private static Map<String, String> keywordToTagMap;
+
 
 
     /**

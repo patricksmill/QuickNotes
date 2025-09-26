@@ -6,7 +6,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.provider.Settings;
 import android.view.View;
 
@@ -63,26 +62,21 @@ public class Notifier {
      * @return true if permission is granted, false otherwise
      */
     public boolean canScheduleExactAlarms() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            AlarmManager alarmManager = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
-            return alarmManager != null && alarmManager.canScheduleExactAlarms();
-        }
-        return true; // No permission needed for Android 11 and below
+        AlarmManager alarmManager = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
+        return alarmManager != null && alarmManager.canScheduleExactAlarms();
     }
 
     /**
      * Opens the system settings to request exact alarm permission.
      */
     public void requestExactAlarmPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            try {
-                ctx.startActivity(intent);
-                showMessage(ctx.getString(R.string.alarm_permission_request), Snackbar.LENGTH_LONG);
-            } catch (Exception e) {
-                showMessage(ctx.getString(R.string.alarm_permission_error), Snackbar.LENGTH_LONG);
-            }
+        Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            ctx.startActivity(intent);
+            showMessage(ctx.getString(R.string.alarm_permission_request), Snackbar.LENGTH_LONG);
+        } catch (Exception e) {
+            showMessage(ctx.getString(R.string.alarm_permission_error), Snackbar.LENGTH_LONG);
         }
     }
 
@@ -179,22 +173,5 @@ public class Notifier {
         }
     }
 
-    /**
-     * Updates notification scheduling for a note.
-     * This method handles both scheduling new notifications and canceling existing ones.
-     * @param note The note to update notifications for
-     * @param enabled Whether notifications should be enabled
-     * @param date The notification date (can be null if disabled)
-     */
-    public void updateNotification(Note note, boolean enabled, Date date) {
-        note.setNotificationsEnabled(enabled);
-        note.setNotificationDate(date);
-
-        if (enabled && date != null) {
-            scheduleNotification(note);
-        } else {
-            cancelNotification(note);
-        }
-    }
 }
 
