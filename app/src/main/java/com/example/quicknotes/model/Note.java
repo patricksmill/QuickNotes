@@ -8,7 +8,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public class Note implements INote {
+public class Note implements java.io.Serializable {
     private String id;
     private String title;
     private String content;

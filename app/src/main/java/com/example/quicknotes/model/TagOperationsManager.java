@@ -139,7 +139,7 @@ public class TagOperationsManager {
                 }
             }
             if (!toRemove.isEmpty()) {
-                note.getTags().removeAll(toRemove);
+                toRemove.forEach(note.getTags()::remove);
                 note.setTag(newTag);
                 changed = true;
             }
@@ -175,7 +175,7 @@ public class TagOperationsManager {
                 }
             }
             if (!toRemove.isEmpty()) {
-                note.getTags().removeAll(toRemove);
+                toRemove.forEach(note.getTags()::remove);
                 changed = true;
             }
         }
@@ -221,7 +221,7 @@ public class TagOperationsManager {
                 }
             }
             if (!toRemove.isEmpty()) {
-                note.getTags().removeAll(toRemove);
+                toRemove.forEach(note.getTags()::remove);
                 note.setTag(targetTag);
                 noteChanged = true;
             }

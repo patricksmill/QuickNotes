@@ -8,12 +8,8 @@ import androidx.annotation.NonNull;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 
-import com.example.quicknotes.R;
 import com.example.quicknotes.databinding.MainBinding;
 
 /**
@@ -21,7 +17,6 @@ import com.example.quicknotes.databinding.MainBinding;
  */
 public class MainUI {
     private final MainBinding binding;
-    private final FragmentManager fmanager;
 
     /**
      * Constructor method.
@@ -29,7 +24,6 @@ public class MainUI {
      */
     public MainUI(@NonNull FragmentActivity factivity) {
         this.binding = MainBinding.inflate(LayoutInflater.from(factivity));
-        this.fmanager = factivity.getSupportFragmentManager();
 
         // eliminates colored bar at top of screen
         EdgeToEdge.enable(factivity);
@@ -38,27 +32,6 @@ public class MainUI {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-    }
-
-    /**
-     * Replaces the contents of the screen's fragment container with the one passed in as an argument.
-     *
-     * @param frag The fragment to be displayed.
-     * @param addToBackStack Whether to add this transaction to the back stack
-     */
-    public void displayFragment(@NonNull Fragment frag, boolean addToBackStack) {
-        FragmentTransaction ftrans = this.fmanager.beginTransaction();
-        ftrans.setCustomAnimations(
-            R.anim.slide_in_right, 
-            R.anim.slide_out_left, 
-            R.anim.slide_in_left, 
-            R.anim.slide_out_right
-        );
-        ftrans.replace(this.binding.fragmentContainerView.getId(), frag);
-        if (addToBackStack) {
-            ftrans.addToBackStack(null);
-        }
-        ftrans.commit();
     }
 
     /**

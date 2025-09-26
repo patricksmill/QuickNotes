@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -8,18 +9,17 @@
     android:background="?attr/colorSurface">
 
     <LinearLayout
-        android:id="@+id/buttonContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingBottom="8dp">
+        android:paddingBottom="0dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/cancelButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
             android:layout_weight="1"
-            android:layout_marginStart="8dp"
             android:text="@android:string/cancel" />
 
 
@@ -27,15 +27,14 @@
             android:id="@+id/saveButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
             android:text="@string/save" />
 
 
     </LinearLayout>
 
     <androidx.core.widget.NestedScrollView
-        android:id="@+id/scrollContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fillViewport="true"
@@ -64,10 +63,9 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/contentInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="16dp">
+                android:paddingBottom="8dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/noteContentText"
@@ -83,15 +81,15 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingBottom="16dp">
+                android:orientation="horizontal">
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tagsInputLayout"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:visibility="gone"
                     app:endIconMode="custom">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -103,31 +101,92 @@
 
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <ImageButton
-                    android:id="@+id/aiSuggestButton"
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/addTagChip"
+                    style="@style/Widget.Material3.Chip.Assist.Elevated"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="AI suggest tags"
-                    android:padding="8dp"
-                    android:layout_marginStart="@dimen/spacing_sm"
-                    android:src="@drawable/ic_sparkles"
-                    app:tint="?attr/colorOnSurfaceVariant" />
+                    android:layout_marginBottom="0dp"
+                    android:text="@string/add_tag"
+                    app:chipIcon="@drawable/ic_add"
+                    app:chipIconVisible="true" />
 
-                <com.google.android.material.progressindicator.CircularProgressIndicator
-                    android:id="@+id/aiSuggestProgress"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center_vertical"
+                <ImageButton
+                    android:id="@+id/openTagPickerButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/spacing_sm"
-                    android:visibility="gone"
-                    app:indicatorSize="24dp"
-                    app:trackCornerRadius="8dp" />
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/pick_tags"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_label"
+                    app:tint="?attr/colorOnSurfaceVariant"
+                    tools:ignore="HardcodedText" />
+
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/spacing_sm">
+
+                    <ImageButton
+                        android:id="@+id/aiSuggestButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="AI suggest tags"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_sparkles"
+                        app:tint="?attr/colorOnSurfaceVariant" />
+
+                    <com.google.android.material.progressindicator.CircularProgressIndicator
+                        android:id="@+id/aiSuggestProgress"
+                        style="@style/Widget.Material3.CircularProgressIndicator"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="center"
+                        android:visibility="gone"
+                        app:indicatorSize="24dp"
+                        app:trackCornerRadius="8dp" />
+                </FrameLayout>
 
             </LinearLayout>
 
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:overScrollMode="never"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/selectedTagsGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="0dp"
+                    app:singleLine="true"
+                    app:singleSelection="false" />
+            </HorizontalScrollView>
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:overScrollMode="never"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/suggestedTagsGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="0dp"
+                    app:singleLine="true"
+                    app:singleSelection="false" />
+            </HorizontalScrollView>
+
             <LinearLayout
-                android:id="@+id/notificationLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"

@@ -9,7 +9,6 @@ import androidx.annotation.NonNull;
 
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
-import com.openai.models.ChatModel;
 import com.openai.models.responses.Response;
 import com.openai.models.responses.ResponseCreateParams;
 import com.openai.models.responses.ResponseOutputItem;
@@ -68,7 +67,7 @@ public class AutoTaggingService {
         String combined = extractTextContent(note);
         Set<String> words = extractWords(combined);
         Map<String, String> dictionary = KeywordTagDictionary.loadTagMap(ctx);
-        android.util.Log.d(TAG, "Simple auto-tag extracted words=" + words.size() + ", dictionary size=" + (dictionary != null ? dictionary.size() : 0));
+        android.util.Log.d(TAG, "Simple auto-tag extracted words=" + words.size() + ", dictionary size=" + dictionary.size());
         assignTagsFromDictionary(note, words, dictionary, limit);
     }
 
@@ -253,7 +252,7 @@ public class AutoTaggingService {
             var list = client.models().list();
             for (var m : list.data()) {
                 String id = m.id();
-                if (id != null && (id.startsWith("gpt-") || id.contains("chat"))) {
+                if (id.startsWith("gpt-") || id.contains("chat")) {
                     ids.add(id);
                 }
             }

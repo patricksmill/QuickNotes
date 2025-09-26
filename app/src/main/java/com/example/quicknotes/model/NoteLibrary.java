@@ -100,6 +100,7 @@ public class NoteLibrary {
     public void deleteNote(@NonNull Note note) {
         if (notes.remove(note)) {
             recentlyDeletedNote = note;
+            tagManager.cleanupUnusedTags();
             Persistence.saveNotes(ctx, notes);
         }
     }

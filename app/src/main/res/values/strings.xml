@@ -1,13 +1,11 @@
 <resources>
     <string name="app_name">QuickNotes</string>
     <!-- Strings used for fragments for navigation -->
-    <string name="note_name">Note Name</string>"
-    <string name="note_content">Note Content</string>
+    <string name="note_name">Name</string>"
+    <string name="note_content">Content</string>
     <string name="add">Add</string>
-    <string name="missing_item_field_error">Missing Item Field Error</string>
 
 
-    <string name="delete">Delete</string>
     <!-- Preference Titles -->
 
 
@@ -30,4 +28,6 @@
     <string name="skip">Skip</string>
     <string name="next">Next</string>
     <string name="try_it">Try it!</string>
+    <string name="add_tag">Add tag</string>
+    <string name="pick_tags">Pick tags</string>
 </resources>

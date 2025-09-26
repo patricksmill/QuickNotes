@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    app:startDestination="@id/searchNotesFragment">
+
+    <fragment
+        android:id="@+id/searchNotesFragment"
+        android:name="com.example.quicknotes.view.SearchNotesFragment"
+        android:label="fragment_search_notes"
+        tools:layout="@layout/fragment_search_notes" >
+        <action
+            android:id="@+id/action_searchNotesFragment_to_manageNoteFragment"
+            app:destination="@id/manageNoteFragment" />
+        <action
+            android:id="@+id/action_searchNotesFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
+        <action
+            android:id="@+id/action_searchNotesFragment_to_manageTagsFragment"
+            app:destination="@id/manageTagsFragment" />
+    </fragment>
+
+    <dialog
+        android:id="@+id/manageNoteFragment"
+        android:name="com.example.quicknotes.view.ManageNoteFragment"
+        android:label="fragment_manage_note"
+        tools:layout="@layout/fragment_manage_note" >
+        <argument
+            android:name="note"
+            app:argType="com.example.quicknotes.model.Note"
+            app:nullable="true" />
+    </dialog>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.quicknotes.view.SettingsFragment"
+        android:label="Settings" />
+
+    <fragment
+        android:id="@+id/manageTagsFragment"
+        android:name="com.example.quicknotes.view.ManageTagsFragment"
+        android:label="Manage Tags" />
+
+</navigation>

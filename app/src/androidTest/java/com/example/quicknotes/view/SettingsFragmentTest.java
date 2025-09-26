@@ -14,7 +14,7 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.example.quicknotes.R;
-import com.example.quicknotes.controller.ControllerActivity;
+import com.example.quicknotes.controller.MainActivity;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -28,8 +28,8 @@ import org.junit.Test;
 public class SettingsFragmentTest {
 
     @Rule
-    public ActivityScenarioRule<ControllerActivity> activityRule =
-            new ActivityScenarioRule<>(ControllerActivity.class);
+    public ActivityScenarioRule<MainActivity> activityRule =
+            new ActivityScenarioRule<>(MainActivity.class);
 
     @Before
     public void setUp() {

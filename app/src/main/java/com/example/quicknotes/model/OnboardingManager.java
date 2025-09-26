@@ -56,7 +56,7 @@ public class OnboardingManager {
     }
 
     public OnboardingManager(@NonNull Context context) {
-        Context context1 = context.getApplicationContext();
+        Context context1 = context.getApplicationContext(); // Ensure application context for preferences
         this.preferences = PreferenceManager.getDefaultSharedPreferences(context1);
         this.steps = createOnboardingSteps();
     }
@@ -104,7 +104,7 @@ public class OnboardingManager {
     public void nextStep(@NonNull FragmentActivity activity, @NonNull ViewGroup rootView) {
         currentStepIndex++;
         if (currentStepIndex >= steps.size()) {
-            completeOnboarding();
+            setOnboardingCompleted(); // Call the public method
         } else {
             showStep(activity, rootView);
         }
@@ -114,13 +114,14 @@ public class OnboardingManager {
      * Skips the entire onboarding flow
      */
     public void skipOnboarding() {
-        completeOnboarding();
+        setOnboardingCompleted(); // Call the public method
     }
 
     /**
-     * Marks onboarding as completed
+     * Marks onboarding as completed.
+     * This method is now public and named setOnboardingCompleted to be callable from OnboardingRepository.
      */
-    private void completeOnboarding() {
+    public void setOnboardingCompleted() { // Renamed from completeOnboarding and made public
         hideCurrentOverlay();
         preferences.edit()
                 .putBoolean(PREF_ONBOARDING_COMPLETED, true)
@@ -128,7 +129,9 @@ public class OnboardingManager {
                 .apply();
         
         if (listener != null) {
-            listener.onOnboardingCompleted();
+            // This listener is on the OnboardingManager instance in MainActivity (or the Activity hosting onboarding)
+            // It will trigger MainViewModel.onboardingCompleted(activity) via MainActivity's implementation.
+            listener.onOnboardingCompleted(); 
         }
     }
 

@@ -16,7 +16,7 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 
 import com.example.quicknotes.R;
-import com.example.quicknotes.controller.ControllerActivity;
+import com.example.quicknotes.controller.MainActivity;
 import com.example.quicknotes.model.Note;
 import com.example.quicknotes.model.NoteLibrary;
 import com.example.quicknotes.model.Persistence;
@@ -29,8 +29,8 @@ import java.util.LinkedHashSet;
 
 public class SearchNotesFragmentTest {
     @Rule
-    public final ActivityScenarioRule<ControllerActivity> activityRule =
-            new ActivityScenarioRule<>(ControllerActivity.class);
+    public final ActivityScenarioRule<MainActivity> activityRule =
+            new ActivityScenarioRule<>(MainActivity.class);
 
     private final String noteName = "Test Search Note";
     private final String secondNoteName = "Second Test Note";
