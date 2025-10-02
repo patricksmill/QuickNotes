@@ -67,30 +67,45 @@ public class NoteLibrary {
     public void addNote(@NonNull Note note) {
         if (note.getTitle() == null) return;
         String title = note.getTitle().trim();
-        if (title.isEmpty()) return;
-        if (notes.stream().anyMatch(n -> n.getTitle().equalsIgnoreCase(title))) {
-            return;
-        }
         updateNoteDate(note);
         boolean aiMode = tagManager.isAiMode();
         boolean confirmAi = new TagSettingsManager(ctx).isAiConfirmationEnabled();
         if (aiMode) {
             if (confirmAi) {
-                // If AI confirmation is enabled but we're offline, fall back to simple tagging now
                 if (!isOnline()) {
                     tagManager.simpleAutoTag(note, tagManager.getAutoTagLimit());
                 }
-                // Otherwise, suggestions UI will handle user confirmation; do not auto-apply here
             } else {
                 tagManager.aiAutoTag(note, tagManager.getAutoTagLimit());
             }
         } else {
-            // Always run simple tagging when AI mode is off
             tagManager.simpleAutoTag(note, tagManager.getAutoTagLimit());
         }
         notes.add(note);
         Persistence.saveNotes(ctx, notes);
     }
+
+    /**
+     * Updates an existing note in the library.
+     * If the note is not found by ID, it will not be added.
+     * @param updatedNote The note with updated content
+     */
+    public void updateNote(@NonNull Note updatedNote) {
+        if (updatedNote.getId() == null || updatedNote.getId().trim().isEmpty()) {
+            return; // Cannot update a note without a valid ID
+        }
+        for (int i = 0; i < notes.size(); i++) {
+            Note note = notes.get(i);
+            if (updatedNote.getId().equals(note.getId())) {
+                updateNoteDate(updatedNote); // Update lastModified date
+                notes.set(i, updatedNote); // Replace the old note with the updated one
+                Persistence.saveNotes(ctx, notes); // Persist changes
+                return;
+            }
+        }
+        // Optional: Log if a note to be updated was not found, or handle as an error/add if desired.
+    }
+
 
     /**
      * Deletes a note from the library.
@@ -113,7 +128,7 @@ public class NoteLibrary {
     public boolean undoDelete() {
         if (recentlyDeletedNote != null) {
             notes.add(recentlyDeletedNote);
-            updateNoteDate(recentlyDeletedNote);
+            updateNoteDate(recentlyDeletedNote); // Reset its date upon restoration if desired
             Persistence.saveNotes(ctx, notes);
             recentlyDeletedNote = null;
             return true;
@@ -132,7 +147,7 @@ public class NoteLibrary {
      */
     public List<Note> searchNotes(@NonNull String query, boolean title, boolean content, boolean tag) {
         if (query.trim().isEmpty()) {
-            return getNotes();
+            return getNotes(); // Return a new copy
         }
         String lower = query.toLowerCase();
         Set<Note> results = new LinkedHashSet<>();
@@ -162,6 +177,7 @@ public class NoteLibrary {
      */
     public void togglePin(@NonNull Note note) {
         note.setPinned(!note.isPinned());
+        updateNoteDate(note); // Changing pinned status can be considered an update
         Persistence.saveNotes(ctx, notes);
     }
 
@@ -185,6 +201,7 @@ public class NoteLibrary {
     public void updateNoteNotificationSettings(@NonNull Note note, boolean enabled, Date date) {
         note.setNotificationsEnabled(enabled);
         note.setNotificationDate(date);
+        updateNoteDate(note); // Changing notification settings is an update
         Persistence.saveNotes(ctx, notes);
     }
 
