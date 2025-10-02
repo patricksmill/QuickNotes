@@ -8,6 +8,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.example.quicknotes.util.Event;
 
+import java.util.ArrayList; // Added
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -27,7 +28,12 @@ public class NoteViewModel extends AndroidViewModel {
         super(application);
         noteLibrary = new NoteLibrary(application);
         notificationRepository = new NotificationRepository(application);
-        notesLiveData.setValue(noteLibrary.getNotes());
+        refreshNotesLiveData(); // Initial load
+    }
+
+    private void refreshNotesLiveData() {
+        List<Note> currentNotes = noteLibrary.getNotes();
+        notesLiveData.setValue(currentNotes != null ? new ArrayList<>(currentNotes) : new ArrayList<>());
     }
 
     public LiveData<List<Note>> getNotes() {
@@ -44,33 +50,33 @@ public class NoteViewModel extends AndroidViewModel {
 
     public void addNote(Note note) {
         noteLibrary.addNote(note);
-        notesLiveData.setValue(noteLibrary.getNotes());
+        refreshNotesLiveData();
     }
 
     public void deleteNote(Note note) {
         noteLibrary.deleteNote(note);
-        notesLiveData.setValue(noteLibrary.getNotes());
+        refreshNotesLiveData();
     }
 
     public void searchNotes(String query, boolean title, boolean content, boolean tag) {
         List<Note> filteredNotes = noteLibrary.searchNotes(query, title, content, tag);
-        notesLiveData.setValue(filteredNotes);
+        notesLiveData.setValue(filteredNotes != null ? new ArrayList<>(filteredNotes) : new ArrayList<>());
     }
 
     public void undoDelete() {
         if (noteLibrary.undoDelete()) {
-            notesLiveData.setValue(noteLibrary.getNotes());
+            refreshNotesLiveData();
         }
     }
 
     public void togglePin(Note note) {
         noteLibrary.togglePin(note);
-        notesLiveData.setValue(noteLibrary.getNotes());
+        refreshNotesLiveData();
     }
 
     public void deleteAllNotes() {
         noteLibrary.deleteAllNotes();
-        notesLiveData.setValue(noteLibrary.getNotes());
+        refreshNotesLiveData();
         snackbarMessage.setValue("All notes deleted");
     }
 
@@ -80,7 +86,7 @@ public class NoteViewModel extends AndroidViewModel {
 
     public void setTags(@NonNull Note note, @NonNull List<String> tags) {
         noteLibrary.getManageTags().setTags(note, tags);
-        notesLiveData.setValue(noteLibrary.getNotes());
+        refreshNotesLiveData(); 
     }
 
     public Set<Tag> getAllTags() {
@@ -92,13 +98,12 @@ public class NoteViewModel extends AndroidViewModel {
     }
 
     public boolean isValidNotificationDate(Date date) {
-        // Delegate to NotificationRepository
         return notificationRepository.isValidNotificationDate(date);
     }
 
     public void scheduleNotification(Note note, boolean enabled, Date date) {
         noteLibrary.updateNoteNotificationSettings(note, enabled, date);
-        notesLiveData.setValue(noteLibrary.getNotes());
+        refreshNotesLiveData();
 
         if (enabled && date != null) {
             notificationRepository.scheduleNotification(note); 
@@ -118,17 +123,20 @@ public class NoteViewModel extends AndroidViewModel {
         };
 
         for (int i = 0; i < topics.length; i++) {
-            addNote(new Note(titles[i], topics[i], new LinkedHashSet<>()));
+            // Directly use noteLibrary.addNote to avoid multiple LiveData updates in a loop
+            noteLibrary.addNote(new Note(titles[i], topics[i], new LinkedHashSet<>()));
         }
+        refreshNotesLiveData(); // Single refresh after loop
         snackbarMessage.setValue("Demo notes added");
     }
 
     public void saveNote(Note note, boolean isNewNote) {
         if (isNewNote) {
-            addNote(note);
+            noteLibrary.addNote(note); 
         } else {
+            noteLibrary.updateNote(note); // Added call to updateNote in NoteLibrary
         }
-        notesLiveData.setValue(noteLibrary.getNotes()); 
+        refreshNotesLiveData(); 
     }
 
 
@@ -154,7 +162,7 @@ public class NoteViewModel extends AndroidViewModel {
 
     public void processViewNoteIntent(String noteId) {
         if (noteId == null) return;
-        List<Note> currentNotes = noteLibrary.getNotes();
+        List<Note> currentNotes = noteLibrary.getNotes(); // Use a local copy for iteration
         if (currentNotes == null) return;
 
         for (Note note : currentNotes) {
