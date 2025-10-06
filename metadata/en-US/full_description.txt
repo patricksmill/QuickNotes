@@ -1,3 +1,13 @@
-QuickNotes is a simple note taking app with the ability to create tagged notes fast. Notes can be tagged manually, with simple keyword tagging, or leveraging AI services*.
+A note-taking application for Android devices that makes taking and organizing notes simpler, leveraging the power of AI (user-provided OpenAI API key required).
 
-*User-provided OpenAI API key required.
+## Functionality
+
+This Android application provides the following features:
+
+- Add a new note
+- Viewing all notes
+- Search notes by title, content, and tags
+- Filter notes based on tags
+- Edit an existing note
+- Auto-tag a note based on keywords, or by using an Open AI API response
+- Delete a note by swiping

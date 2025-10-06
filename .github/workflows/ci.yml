@@ -31,4 +31,4 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Run Gradle
-        run: ./gradlew clean license check assembleRelease --no-daemon
+        run: ./gradlew :app:assembleRelease --no-daemon

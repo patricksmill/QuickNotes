@@ -6,14 +6,6 @@
 
 A note-taking application for Android devices that makes taking and organizing notes simpler, leveraging the power of AI.
 
-## Project Structure
-
-The project follows the Model-View-Controller (MVC) architectural pattern:
-
-- model: Contains the data models and business logic
-- view: Contains the UI components and layouts
-- controller: Contains the logic that connects the model and view
-
 ## Functionality
 
 This Android application provides the following features:
@@ -33,7 +25,6 @@ This Android application provides the following features:
 - BUG: User should not be able to set a previous time for a notification for the current day
 - BUG: Notifications are not disabled once a user has untoggled the notification for a note
 - Users should be able to launch QuickNotes from the notification, or delete the note right from the notification pane via a button on the notification
-
 
 ## How to Run the Application
 
@@ -64,13 +55,13 @@ This roadmap outlines the planned improvements and future direction for QuickNot
 
 ### Medium-Term Goals
 *   **Database Persistence:** Migrate from JSON file storage to a Room database for improved performance, querying capabilities, and data integrity.
-*   **Kotlin Migration (Incremental):** Begin strategically migrating key components from Java to Kotlin to leverage modern language features like coroutines for background tasks and improved null safety.
-*   **Rich Text Editing:** Implement basic rich text editing features for note content (e.g., bold, italics, checklists).
+- **Kotlin Migration (Incremental):** Begin strategically migrating key components from Java to Kotlin to leverage modern language features like coroutines for background tasks and improved null safety.
+-   **Rich Text Editing:** Implement basic rich text editing features for note content (e.g., bold, italics, checklists).
 *   **Advanced Search & Filtering:** Introduce more granular search options (e.g., by creation/modification date, notes without tags).
 *   **UI Test Automation:** Add more Espresso UI tests for critical user flows.
 
 ### Long-Term Goals
-*   **Cloud Sync & Backup:** Explore options for syncing notes across devices using a cloud service (e.g., Google Drive API or a dedicated backend).
+-   **Cloud Sync & Backup:** Explore options for syncing notes across devices using a cloud service (e.g., Google Drive API or a dedicated backend).
 *   **Customizable Themes:** Offer users options for different app themes (e.g., various dark and light modes, accent colors).
 *   **Tablet/Foldable UI Optimization:** Enhance layouts and user experience for larger screens and foldable devices.
 *   **AI Feature Expansion:**
@@ -78,4 +69,3 @@ This roadmap outlines the planned improvements and future direction for QuickNot
     *   Explore possibilities for natural language search queries.
 *   **Home Screen Widgets:** Develop widgets for quick note creation or displaying specific notes.
 *   **CI/CD Pipeline:** Set up a Continuous Integration/Continuous Deployment pipeline for automated builds and testing.
-
