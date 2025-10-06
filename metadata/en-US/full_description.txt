@@ -11,3 +11,5 @@ A simple note-taking application for Android devices that makes taking and organ
 * Delete a note by swiping
 * Schedule note reminders
 * Pin notes to the top of the list
+
+This was originally created for my semester-long software design class, and I have since worked on it occasionally since.
