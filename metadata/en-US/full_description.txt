@@ -1,8 +1,8 @@
 A note-taking application for Android devices that makes taking and organizing notes simpler, leveraging the power of AI (user-provided OpenAI API key required).
 
-## Functionality
+<b> Functionality</b>
 
-This Android application provides the following features:
+<li> Android application provides the following features:</li>
 
 - Add a new note
 - Viewing all notes
