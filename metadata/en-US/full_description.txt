@@ -1,13 +1,13 @@
-A note-taking application for Android devices that makes taking and organizing notes simpler, leveraging the power of AI (user-provided OpenAI API key required).
+A simple note-taking application for Android devices that makes taking and organizing notes simpler, leveraging the power of AI (user-provided OpenAI API key required).
 
-<b> Functionality</b>
+<b>QuickNotes Features:</b>
 
-<li> Android application provides the following features:</li>
+<b>Features:</b>
 
-- Add a new note
-- Viewing all notes
-- Search notes by title, content, and tags
-- Filter notes based on tags
-- Edit an existing note
-- Auto-tag a note based on keywords, or by using an Open AI API response
-- Delete a note by swiping
+* Quickly add a new note
+* Easily search notes by title, content, and tags
+* Filter notes based on tags
+* Auto-tag a note based on keywords, or by using an Open AI API response
+* Delete a note by swiping
+* Schedule note reminders
+* Pin notes to the top of the list
