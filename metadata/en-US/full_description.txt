@@ -1,0 +1,3 @@
+QuickNotes is a simple note taking app with the ability to create tagged notes fast. Notes can be tagged manually, with simple keyword tagging, or leveraging AI services*.
+
+*User-provided OpenAI API key required.
