@@ -49,12 +49,23 @@
                 android:ellipsize="end" />
 
             <ImageView
+                android:id="@+id/noteNotifIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="@string/notification_scheduled"
+                android:padding="1dp"
+                android:src="@drawable/ic_bell"
+                app:tint="?attr/colorOnSurfaceVariant"
+                android:visibility="gone"
+                android:background="?attr/selectableItemBackgroundBorderless" />
+
+            <ImageView
                 android:id="@+id/notePinIcon"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:contentDescription="@string/pin_icon"
                 android:padding="1dp"
-                android:src="@drawable/ic_pin_outline"
+                android:src="@drawable/selector_pin"
                 app:tint="?attr/colorOnSurfaceVariant"
                 android:clickable="true"
                 android:focusable="true"

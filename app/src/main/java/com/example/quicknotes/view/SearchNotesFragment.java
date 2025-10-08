@@ -31,7 +31,7 @@ import com.example.quicknotes.model.Tag;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.chip.Chip;
 
-import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -42,7 +42,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SearchNotesFragment extends Fragment {
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault());
+    private DateFormat dateFormat;
 
     private FragmentSearchNotesBinding binding;
     private NoteViewModel noteViewModel;
@@ -65,6 +65,13 @@ public class SearchNotesFragment extends Fragment {
         noteViewModel = new ViewModelProvider(requireActivity()).get(NoteViewModel.class);
         navController = NavHostFragment.findNavController(this);
 
+        // Use a non-static, locale-aware formatter so changes to locale at runtime are respected
+        dateFormat = java.text.DateFormat.getDateTimeInstance(
+                java.text.DateFormat.MEDIUM,
+                java.text.DateFormat.SHORT,
+                Locale.getDefault()
+        );
+
         setupRecyclerViews();
         setupSearchView();
         setupClickListeners();
@@ -79,6 +86,7 @@ public class SearchNotesFragment extends Fragment {
             }
         });
     }
+
 
     private void setupRecyclerViews() {
         binding.notesRecyclerView.setAdapter(notesListAdapter);
@@ -407,15 +415,11 @@ public class SearchNotesFragment extends Fragment {
             public void bind(Note note) {
                 binding.noteNameText.setText(note.getTitle());
                 binding.noteContentText.setText(note.getContent());
-                binding.noteDateText.setText(DATE_FORMAT.format(note.getLastModified()));
+                binding.noteDateText.setText(dateFormat.format(note.getLastModified()));
                 binding.noteTagsText.setText(TextUtils.join(", ", note.getTagNames()));
                 setupPins(binding.notePinIcon, note);
                 boolean showNotif = (note.isNotificationsEnabled() && note.getNotificationDate() != null && note.getNotificationDate().after(new java.util.Date()));
-                if (showNotif) {
-                    binding.noteTagsText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_bell, 0, 0, 0);
-                } else {
-                    binding.noteTagsText.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
-                }
+                binding.noteNotifIcon.setVisibility(showNotif ? View.VISIBLE : View.GONE);
                 binding.getRoot().setOnClickListener(v -> onManageNotes(note));
             }
         }

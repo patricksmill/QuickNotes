@@ -5,8 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp"
-    android:background="?attr/colorSurface">
+    android:padding="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -138,7 +137,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="AI suggest tags"
+                        android:contentDescription="@string/ai_suggest_tags"
                         android:padding="8dp"
                         android:src="@drawable/ic_sparkles"
                         app:tint="?attr/colorOnSurfaceVariant" />
