@@ -42,7 +42,7 @@ public class KeywordTagDictionary {
             return map;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             return Collections.emptyMap();
         }
     }

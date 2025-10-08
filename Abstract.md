@@ -1,5 +1,15 @@
-# Poster Abstract
+# QuickNotes - An AI powered note-taking mobile app
 
-For my software design class, I was assigned the task of creating an Android app. I wanted to create an app that I would see myself using every day. I brainstormed a few ideas and put a list of some I liked into the default notes app on my iPhone, to which I found was horribly organized. No easy organization system to decipher types of notes. Everything was group chronologically, and the only way to organize was to create folders. This was fine for the occasional note, but I needed a better way to organize my notes, which is why I decided to make QuickNotes.
+## Additional Authors
+Rui Meireles
 
-QuickNotes is a note-taking app that makes it quick to create, edit, and organize your notes. Adding a note is as simple as pressing a button.
+## Institution
+Vassar College
+
+## Abstract
+
+QuickNotes is an intelligent note-taking app for Android that rethinks personal organization via AI-powered auto-tagging. I built this app for my software design class to solve my own frustration with disorganized notes. Traditional note apps force chronological organization with manual folder management—inefficient for daily use. QuickNotes eliminates this problem by automatically categorizing notes using OpenAI's API while maintaining full user control.
+
+The app leverages modern Android architecture (MVVM, Material Design 3) to deliver a seamless experience. Users can create notes normally, and the AI instantly suggests relevant tags based on content analysis. Features include notification reminders, manual/auto tagging, and reliable local storage. The AI integration demonstrates practical machine learning in mobile development, solving everyday organizational issues with contemporary note-taking apps.
+
+Since submitting QuickNotes as my semester-long project, I have continued to refine and iterate on the app. The biggest of such iterations was a switch to the MVVM design pattern instead of MVC, requiring a major rewrite of the application.

@@ -30,4 +30,7 @@
     <string name="try_it">Try it!</string>
     <string name="add_tag">Add tag</string>
     <string name="pick_tags">Pick tags</string>
+    <string name="onboarding_step_description">Description of what this step is about and what the user should do.</string>
+    <string name="tag_name_placeholder">Tag Name</string>
+    <string name="ai_suggest_tags">AI suggest tags</string>
 </resources>

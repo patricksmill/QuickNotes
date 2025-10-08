@@ -45,7 +45,7 @@ public final class Persistence {
             List<Note> notes = new Gson().fromJson(reader, listType);
             return notes != null ? notes : new ArrayList<>();
         } catch (IOException e) {
-            e.printStackTrace();
+            android.util.Log.e("Persistence", "Failed to load notes", e);
             return new ArrayList<>();
         }
     }
@@ -62,7 +62,7 @@ public final class Persistence {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             gson.toJson(notes, writer);
         } catch (IOException e) {
-            e.printStackTrace();
+            android.util.Log.e("Persistence", "Failed to save notes", e);
         }
     }
 
@@ -82,7 +82,7 @@ public final class Persistence {
             Map<String, Integer> map = new Gson().fromJson(reader, type);
             return map != null ? map : new HashMap<>();
         } catch (IOException e) {
-            e.printStackTrace();
+            android.util.Log.e("Persistence", "Failed to load tag map", e);
             return new HashMap<>();
         }
     }
@@ -99,7 +99,7 @@ public final class Persistence {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             gson.toJson(map, writer);
         } catch (IOException e) {
-            e.printStackTrace();
+            android.util.Log.e("Persistence", "Failed to save tag map", e);
         }
     }
 }

@@ -147,7 +147,7 @@ public class NoteLibrary {
      */
     public List<Note> searchNotes(@NonNull String query, boolean title, boolean content, boolean tag) {
         if (query.trim().isEmpty()) {
-            return getNotes(); // Return a new copy
+            return getNotes(); // Return copies
         }
         String lower = query.toLowerCase();
         Set<Note> results = new LinkedHashSet<>();

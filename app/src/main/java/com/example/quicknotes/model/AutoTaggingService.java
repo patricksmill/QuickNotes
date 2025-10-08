@@ -307,7 +307,7 @@ public class AutoTaggingService {
      * @param uiHandler Handler for UI thread operations
      */
     private void handleAiTaggingError(@NonNull Exception e, @NonNull Handler uiHandler) {
-        e.printStackTrace();
+        // e.printStackTrace();
         android.util.Log.e(TAG, "AI tagging error", e);
         uiHandler.post(() ->
                 Toast.makeText(ctx, "Auto-tag error: " + e.getMessage(),
