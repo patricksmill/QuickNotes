@@ -1,56 +1,49 @@
-package com.example.quicknotes.model;
+package com.example.quicknotes.model
 
-import android.content.Context;
+import android.content.Context
+import android.util.Log
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import java.io.IOException
+import java.io.InputStreamReader
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.lang.reflect.Type;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-public class KeywordTagDictionary {
-    private static final String FILE_NAME = "keyword_tags.json";
-    private static Map<String, String> keywordToTagMap;
-
+object KeywordTagDictionary {
+    private const val TAG = "KeywordTagDictionary"
+    private const val FILE_NAME = "keyword_tags.json"
+    
+    // Create Gson instance once instead of each call
+    private val gson = Gson()
 
     /**
      * Loads the tag map from a JSON file.
      * @param ctx the context of the application
      * @return a map of keywords to tags, or an empty map if the file does not exist
      */
-    public static Map<String, String> loadTagMap(Context ctx) {
-        try (InputStream is = ctx.getAssets().open(FILE_NAME);
-             Reader reader = new InputStreamReader(is)) {
+    fun loadTagMap(ctx: Context): Map<String, String> {
+        return try {
+            ctx.assets.open(FILE_NAME).use { inputStream ->
+                InputStreamReader(inputStream).use { reader ->
+                    val listType = object : TypeToken<List<KeywordTag>>() {}.type
+                    val list: List<KeywordTag> = gson.fromJson(reader, listType)
 
-            Type listType = new TypeToken<List<KeywordTag>>(){}.getType();
-            List<KeywordTag> list = new Gson().fromJson(reader, listType);
-
-            Map<String,String> map = new HashMap<>();
-            if (list != null) {
-                for (KeywordTag kt : list) {
-                    if (kt.keyword != null && kt.tag != null) {
-                        map.put(kt.keyword.toLowerCase(), kt.tag);
-                    }
+                    list.mapNotNull { kt ->
+                        if (kt.keyword != null && kt.tag != null) {
+                            kt.keyword.lowercase() to kt.tag
+                        } else null
+                    }.toMap()
                 }
             }
-            return map;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return Collections.emptyMap();
+        } catch (e: IOException) {
+            Log.w(TAG, "Could not read $FILE_NAME from assets", e)
+            emptyMap()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing $FILE_NAME", e)
+            emptyMap()
         }
     }
 
-    private static class KeywordTag {
-        String keyword;
-        String tag;
-    }
-
-
+    private data class KeywordTag(
+        val keyword: String? = null,
+        val tag: String? = null
+    )
 }
