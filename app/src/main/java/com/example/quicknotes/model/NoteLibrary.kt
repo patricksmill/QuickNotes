@@ -1,224 +1,198 @@
-package com.example.quicknotes.model;
+package com.example.quicknotes.model
 
-import android.content.Context;
-
-import androidx.annotation.NonNull;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import java.util.Date
 
 /**
  * NoteLibrary manages the collection of notes and their associated operations.
  * It acts as the Model in the MVC architecture, providing methods to add, edit, delete, search, and manage notes.
  */
-public class NoteLibrary {
-    private final Context ctx;
-    private final List<Note> notes;
-    private Note recentlyDeletedNote;
-    private final TagManager tagManager;
-
-    /**
-     * Constructs a NoteLibrary instance with the given context.
-     *
-     * @param ctx The application context
-     */
-    public NoteLibrary(@NonNull Context ctx) {
-        this.ctx = ctx.getApplicationContext();
-        this.notes = new ArrayList<>(Persistence.loadNotes(this.ctx));
-        ensureNoteIds();
-        this.tagManager = new TagManager(this);
-    }
-
+class NoteLibrary(ctx: Context) {
     /**
      * Returns the application context associated with this library.
-     *
-     * @return The application context
      */
-    public Context getContext() {
-        return ctx;
-    }
+    val context: Context = ctx.applicationContext
+    
+    private val notes: MutableList<Note> = mutableListOf()
+    private var recentlyDeletedNote: Note? = null
 
     /**
      * Returns the ManageTags instance for tag management.
-     *
-     * @return The ManageTags instance
      */
-    public TagManager getManageTags() {
-        return tagManager;
+    val manageTags: TagManager
+
+    init {
+        notes.addAll(Persistence.loadNotes(context))
+        ensureNoteIds()
+        this.manageTags = TagManager(this)
     }
 
     /**
      * Returns a list of all notes in the library.
-     *
-     * @return List of all notes
      */
-    public List<Note> getNotes() {
-        return new ArrayList<>(notes);
-    }
+    fun getNotes(): List<Note> = notes.toList()
 
     /**
      * Adds a new note to the library.
-     *
-     * @param note The note to add
      */
-    public void addNote(@NonNull Note note) {
-        if (note.getTitle() == null) return;
-        String title = note.getTitle().trim();
-        if (title.isEmpty()) return;
-        if (notes.stream().anyMatch(n -> n.getTitle().equalsIgnoreCase(title))) {
-            return;
+    fun addNote(note: Note) {
+        val title = note.title.trim()
+        if (title.isEmpty()) return
+        
+        // Check if a note with the same title already exists
+        if (notes.any { it.title.equals(title, ignoreCase = true) }) {
+            return
         }
-        updateNoteDate(note);
-        boolean aiMode = tagManager.isAiMode();
-        boolean confirmAi = new TagSettingsManager(ctx).isAiConfirmationEnabled();
-        if (aiMode) {
-            if (confirmAi) {
+        
+        updateNoteDate(note)
+        
+        val aiMode = manageTags.isAiMode
+        val confirmAi = TagSettingsManager(context).isAiConfirmationEnabled
+        
+        when {
+            aiMode && confirmAi -> {
                 // If AI confirmation is enabled but we're offline, fall back to simple tagging now
-                if (!isOnline()) {
-                    tagManager.simpleAutoTag(note, tagManager.getAutoTagLimit());
+                if (!isOnline) {
+                    manageTags.simpleAutoTag(note, manageTags.autoTagLimit)
                 }
                 // Otherwise, suggestions UI will handle user confirmation; do not auto-apply here
-            } else {
-                tagManager.aiAutoTag(note, tagManager.getAutoTagLimit());
             }
-        } else {
-            // Always run simple tagging when AI mode is off
-            tagManager.simpleAutoTag(note, tagManager.getAutoTagLimit());
+            aiMode -> {
+                manageTags.aiAutoTag(note, manageTags.autoTagLimit)
+            }
+            else -> {
+                // Always run simple tagging when AI mode is off
+                manageTags.simpleAutoTag(note, manageTags.autoTagLimit)
+            }
         }
-        notes.add(note);
-        Persistence.saveNotes(ctx, notes);
+        
+        notes.add(note)
+        Persistence.saveNotes(context, notes)
     }
 
     /**
      * Deletes a note from the library.
-     *
-     * @param note The note to delete
      */
-    public void deleteNote(@NonNull Note note) {
+    fun deleteNote(note: Note) {
         if (notes.remove(note)) {
-            recentlyDeletedNote = note;
-            Persistence.saveNotes(ctx, notes);
+            recentlyDeletedNote = note
+            Persistence.saveNotes(context, notes)
         }
     }
 
     /**
      * Undoes the last delete operation, restoring the most recently deleted note.
-     *
-     * @return true if the note was successfully restored, false otherwise
      */
-    public boolean undoDelete() {
-        if (recentlyDeletedNote != null) {
-            notes.add(recentlyDeletedNote);
-            updateNoteDate(recentlyDeletedNote);
-            Persistence.saveNotes(ctx, notes);
-            recentlyDeletedNote = null;
-            return true;
-        }
-        return false;
+    fun undoDelete(): Boolean {
+        val deletedNote = recentlyDeletedNote ?: return false
+        
+        notes.add(deletedNote)
+        updateNoteDate(deletedNote)
+        Persistence.saveNotes(context, notes)
+        recentlyDeletedNote = null
+        return true
     }
 
     /**
      * Searches for notes by title, content, or tags, in any combination.
-     *
-     * @param query   The search query
-     * @param title   True to search by title
-     * @param content True to search by content
-     * @param tag     True to search by tags
-     * @return List of notes that match the search query
      */
-    public List<Note> searchNotes(@NonNull String query, boolean title, boolean content, boolean tag) {
-        if (query.trim().isEmpty()) {
-            return getNotes();
+    fun searchNotes(
+        query: String,
+        title: Boolean,
+        content: Boolean,
+        tag: Boolean
+    ): List<Note> {
+        val trimmedQuery = query.trim()
+        if (trimmedQuery.isEmpty()) {
+            return getNotes()
         }
-        String lower = query.toLowerCase();
-        Set<Note> results = new LinkedHashSet<>();
+        
+        val lowerQuery = trimmedQuery.lowercase()
+        val results = mutableSetOf<Note>()
+        
         if (title) {
-            notes.stream()
-                    .filter(n -> n.getTitle().toLowerCase().contains(lower))
-                    .forEach(results::add);
+            results.addAll(
+                notes.filter { it.title.lowercase().contains(lowerQuery) }
+            )
         }
+        
         if (content) {
-            notes.stream()
-                    .filter(n -> n.getContent().toLowerCase().contains(lower))
-                    .forEach(results::add);
+            results.addAll(
+                notes.filter { it.content.lowercase().contains(lowerQuery) }
+            )
         }
+        
         if (tag) {
-            notes.stream()
-                    .filter(n -> n.getTags().stream()
-                            .anyMatch(t -> t.name().toLowerCase().contains(lower)))
-                    .forEach(results::add);
+            results.addAll(
+                notes.filter { note ->
+                    note.tags.any { tag ->
+                        tag.name.lowercase().contains(lowerQuery)
+                    }
+                }
+            )
         }
-        return new ArrayList<>(results);
+        
+        return results.toList()
     }
 
     /**
      * Toggles the pinned status of a note.
-     *
-     * @param note The note to toggle the pinned status of
      */
-    public void togglePin(@NonNull Note note) {
-        note.setPinned(!note.isPinned());
-        Persistence.saveNotes(ctx, notes);
+    fun togglePin(note: Note) {
+        note.isPinned = !note.isPinned
+        Persistence.saveNotes(context, notes)
     }
 
     /**
      * Deletes all notes from the library.
      * This operation cannot be undone.
      */
-    public void deleteAllNotes() {
-        notes.clear();
-        recentlyDeletedNote = null;
-        tagManager.cleanupUnusedTags();
-        Persistence.saveNotes(ctx, notes);
+    fun deleteAllNotes() {
+        notes.clear()
+        recentlyDeletedNote = null
+        manageTags.cleanupUnusedTags()
+        Persistence.saveNotes(context, notes)
     }
 
     /**
      * Updates notification settings for a note and persists the changes.
-     * @param note The note to update
-     * @param enabled Whether notifications are enabled
-     * @param date The notification date/time
      */
-    public void updateNoteNotificationSettings(@NonNull Note note, boolean enabled, Date date) {
-        note.setNotificationsEnabled(enabled);
-        note.setNotificationDate(date);
-        Persistence.saveNotes(ctx, notes);
+    fun updateNoteNotificationSettings(note: Note, enabled: Boolean, date: Date?) {
+        note.isNotificationsEnabled = enabled
+        note.notificationDate = date
+        Persistence.saveNotes(context, notes)
     }
 
     /**
      * Updates the last modified date of a note.
-     *
-     * @param note The note to update
      */
-    private void updateNoteDate(@NonNull Note note) {
-        note.setLastModified(new Date());
+    private fun updateNoteDate(note: Note) {
+        note.lastModified = Date()
     }
 
     /**
-     * Ensures all notes have a stable unique ID. Assigns a UUID to any note missing an ID
-     * and persists the updated list once if changes were made.
+     * Ensures all notes have a stable unique ID. 
+     * Since Note.id is immutable, we don't need to check for empty IDs
+     * as they are always generated during Note construction.
      */
-    private void ensureNoteIds() {
-        boolean changed = false;
-        for (Note n : notes) {
-            if (n.getId() == null || n.getId().trim().isEmpty()) {
-                n.setId(java.util.UUID.randomUUID().toString());
-                changed = true;
-            }
-        }
-        if (changed) {
-            Persistence.saveNotes(ctx, notes);
-        }
+    private fun ensureNoteIds() {
+        // Note: Since Note.id is a val property that's always initialized with UUID.randomUUID(),
+        // we don't need to check for empty IDs. All notes should already have valid IDs.
+        // This method is kept for compatibility but doesn't need to do anything.
     }
 
-    private boolean isOnline() {
-        android.net.ConnectivityManager cm = (android.net.ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm == null) return false;
-        android.net.Network network = cm.getActiveNetwork();
-        if (network == null) return false;
-        android.net.NetworkCapabilities caps = cm.getNetworkCapabilities(network);
-        return caps != null && caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET);
-    }
+    /**
+     * Checks if the device is currently online.
+     */
+    private val isOnline: Boolean
+        get() {
+            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+                ?: return false
+            
+            val network = cm.activeNetwork ?: return false
+            val caps = cm.getNetworkCapabilities(network)
+            return caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+        }
 }

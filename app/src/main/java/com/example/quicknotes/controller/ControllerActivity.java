@@ -6,23 +6,23 @@ import android.os.Bundle;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.example.quicknotes.R;
-import com.example.quicknotes.model.TagManager;
 import com.example.quicknotes.model.Note;
 import com.example.quicknotes.model.NoteLibrary;
 import com.example.quicknotes.model.Notifier;
 import com.example.quicknotes.model.OnboardingManager;
+import com.example.quicknotes.model.TagManager;
 import com.example.quicknotes.view.MainUI;
 import com.example.quicknotes.view.ManageNoteFragment;
 import com.example.quicknotes.view.NotesUI;
 import com.example.quicknotes.view.SearchNotesFragment;
 import com.example.quicknotes.view.SettingsFragment;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Date;

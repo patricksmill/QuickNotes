@@ -1,415 +1,417 @@
-package com.example.quicknotes.view;
+package com.example.quicknotes.view
 
-import android.app.AlertDialog;
-import android.os.Bundle;
-import android.text.TextUtils;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.widget.SearchView;
-import androidx.core.content.ContextCompat;
-import androidx.core.graphics.ColorUtils;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.DiffUtil;
-import androidx.recyclerview.widget.ItemTouchHelper;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.example.quicknotes.R;
-import com.example.quicknotes.databinding.FragmentSearchNotesBinding;
-import com.example.quicknotes.databinding.ListNoteBinding;
-import com.example.quicknotes.databinding.TagChipBinding;
-import com.example.quicknotes.model.Note;
-import com.example.quicknotes.model.Tag;
-import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.chip.Chip;
-
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-import java.util.stream.Collectors;
+import android.content.DialogInterface
+import android.content.res.ColorStateList
+import android.os.Bundle
+import android.text.TextUtils
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import androidx.appcompat.widget.SearchView
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.quicknotes.R
+import com.example.quicknotes.controller.ControllerActivity
+import com.example.quicknotes.databinding.FragmentSearchNotesBinding
+import com.example.quicknotes.databinding.ListNoteBinding
+import com.example.quicknotes.databinding.TagChipBinding
+import com.example.quicknotes.model.Note
+import com.example.quicknotes.model.Tag
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 /**
  * Fragment responsible for displaying and managing the main notes view.
  * Provides functionality for searching, filtering, sorting, and managing notes.
  * Follows MVC pattern by delegating all business logic to the controller.
  */
-public class SearchNotesFragment extends Fragment implements NotesUI {
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault());
-    
-    private FragmentSearchNotesBinding binding;
-    private Listener listener;
-    private final TagListAdapter tagAdapter = new TagListAdapter();
-    private final NotesListAdapter notesListAdapter = new NotesListAdapter();
-    private final Set<String> activeTagFilters = new LinkedHashSet<>();
-    private List<Note> baseNotes = new ArrayList<>();
-    private String currentSortBy = "date";
+class SearchNotesFragment : Fragment(), NotesUI {
+    private var binding: FragmentSearchNotesBinding? = null
+    private var listener: NotesUI.Listener? = null
+    private val tagAdapter = TagListAdapter()
+    private val notesListAdapter = NotesListAdapter()
+    private val activeTagFilters: MutableSet<String> = mutableSetOf()
+    private var baseNotes: MutableList<Note> = mutableListOf()
+    private var currentSortBy = "date"
 
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        binding = FragmentSearchNotesBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        binding = FragmentSearchNotesBinding.inflate(inflater, container, false)
+        return binding?.root
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        setupRecyclerViews();
-        setupSearchView();
-        setupClickListeners();
-        setupSwipeToDelete();
-        if (listener != null) updateView(listener.onGetNotes());
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setupRecyclerViews()
+        setupSearchView()
+        setupClickListeners()
+        setupSwipeToDelete()
+        listener?.let { updateView(it.onGetNotes()) }
     }
 
-    private void setupRecyclerViews() {
-        binding.notesRecyclerView.setAdapter(notesListAdapter);
-        binding.notesRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        binding.tagRecyclerView.setAdapter(tagAdapter);
-        binding.tagRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+    private fun setupRecyclerViews() {
+        binding?.let { binding ->
+            binding.notesRecyclerView.adapter = notesListAdapter
+            binding.notesRecyclerView.layoutManager = LinearLayoutManager(context)
+            binding.tagRecyclerView.adapter = tagAdapter
+            binding.tagRecyclerView.layoutManager = LinearLayoutManager(
+                context,
+                LinearLayoutManager.HORIZONTAL,
+                false
+            )
+        }
     }
 
-    private void setupSearchView() {
-        SearchView searchView = binding.searchBar;
-        searchView.setOnCloseListener(() -> {
-            searchView.setQuery("", false);
-            if (listener != null) listener.onSearchNotes("", true, true, true);
-            return false;
-        });
+    private fun setupSearchView() {
+        val searchView = binding?.searchBar ?: return
+        searchView.setOnCloseListener {
+            searchView.setQuery("", false)
+            listener?.onSearchNotes("", true, true, true)
+            false
+        }
 
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                return handleSearch(query);
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String): Boolean {
+                return handleSearch(query)
             }
 
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                return handleSearch(newText);
+            override fun onQueryTextChange(newText: String): Boolean {
+                return handleSearch(newText)
             }
 
-            private boolean handleSearch(String query) {
-                if (listener != null) listener.onSearchNotes(query, true, true, true);
-                return true;
+            private fun handleSearch(query: String): Boolean {
+                listener?.onSearchNotes(query, true, true, true)
+                return true
             }
-        });
+        })
     }
 
-    private void setupClickListeners() {
-        binding.sortButton.setOnClickListener(v -> showSortDialog());
-        binding.manageTagsButton.setOnClickListener(v -> {
-            if (getActivity() instanceof com.example.quicknotes.controller.ControllerActivity) {
-                getParentFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainerView, new ManageTagsFragment())
+    private fun setupClickListeners() {
+        binding?.let { binding ->
+            binding.sortButton.setOnClickListener { showSortDialog() }
+            binding.manageTagsButton.setOnClickListener {
+                if (activity is ControllerActivity) {
+                    parentFragmentManager.beginTransaction()
+                        .replace(R.id.fragmentContainerView, ManageTagsFragment())
                         .addToBackStack(null)
-                        .commit();
+                        .commit()
+                }
             }
-        });
-        binding.addNoteFab.setOnClickListener(v -> { if (listener != null) listener.onNewNote(); });
-        binding.addNoteFab.setOnLongClickListener(v -> {
-            if (listener != null) {
-                listener.onAddDemoNotes();
-                updateView(listener.onGetNotes());
+            binding.addNoteFab.setOnClickListener { listener?.onNewNote() }
+            binding.addNoteFab.setOnLongClickListener {
+                listener?.let {
+                    it.onAddDemoNotes()
+                    updateView(it.onGetNotes())
+                }
+                true
             }
-            return true;
-        });
-        binding.settingsButton.setOnClickListener(v -> { if (listener != null) listener.onOpenSettings(); });
-    }
-
-    private void setupSwipeToDelete() {
-        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
-            @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-                return false;
-            }
-
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                int position = viewHolder.getBindingAdapterPosition();
-                if (position == RecyclerView.NO_POSITION || listener == null) return;
-
-                Note noteToDelete = notesListAdapter.listNotes.get(position);
-                listener.onDeleteNote(noteToDelete);
-                Snackbar.make(binding.getRoot(), "Note deleted", Snackbar.LENGTH_LONG)
-                        .setAction("Undo", v -> listener.onUndoDelete())
-                        .show();
-            }
-        }).attachToRecyclerView(binding.notesRecyclerView);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (listener != null) updateView(listener.onGetNotes());
-    }
-
-    public void setListener(Listener listener) {
-        this.listener = listener;
-        if (listener != null && binding != null) updateView(listener.onGetNotes());
-    }
-
-    public void updateView(List<Note> notes) {
-        baseNotes = notes != null ? new ArrayList<>(notes) : new ArrayList<>();
-        if (binding != null && listener != null) {
-            tagAdapter.updateData(listener.onManageTags().getAllTags());
-            tagAdapter.setSelectedTags(activeTagFilters);
-            displayNotes();
+            binding.settingsButton.setOnClickListener { listener?.onOpenSettings() }
         }
     }
 
-    private void displayNotes() {
-        if (binding == null || listener == null) return;
+    private fun setupSwipeToDelete() {
+        ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                return false
+            }
 
-        List<Note> notes = activeTagFilters.isEmpty() ? new ArrayList<>(baseNotes)
-                : baseNotes.stream()
-                .filter(n -> listener.onManageTags().filterNotesByTags(activeTagFilters).contains(n))
-                .collect(Collectors.toList());
-
-        notes.sort((a, b) -> {
-            int pinCmp = Boolean.compare(b.isPinned(), a.isPinned());
-            if (pinCmp != 0) return pinCmp;
-            return "title".equals(currentSortBy) 
-                    ? a.getTitle().compareToIgnoreCase(b.getTitle())
-                    : b.getLastModified().compareTo(a.getLastModified());
-        });
-
-        notesListAdapter.updateData(notes);
-        boolean isEmpty = notes.isEmpty();
-        binding.emptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
-        binding.notesRecyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.bindingAdapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    val note = notesListAdapter.listNotes[position]
+                    listener?.onDeleteNote(note)
+                    Snackbar.make(
+                        binding?.root ?: return,
+                        "Note deleted",
+                        Snackbar.LENGTH_LONG
+                    ).setAction("Undo") {
+                        listener?.onUndoDelete()
+                    }.show()
+                }
+            }
+        }).attachToRecyclerView(binding?.notesRecyclerView)
     }
 
-    private void setupPins(ImageView pinIcon, Note note) {
-        pinIcon.setSelected(note.isPinned());
-        pinIcon.setOnClickListener(v -> {
-            if (listener == null) return;
-            listener.onTogglePin(note);
-            v.setSelected(note.isPinned());
-            Snackbar.make(binding.getRoot(), "Note " + (note.isPinned() ? "pinned" : "unpinned"), Snackbar.LENGTH_SHORT).show();
-        });
+    fun setListener(listener: NotesUI.Listener?) {
+        this.listener = listener
     }
 
-    private void showSortDialog() {
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Sort Notes")
-                .setItems(new String[]{"Sort by Date", "Sort by Title"}, (dialog, which) -> {
-                    currentSortBy = (which == 1) ? "title" : "date";
-                    displayNotes();
+    fun updateView(notes: List<Note>) {
+        baseNotes.clear()
+        baseNotes.addAll(notes)
+        displayNotes()
+    }
+
+    private fun displayNotes() {
+        var notes = baseNotes.toMutableList()
+
+        // Apply tag filtering
+        if (activeTagFilters.isNotEmpty()) {
+            notes = notes.filter { note ->
+                note.tags.any { tag ->
+                    activeTagFilters.contains(tag.name)
+                }
+            }.toMutableList()
+        }
+
+        // Sort notes
+        notes.sortWith { a, b ->
+            when (currentSortBy) {
+                "title" -> a.title.compareTo(b.title, ignoreCase = true)
+                else -> b.lastModified.compareTo(a.lastModified)
+            }
+        }
+
+        notesListAdapter.updateData(notes)
+        val isEmpty = notes.isEmpty()
+        binding?.let { binding ->
+            binding.emptyState.visibility = if (isEmpty) View.VISIBLE else View.GONE
+            binding.notesRecyclerView.visibility = if (isEmpty) View.GONE else View.VISIBLE
+        }
+    }
+
+    private fun setupPins(pinIcon: ImageView, note: Note) {
+        pinIcon.isSelected = note.isPinned
+        pinIcon.setOnClickListener { view ->
+            listener ?: return@setOnClickListener
+            listener!!.onTogglePin(note)
+            view.isSelected = note.isPinned
+            Snackbar.make(
+                binding?.root ?: return@setOnClickListener,
+                "Note ${if (note.isPinned) "pinned" else "unpinned"}",
+                Snackbar.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    private fun showSortDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Sort Notes")
+            .setItems(
+                arrayOf("Sort by Date", "Sort by Title"),
+                DialogInterface.OnClickListener { _, which ->
+                    currentSortBy = if (which == 1) "title" else "date"
+                    displayNotes()
                 })
-                .show();
+            .show()
     }
 
-    private class TagListAdapter extends RecyclerView.Adapter<TagListAdapter.ViewHolder> {
-        private List<Tag> listTags = new LinkedList<>();
-        private final Set<String> selectedTags = new LinkedHashSet<>();
+    private inner class TagListAdapter : RecyclerView.Adapter<TagListAdapter.ViewHolder>() {
+        private var listTags: MutableList<Tag> = mutableListOf()
+        private val selectedTags: MutableSet<String> = mutableSetOf()
 
-        public TagListAdapter() {
-            setHasStableIds(true);
+        init {
+            setHasStableIds(true)
         }
 
-        @NonNull
-        @Override
-        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new ViewHolder(TagChipBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            return ViewHolder(
+                TagChipBinding.inflate(
+                    LayoutInflater.from(parent.context),
+                    parent,
+                    false
+                )
+            )
         }
 
-        @Override
-        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            holder.bind(listTags.get(position), selectedTags.contains(listTags.get(position).name()));
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            holder.bind(listTags[position], selectedTags.contains(listTags[position].name))
         }
 
-        @Override
-        public int getItemCount() { return listTags.size(); }
+        override fun getItemCount(): Int = listTags.size
 
-        @Override
-        public long getItemId(int position) {
-            return listTags.get(position).name().hashCode();
-        }
+        override fun getItemId(position: Int): Long = listTags[position].name.hashCode().toLong()
 
-        public void updateData(@NonNull Collection<Tag> tags) {
-            List<Tag> newList = new ArrayList<>(tags);
-            DiffUtil.DiffResult diff = DiffUtil.calculateDiff(new DiffUtil.Callback() {
-                @Override
-                public int getOldListSize() { return listTags.size(); }
+        fun updateData(tags: Collection<Tag>) {
+            val newList = tags.toMutableList()
+            val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+                override fun getOldListSize(): Int = listTags.size
+                override fun getNewListSize(): Int = newList.size
 
-                @Override
-                public int getNewListSize() { return newList.size(); }
-
-                @Override
-                public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-                    return listTags.get(oldItemPosition).name()
-                            .equals(newList.get(newItemPosition).name());
+                override fun areItemsTheSame(
+                    oldItemPosition: Int,
+                    newItemPosition: Int
+                ): Boolean {
+                    return listTags[oldItemPosition].name == newList[newItemPosition].name
                 }
 
-                @Override
-                public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-                    Tag a = listTags.get(oldItemPosition);
-                    Tag b = newList.get(newItemPosition);
-                    return a.name().equals(b.name()) && a.colorResId() == b.colorResId();
+                override fun areContentsTheSame(
+                    oldItemPosition: Int,
+                    newItemPosition: Int
+                ): Boolean {
+                    val a = listTags[oldItemPosition]
+                    val b = newList[newItemPosition]
+                    return a.name == b.name && a.colorResId() == b.colorResId()
                 }
-            });
-            this.listTags = newList;
-            diff.dispatchUpdatesTo(this);
+            })
+            this.listTags = newList
+            diff.dispatchUpdatesTo(this)
         }
 
-        public void setSelectedTags(@NonNull Set<String> names) {
-            Set<String> previous = new LinkedHashSet<>(selectedTags);
-            selectedTags.clear();
-            selectedTags.addAll(names);
+        fun setSelectedTags(names: Set<String>) {
+            val previous = selectedTags.toMutableSet()
+            selectedTags.clear()
+            selectedTags.addAll(names)
 
             // Notify only affected chips
-            Set<String> changed = new LinkedHashSet<>(previous);
-            changed.addAll(selectedTags);
-            for (String name : changed) {
-                int pos = findTagPositionByName(name);
-                if (pos >= 0) notifyItemChanged(pos);
+            val changed = previous + selectedTags
+            for (name in changed) {
+                val pos = findTagPositionByName(name)
+                if (pos >= 0) notifyItemChanged(pos)
             }
         }
 
-        private int findTagPositionByName(String name) {
-            for (int i = 0; i < listTags.size(); i++) {
-                if (listTags.get(i).name().equals(name)) return i;
-            }
-            return -1;
+        fun findTagPositionByName(name: String): Int {
+            return listTags.indexOfFirst { it.name == name }
         }
 
-        class ViewHolder extends RecyclerView.ViewHolder {
-            private final TagChipBinding binding;
-
-            public ViewHolder(@NonNull TagChipBinding binding) {
-                super(binding.getRoot());
-                this.binding = binding;
-            }
-
-            public void bind(Tag tag, boolean isSelected) {
-                Chip chip = binding.tagChip;
-                chip.setText(tag.name());
-                chip.setChecked(isSelected);
-                int baseColor = ContextCompat.getColor(requireContext(), tag.colorResId());
-                chip.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(baseColor));
+        inner class ViewHolder(private val binding: TagChipBinding) : RecyclerView.ViewHolder(
+            binding.root
+        ) {
+            fun bind(tag: Tag, isSelected: Boolean) {
+                val chip = binding.tagChip
+                chip.text = tag.name
+                chip.isChecked = isSelected
+                val baseColor = ContextCompat.getColor(requireContext(), tag.colorResId())
+                chip.chipBackgroundColor = ColorStateList.valueOf(baseColor)
+                
                 // Choose readable text color based on luminance
-                int textColor = ColorUtils.calculateLuminance(baseColor) > 0.5 ?
-                        ContextCompat.getColor(requireContext(), android.R.color.black) :
-                        ContextCompat.getColor(requireContext(), android.R.color.white);
-                chip.setTextColor(textColor);
-                chip.setChipStrokeColor(android.content.res.ColorStateList.valueOf(ColorUtils.blendARGB(baseColor, 0xFF000000, 0.2f)));
-                chip.setChipStrokeWidth(getResources().getDimensionPixelSize(R.dimen.chip_stroke_width));
-                chip.setOnClickListener(v -> {
-                    String previouslySelected = selectedTags.isEmpty() ? null : selectedTags.iterator().next();
-                    selectedTags.clear();
-                    if (!isSelected) selectedTags.add(tag.name());
+                val textColor = if (ColorUtils.calculateLuminance(baseColor) > 0.5) {
+                    ContextCompat.getColor(requireContext(), android.R.color.black)
+                } else {
+                    ContextCompat.getColor(requireContext(), android.R.color.white)
+                }
+                chip.setTextColor(textColor)
+                chip.chipStrokeColor = ColorStateList.valueOf(
+                    ColorUtils.blendARGB(baseColor, -0x1000000, 0.2f)
+                )
+                chip.chipStrokeWidth = resources.getDimensionPixelSize(R.dimen.chip_stroke_width).toFloat()
+                
+                chip.setOnClickListener {
+                    val previouslySelected = selectedTags.firstOrNull()
+                    selectedTags.clear()
+                    if (!isSelected) selectedTags.add(tag.name)
 
-                    activeTagFilters.clear();
-                    activeTagFilters.addAll(selectedTags);
-                    displayNotes();
+                    activeTagFilters.clear()
+                    activeTagFilters.addAll(selectedTags)
+                    displayNotes()
 
                     // Notify only the two chips that changed selection state
-                    if (previouslySelected != null) {
-                        int prevPos = findTagPositionByName(previouslySelected);
-                        if (prevPos >= 0) notifyItemChanged(prevPos);
+                    previouslySelected?.let { prev ->
+                        val prevPos = findTagPositionByName(prev)
+                        if (prevPos >= 0) notifyItemChanged(prevPos)
                     }
-                    int currPos = getBindingAdapterPosition();
-                    if (currPos != RecyclerView.NO_POSITION) notifyItemChanged(currPos);
-                });
+                    val currPos = bindingAdapterPosition
+                    if (currPos != RecyclerView.NO_POSITION) notifyItemChanged(currPos)
+                }
             }
         }
     }
 
-    private class NotesListAdapter extends RecyclerView.Adapter<NotesListAdapter.ViewHolder> {
-        List<Note> listNotes = new LinkedList<>();
+    private inner class NotesListAdapter : RecyclerView.Adapter<NotesListAdapter.ViewHolder>() {
+        var listNotes: MutableList<Note> = mutableListOf()
 
-        public NotesListAdapter() {
-            setHasStableIds(true);
+        init {
+            setHasStableIds(true)
         }
 
-        @NonNull
-        @Override
-        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new ViewHolder(ListNoteBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            return ViewHolder(
+                ListNoteBinding.inflate(
+                    LayoutInflater.from(parent.context),
+                    parent,
+                    false
+                )
+            )
         }
 
-        @Override
-        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            holder.bind(listNotes.get(position));
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            holder.bind(listNotes[position])
         }
 
-        @Override
-        public int getItemCount() { return listNotes.size(); }
+        override fun getItemCount(): Int = listNotes.size
 
-        @Override
-        public long getItemId(int position) {
-            return listNotes.get(position).getId().hashCode();
-        }
+        override fun getItemId(position: Int): Long = listNotes[position].id.hashCode().toLong()
 
-        public void updateData(@NonNull List<Note> notes) {
-            List<Note> newList = new ArrayList<>(notes);
-            DiffUtil.DiffResult diff = DiffUtil.calculateDiff(new DiffUtil.Callback() {
-                @Override
-                public int getOldListSize() { return listNotes.size(); }
+        fun updateData(notes: List<Note>) {
+            val newList = notes.toMutableList()
+            val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+                override fun getOldListSize(): Int = listNotes.size
+                override fun getNewListSize(): Int = newList.size
 
-                @Override
-                public int getNewListSize() { return newList.size(); }
-
-                @Override
-                public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-                    String a = listNotes.get(oldItemPosition).getId();
-                    String b = newList.get(newItemPosition).getId();
-                    if (a == null || b == null) return false;
-                    return a.equals(b);
+                override fun areItemsTheSame(
+                    oldItemPosition: Int,
+                    newItemPosition: Int
+                ): Boolean {
+                    return listNotes[oldItemPosition].id == newList[newItemPosition].id
                 }
 
-                @Override
-                public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-                    Note a = listNotes.get(oldItemPosition);
-                    Note b = newList.get(newItemPosition);
-                    if (a.isPinned() != b.isPinned()) return false;
-                    if (!a.getTitle().equals(b.getTitle())) return false;
-                    if (!a.getContent().equals(b.getContent())) return false;
-                    if (a.getLastModified() == null ? b.getLastModified() != null : !a.getLastModified().equals(b.getLastModified())) return false;
-                    if (a.isNotificationsEnabled() != b.isNotificationsEnabled()) return false;
-                    if (a.getNotificationDate() == null ? b.getNotificationDate() != null : !a.getNotificationDate().equals(b.getNotificationDate())) return false;
+                override fun areContentsTheSame(
+                    oldItemPosition: Int,
+                    newItemPosition: Int
+                ): Boolean {
+                    val a = listNotes[oldItemPosition]
+                    val b = newList[newItemPosition]
+                    if (a.isPinned != b.isPinned) return false
+                    if (a.title != b.title) return false
+                    if (a.content != b.content) return false
+                    if (a.lastModified != b.lastModified) return false
+                    if (a.isNotificationsEnabled != b.isNotificationsEnabled) return false
+                    if (a.notificationDate != b.notificationDate) return false
+                    
                     // Compare tag names (ordering not guaranteed)
-                    List<String> at = new ArrayList<>(a.getTagNames());
-                    List<String> bt = new ArrayList<>(b.getTagNames());
-                    java.util.Collections.sort(at);
-                    java.util.Collections.sort(bt);
-                    return at.equals(bt);
+                    val at = a.tagNames.toMutableList()
+                    val bt = b.tagNames.toMutableList()
+                    at.sort()
+                    bt.sort()
+                    return at == bt
                 }
-            });
-            this.listNotes = newList;
-            diff.dispatchUpdatesTo(this);
+            })
+            this.listNotes = newList
+            diff.dispatchUpdatesTo(this)
         }
 
-        private class ViewHolder extends RecyclerView.ViewHolder {
-            private final ListNoteBinding binding;
-
-            public ViewHolder(@NonNull final ListNoteBinding binding) {
-                super(binding.getRoot());
-                this.binding = binding;
-            }
-
-            public void bind(Note note) {
-                binding.noteNameText.setText(note.getTitle());
-                binding.noteContentText.setText(note.getContent());
-                binding.noteDateText.setText(DATE_FORMAT.format(note.getLastModified()));
-                binding.noteTagsText.setText(TextUtils.join(", ", note.getTagNames()));
-                setupPins(binding.notePinIcon, note);
-                boolean showNotif = (listener != null && listener.onShouldShowNotificationIcon(note));
+        inner class ViewHolder(private val binding: ListNoteBinding) :
+            RecyclerView.ViewHolder(binding.root) {
+            fun bind(note: Note) {
+                binding.noteNameText.text = note.title
+                binding.noteContentText.text = note.content
+                binding.noteDateText.text = DATE_FORMAT.format(note.lastModified)
+                binding.noteTagsText.text = TextUtils.join(", ", note.tagNames)
+                setupPins(binding.notePinIcon, note)
+                
+                val showNotif = listener?.onShouldShowNotificationIcon(note) == true
                 if (showNotif) {
-                    binding.noteTagsText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_bell, 0, 0, 0);
+                    binding.noteTagsText.setCompoundDrawablesWithIntrinsicBounds(
+                        R.drawable.ic_bell, 0, 0, 0
+                    )
                 } else {
-                    binding.noteTagsText.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+                    binding.noteTagsText.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0)
                 }
-                binding.getRoot().setOnClickListener(v -> { if (listener != null) listener.onManageNotes(note); });
+                
+                binding.root.setOnClickListener {
+                    listener?.onManageNotes(note)
+                }
             }
         }
+    }
+
+    companion object {
+        private val DATE_FORMAT = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
     }
 }
