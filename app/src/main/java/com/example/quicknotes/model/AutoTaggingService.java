@@ -186,7 +186,7 @@ public class AutoTaggingService {
         if (!toAssign.isEmpty()) {
             android.util.Log.d(TAG, "Simple auto-tag will assign: " + toAssign);
             tagOperations.setTags(note, toAssign);
-            Toast.makeText(ctx, "Auto-tagged: " + String.join(", ", toAssign), Toast.LENGTH_SHORT).show();
+            Toast.makeText(ctx, "Auto-tagged " + note.getTitle() + ": " + String.join(", ", toAssign), Toast.LENGTH_SHORT).show();
         }
     }
 
