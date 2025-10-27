@@ -1,135 +1,58 @@
-package com.example.quicknotes.model;
+package com.example.quicknotes.model
 
-import androidx.annotation.NonNull;
+import java.util.Date
+import java.util.UUID
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+/**
+ * Represents a note in the QuickNotes application.
+ * Contains title, content, tags, and metadata like creation/modification dates.
+ */
+class Note(
+    var title: String = "",
+    var content: String = "",
+    tags: Set<Tag>? = null
+) {
+    val id: String = UUID.randomUUID().toString()
+    val tags: MutableSet<Tag> = tags?.toMutableSet() ?: mutableSetOf()
+    var lastModified: Date = Date()
+    var isNotificationsEnabled: Boolean = false
+    var notificationDate: Date? = null
+    var isPinned: Boolean = false
 
-public class Note implements INote {
-    private String id;
-    private String title;
-    private String content;
-    private final Set<Tag> tags;
-    private Date lastModified;
-    private boolean notificationsEnabled;
-    private Date notificationDate;
-
-
-    private boolean pinned;
-
-    public Note(String title, String content, Set<Tag> tags) {
-        this.id = java.util.UUID.randomUUID().toString();
-        this.title = title;
-        this.content = content;
-        this.tags = tags != null
-            ? new LinkedHashSet<>(tags)
-            : new LinkedHashSet<>();
-        this.lastModified = new Date();
-        this.pinned = false;
+    /**
+     * Adds a tag to the note and updates the last modified date.
+     */
+    fun setTag(tag: Tag) {
+        tags.add(tag)
+        this.lastModified = Date()
     }
 
-    public String getTitle() {
-        return title;
+    /**
+     * Gets a list of tag names from the note's tags.
+     */
+    val tagNames: List<String>
+        get() = tags.map { it.name }
+
+    /**
+     * Returns a string representation of the note.
+     */
+    override fun toString(): String {
+        return "$title: $content"
     }
 
-    public void setTitle(String title) {
-        this.title = title;
-        this.lastModified = new Date();
+    /**
+     * Checks equality based on the note's ID.
+     */
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Note) return false
+        return id == other.id
     }
 
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-        this.lastModified = new Date();
-    }
-
-    @NonNull
-    @Override
-    public String toString() {
-        return title + ": " + content;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public Set<Tag> getTags() {
-        return tags;
-    }
-
-
-    public void setTag(Tag tag) {
-        tags.add(tag);
-        this.lastModified = new Date();
-    }
-
-    public Date getLastModified() {
-        return lastModified;
-    }
-
-    public List<String> getTagNames() {
-        Set<Tag> tags = getTags();
-        List<String> tagNames = new ArrayList<>();
-        if (tags != null) {
-            for (Tag tag : tags) {
-                tagNames.add(tag.name());
-            }
-        }
-        return tagNames;
-    }
-
-    public void setLastModified(Date lastModified) {
-        this.lastModified = lastModified;
-    }
-
-    public boolean isPinned() {
-        return pinned;
-    }
-
-    public void setPinned(boolean pinned) {
-        this.pinned = pinned;
-    }
-
-    public boolean isNotificationsEnabled() {
-        return notificationsEnabled;
-    }
-
-    public void setNotificationsEnabled(boolean enabled) {
-        this.notificationsEnabled = enabled;
-    }
-
-    public Date getNotificationDate() {
-        return notificationDate;
-    }
-
-    public void setNotificationDate(Date notificationDate) {
-        this.notificationDate = notificationDate;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Note note = (Note) o;
-        return java.util.Objects.equals(id, note.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return java.util.Objects.hash(id);
+    /**
+     * Returns hash code based on the note's ID.
+     */
+    override fun hashCode(): Int {
+        return id.hashCode()
     }
 }
-    
-
-
-
