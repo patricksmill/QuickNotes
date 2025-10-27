@@ -9,7 +9,6 @@ import androidx.annotation.NonNull;
 
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
-import com.openai.models.ChatModel;
 import com.openai.models.responses.Response;
 import com.openai.models.responses.ResponseCreateParams;
 import com.openai.models.responses.ResponseOutputItem;
@@ -186,7 +185,7 @@ public class AutoTaggingService {
         if (!toAssign.isEmpty()) {
             android.util.Log.d(TAG, "Simple auto-tag will assign: " + toAssign);
             tagOperations.setTags(note, toAssign);
-            Toast.makeText(ctx, "Auto-tagged: " + String.join(", ", toAssign), Toast.LENGTH_SHORT).show();
+            Toast.makeText(ctx, "Auto-tagged " + note.getTitle() + ": " + String.join(", ", toAssign), Toast.LENGTH_SHORT).show();
         }
     }
 
