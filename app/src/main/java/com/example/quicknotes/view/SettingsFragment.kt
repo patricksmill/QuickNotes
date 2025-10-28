@@ -1,165 +1,111 @@
-package com.example.quicknotes.view;
+package com.example.quicknotes.view
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import android.os.Bundle;
-import android.view.View;
+import android.os.Bundle
+import androidx.preference.EditTextPreference
+import androidx.preference.ListPreference
+import androidx.preference.Preference
+import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SeekBarPreference
+import androidx.preference.SwitchPreferenceCompat
+import com.example.quicknotes.R
+import com.example.quicknotes.model.TagSettingsManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.preference.EditTextPreference;
-import androidx.preference.Preference;
-import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.PreferenceManager;
-import androidx.preference.SeekBarPreference;
+class SettingsFragment : PreferenceFragmentCompat() {
+    private lateinit var tagSettingsManager: TagSettingsManager
 
-import com.example.quicknotes.R;
-import com.example.quicknotes.controller.ControllerActivity;
-import com.google.android.material.snackbar.Snackbar;
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        setPreferencesFromResource(R.xml.root_preferences, rootKey)
+        tagSettingsManager = TagSettingsManager(requireContext())
 
-/**
- * Fragment for managing application settings and preferences.
- */
-public class SettingsFragment extends PreferenceFragmentCompat implements NotesUI {
-    private NotesUI.Listener listener;
-
-    @Override
-    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-        setPreferencesFromResource(R.xml.root_preferences, rootKey);
-        setupApiKeyPreference();
-        setupAutoTagLimitPreference();
-        setupModelPreference();
-        setupDeleteAllPreference();
-        setupReplayTutorialPreference();
-        setupNotificationPermissionRequest();
-        setupManageTagsPreference();
+        setupVersionPref()
+        setupDeleteAllPref()
+        setupReplayTutorialPref()
+        setupNotifications()
+        setupAiPrefs()
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        if (getActivity() instanceof ControllerActivity) {
-            setListener((NotesUI.Listener) getActivity());
+    private fun setupVersionPref() {
+        val pm = requireContext().packageManager
+        val pkg = requireContext().packageName
+        val version = try {
+            val info = pm.getPackageInfo(pkg, 0)
+            info.versionName ?: ""
+        } catch (_: Exception) { "" }
+        findPreference<Preference>("app_version")?.summary = "Version: $version"
+    }
+
+    private fun setupDeleteAllPref() {
+        findPreference<Preference>("pref_delete_all")?.setOnPreferenceClickListener {
+            showDeleteAllConfirmationDialog()
+            true
         }
     }
 
-    private void setupApiKeyPreference() {
-        EditTextPreference apiKeyPref = findPreference("openai_api_key");
-        if (apiKeyPref != null) {
-            apiKeyPref.setSummaryProvider(preference -> {
-                String value = ((EditTextPreference) preference).getText();
-                if (value == null || value.trim().isEmpty()) {
-                    return "Not set";
-                }
-                return "Set";
-            });
-        }
-    }
-
-    private void setupAutoTagLimitPreference() {
-        SeekBarPreference limitPref = findPreference("auto_tag_limit");
-        if (limitPref == null) return;
-
-        int current = PreferenceManager.getDefaultSharedPreferences(requireContext()).getInt("auto_tag_limit", 3);
-        limitPref.setSummary(current + " tags per note");
-        limitPref.setOnPreferenceChangeListener((pref, newValue) -> {
-            pref.setSummary(newValue + " tags per note");
-            return true;
-        });
-    }
-
-    private void setupModelPreference() {
-        androidx.preference.ListPreference modelPref = findPreference("pref_ai_model");
-        if (modelPref == null) return;
-        modelPref.setSummaryProvider(pref -> {
-            CharSequence entry = ((androidx.preference.ListPreference) pref).getEntry();
-            return entry != null ? entry : "GPT-4.1 Nano";
-        });
-    }
-
-    private void setupDeleteAllPreference() {
-        Preference deleteAll = findPreference("pref_delete_all");
-        if (deleteAll == null) return;
-
-        deleteAll.setOnPreferenceClickListener(pref -> {
-            showDeleteConfirmation();
-            return true;
-        });
-    }
-
-    private void setupReplayTutorialPreference() {
-        Preference replayTutorialPref = findPreference("pref_replay_tutorial");
-        if (replayTutorialPref != null && getActivity() instanceof ControllerActivity activity) {
-            replayTutorialPref.setOnPreferenceClickListener(preference -> {
-                activity.startOnboardingTutorial();
-                // Navigate back to main screen for the tutorial
-                if (listener != null) {
-                    listener.onBrowseNotes();
-                }
-                return true;
-            });
-        }
-    }
-
-    private void showDeleteConfirmation() {
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Delete All Notes")
-                .setMessage("Are you sure? This will permanently erase all your notes.")
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(android.R.string.ok, (dlg1, which1) -> {
-                    if (listener != null) {
-                        listener.onDeleteAllNotes();
-                        showExitDialog();
-                    } else {
-                        showError();
-                    }
-                }).show();
-    }
-
-    private void showExitDialog() {
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Notes Deleted")
-                .setMessage("All notes have been deleted. The app will now exit.")
-                .setPositiveButton(android.R.string.ok, (dlg2, which2) -> requireActivity().finishAffinity())
-                .show();
-    }
-
-    /**
-     * Shows an error message using Snackbar
-     */
-    private void showError() {
-        View view = getView();
-        if (view != null) {
-            Snackbar.make(view, "Unable to delete notes at this time", Snackbar.LENGTH_SHORT).show();
-        }
-    }
-
-    private void setListener(NotesUI.Listener listener) {
-        this.listener = listener;
-    }
-
-    private void setupNotificationPermissionRequest() {
-        Preference allowNotiPref = findPreference("pref_noti");
-        if (allowNotiPref == null) return;
-        allowNotiPref.setOnPreferenceChangeListener((pref, newValue) -> {
-            boolean enabled = Boolean.TRUE.equals(newValue);
-            if (enabled && getActivity() instanceof ControllerActivity) {
-                ((ControllerActivity) getActivity()).requestNotificationPermissionFromSettings();
+    private fun showDeleteAllConfirmationDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Delete All Notes?")
+            .setMessage("This will permanently delete all notes. This action CANNOT be undone.")
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Delete") { _, _ ->
+                (activity as? com.example.quicknotes.controller.ControllerActivity)?.onDeleteAllNotes()
             }
-            return true;
-        });
+            .show()
     }
 
-    private void setupManageTagsPreference() {
-        Preference manageTags = findPreference("pref_manage_tags");
-        if (manageTags == null) return;
-        manageTags.setOnPreferenceClickListener(pref -> {
-            if (getActivity() instanceof ControllerActivity) {
-                getParentFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainerView, new ManageTagsFragment())
-                        .addToBackStack(null)
-                        .commit();
+    private fun setupReplayTutorialPref() {
+        findPreference<Preference>("pref_replay_tutorial")?.setOnPreferenceClickListener {
+            (activity as? com.example.quicknotes.controller.ControllerActivity)?.forceStartOnboardingFromSettings()
+            true
+        }
+    }
+
+    private fun setupNotifications() {
+        val notiPref = findPreference<SwitchPreferenceCompat>("pref_noti")
+        notiPref?.setOnPreferenceChangeListener { _, newValue ->
+            if (newValue as Boolean) {
+                (activity as? com.example.quicknotes.controller.ControllerActivity)?.requestPostNotificationsPermissionFromSettings()
             }
-            return true;
-        });
+            true
+        }
+    }
+
+    private fun setupAiPrefs() {
+        val autoTagLimitPref = findPreference<SeekBarPreference>("auto_tag_limit")
+        autoTagLimitPref?.summary = tagSettingsManager.autoTagLimit.toString()
+        autoTagLimitPref?.setOnPreferenceChangeListener { _, newValue ->
+            val limit = newValue as Int
+            tagSettingsManager.setAutoTagLimit(limit)
+            autoTagLimitPref.summary = limit.toString()
+            true
+        }
+
+        val aiModePref = findPreference<SwitchPreferenceCompat>("pref_ai_auto_tag")
+        aiModePref?.isChecked = tagSettingsManager.isAiMode
+        aiModePref?.setOnPreferenceChangeListener { _, newValue ->
+            tagSettingsManager.setAiMode(newValue as Boolean)
+            true
+        }
+
+        val confirmAiPref = findPreference<SwitchPreferenceCompat>("pref_ai_confirm")
+        confirmAiPref?.isChecked = tagSettingsManager.isAiConfirmationEnabled
+        confirmAiPref?.setOnPreferenceChangeListener { _, newValue ->
+            tagSettingsManager.setAiConfirmationEnabled(newValue as Boolean)
+            true
+        }
+
+        val modelPref = findPreference<ListPreference>("pref_ai_model")
+        modelPref?.summary = tagSettingsManager.getSelectedAiModelName()
+        modelPref?.setOnPreferenceChangeListener { _, newValue ->
+            tagSettingsManager.setSelectedAiModel(newValue as String)
+            modelPref.summary = tagSettingsManager.getSelectedAiModelName()
+            true
+        }
+
+        val apiKeyPref = findPreference<EditTextPreference>("openai_api_key")
+        apiKeyPref?.setOnPreferenceChangeListener { _, newValue ->
+            tagSettingsManager.setApiKey(newValue as String)
+            true
+        }
     }
 }

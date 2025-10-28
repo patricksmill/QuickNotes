@@ -1,48 +1,42 @@
-package com.example.quicknotes.model;
+package com.example.quicknotes.model
 
-import android.content.Context;
-import android.content.res.TypedArray;
-
-import androidx.annotation.ColorRes;
-import androidx.annotation.NonNull;
-
-import com.example.quicknotes.R;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import android.content.Context
+import androidx.annotation.ColorRes
+import com.example.quicknotes.R
+import java.util.Collections
+import java.util.Random
 
 /**
  * TagColorManager handles color assignment and management for tags.
  * It manages available colors and assigns colors to tag names persistently.
  */
-public class TagColorManager {
-    private final Context ctx;
-    private final List<ColorOption> availableColors;
-    private final Map<String, Integer> colorMap;
-    private final Random random = new Random();
+class TagColorManager(ctx: Context) {
+    private val ctx: Context = ctx.applicationContext
 
     /**
-         * Represents a color option for a tag.
-         */
-        public record ColorOption(String name, @ColorRes int resId) {
-            public ColorOption(String name, int resId) {
-                this.name = name;
-                this.resId = resId;
-            }
-        }
+     * Returns the list of available color options for tags.
+     *
+     * @return List of ColorOption
+     */
+    @JvmField
+    val availableColors: MutableList<ColorOption?>
+    private val colorMap: MutableMap<String?, Int?>
+    private val random = Random()
+
+    /**
+     * Represents a color option for a tag.
+     */
+    @JvmRecord
+    data class ColorOption(@JvmField val name: String, @JvmField @field:ColorRes val resId: Int)
 
     /**
      * Constructs a TagColorManager instance.
      *
      * @param ctx The application context
      */
-    public TagColorManager(@NonNull Context ctx) {
-        this.ctx = ctx.getApplicationContext();
-        this.availableColors = loadAvailableColors();
-        this.colorMap = Persistence.loadTagMap(ctx);
+    init {
+        this.availableColors = loadAvailableColors()
+        this.colorMap = Persistence.loadTagMap(ctx)
     }
 
     /**
@@ -50,30 +44,23 @@ public class TagColorManager {
      *
      * @return List of available color options
      */
-    private List<ColorOption> loadAvailableColors() {
-        String[] names = ctx.getResources().getStringArray(R.array.tag_color_names);
-        TypedArray ta = ctx.getResources().obtainTypedArray(R.array.tag_color_resources);
+    private fun loadAvailableColors(): MutableList<ColorOption?> {
+        val names = ctx.resources.getStringArray(R.array.tag_color_names)
+        val ta = ctx.resources.obtainTypedArray(R.array.tag_color_resources)
         try {
-            List<ColorOption> opts = new ArrayList<>();
-            for (int i = 0; i < ta.length() && i < names.length; i++) {
-                int id = ta.getResourceId(i, 0);
+            val opts: MutableList<ColorOption?> = ArrayList()
+            var i = 0
+            while (i < ta.length() && i < names.size) {
+                val id = ta.getResourceId(i, 0)
                 if (id != 0) {
-                    opts.add(new ColorOption(names[i], id));
+                    opts.add(ColorOption(names[i], id))
                 }
+                i++
             }
-            return Collections.unmodifiableList(opts);
+            return Collections.unmodifiableList<ColorOption?>(opts)
         } finally {
-            ta.recycle();
+            ta.recycle()
         }
-    }
-
-    /**
-     * Returns the list of available color options for tags.
-     *
-     * @return List of ColorOption
-     */
-    public List<ColorOption> getAvailableColors() {
-        return availableColors;
     }
 
     /**
@@ -82,15 +69,15 @@ public class TagColorManager {
      * @param tagName The name of the tag
      * @return The color resource ID
      */
-    public int getTagColorRes(@NonNull String tagName) {
-        String key = tagName.trim();
-        Integer res = colorMap.get(key);
+    fun getTagColorRes(tagName: String): Int {
+        val key = tagName.trim { it <= ' ' }
+        var res = colorMap[key]
         if (res == null || res == 0) {
-            res = assignRandomColor();
-            colorMap.put(key, res);
-            saveColorMap();
+            res = assignRandomColor()
+            colorMap.put(key, res)
+            saveColorMap()
         }
-        return res;
+        return res
     }
 
     /**
@@ -99,10 +86,10 @@ public class TagColorManager {
      * @param tagName The name of the tag
      * @param resId   The color resource ID
      */
-    public void setTagColor(@NonNull String tagName, int resId) {
-        if (tagName.trim().isEmpty()) return;
-        colorMap.put(tagName.trim(), resId);
-        saveColorMap();
+    fun setTagColor(tagName: String, resId: Int) {
+        if (tagName.trim { it <= ' ' }.isEmpty()) return
+        colorMap.put(tagName.trim { it <= ' ' }, resId)
+        saveColorMap()
     }
 
     /**
@@ -110,9 +97,9 @@ public class TagColorManager {
      *
      * @param usedTagNames Set of tag names currently in use
      */
-    public void cleanupUnusedColors(@NonNull java.util.Set<String> usedTagNames) {
-        if (colorMap.keySet().removeIf(k -> !usedTagNames.contains(k))) {
-            saveColorMap();
+    fun cleanupUnusedColors(usedTagNames: MutableSet<String?>) {
+        if (colorMap.keys.removeIf { k: String? -> !usedTagNames.contains(k) }) {
+            saveColorMap()
         }
     }
 
@@ -121,14 +108,14 @@ public class TagColorManager {
      *
      * @return Random color resource ID
      */
-    private int assignRandomColor() {
-        return availableColors.get(random.nextInt(availableColors.size())).resId;
+    private fun assignRandomColor(): Int {
+        return availableColors[random.nextInt(availableColors.size)]!!.resId
     }
 
     /**
      * Persists the color map to storage.
      */
-    private void saveColorMap() {
-        Persistence.saveTagMap(ctx, colorMap);
+    private fun saveColorMap() {
+        Persistence.saveTagMap(ctx, colorMap)
     }
-} 
+}

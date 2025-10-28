@@ -44,7 +44,7 @@ class AutoTaggingService(
         val combined = extractTextContent(note)
         val words = extractWords(combined)
         val dictionary = KeywordTagDictionary.loadTagMap(ctx)
-        Log.d(TAG, "Simple auto-tag extracted words=${words.size}, dictionary size=${dictionary?.size ?: 0}")
+        Log.d(TAG, "Simple auto-tag extracted words=${words.size}, dictionary size=${dictionary.size}")
         assignTagsFromDictionary(note, words, dictionary, limit)
     }
 
@@ -76,7 +76,7 @@ class AutoTaggingService(
                 
                 if (tagNames.isNotEmpty()) {
                     Log.d(TAG, "AI suggested tags: $tagNames")
-                    tagOperations.setTags(note, tagNames)
+                    tagOperations.setTags(note, tagNames.map { it as String? }.toMutableList())
                     tagNames.forEach { tagName ->
                         uiHandler.post { callback.onTagAssigned(tagName) }
                     }
@@ -101,10 +101,10 @@ class AutoTaggingService(
      * Suggestions are delivered on the main thread.
      */
     fun performAiSuggest(
-        note: Note, 
-        limit: Int, 
-        apiKey: String,
-        existingTags: Set<String>, 
+        note: Note,
+        limit: Int,
+        apiKey: String?,
+        existingTags: Set<String>,
         callback: TagSuggestionsCallback
     ) {
         val executor = Executors.newSingleThreadExecutor()
@@ -181,7 +181,7 @@ class AutoTaggingService(
         
         if (toAssign.isNotEmpty()) {
             Log.d(TAG, "Simple auto-tag will assign: $toAssign")
-            tagOperations.setTags(note, toAssign)
+            tagOperations.setTags(note, toAssign.map { it as String? }.toMutableList())
             Toast.makeText(
                 ctx,
                 "Auto-tagged ${note.title}: ${toAssign.joinToString(", ")}",
@@ -211,27 +211,27 @@ class AutoTaggingService(
      * @return Comma-separated list of suggested tags
      */
     private fun requestAiTags(
-        note: Note, 
-        limit: Int, 
-        apiKey: String,
+        note: Note,
+        limit: Int,
+        apiKey: String?,
         existingTags: Set<String>
     ): String {
         val client = OpenAIOkHttpClient.builder()
-            .apiKey(apiKey)
+            .apiKey(apiKey.toString())
             .build()
 
         val prompt = buildAiPrompt(note, limit, existingTags)
 
         // Resolve model dynamically: if settings uses "auto", fetch first chat model from OpenAI; otherwise honor selected key
         val settings = TagSettingsManager(ctx)
-        val key = settings.getSelectedAiModelKey()
+        val key = settings.selectedAiModelKey
 
         val modelId = if (key.equals("auto", ignoreCase = true)) {
             try {
                 // Fetch models and pick a viable chat model id
                 val ids = fetchChatModelIds(client)
                 if (ids.isEmpty()) "gpt-4o-mini" else ids[0]
-            } catch (ex: Exception) {
+            } catch (_: Exception) {
                 "gpt-4o-mini"
             }
         } else {
@@ -255,12 +255,12 @@ class AutoTaggingService(
             val list = client.models().list()
             for (m in list.data()) {
                 val id = m.id()
-                if (id != null && (id.startsWith("gpt-") || id.contains("chat"))) {
+                if (id.startsWith("gpt-") || id.contains("chat")) {
                     ids.add(id)
                 }
             }
-        } catch (ignored: Exception) {
-            // Ignore errors
+        } catch (_: Exception) {
+            // Ignore errors ;)
         }
         return ids
     }
