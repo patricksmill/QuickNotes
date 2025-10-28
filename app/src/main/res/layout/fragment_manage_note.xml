@@ -99,6 +99,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/tags_add_hint"
+                        android:paddingStart="@dimen/spacing_lg"
+                        android:paddingEnd="@dimen/spacing_lg"
                         android:imeOptions="actionDone"
                         android:inputType="text" />
 
@@ -127,13 +129,20 @@
 
             </LinearLayout>
 
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/selectedTagsChipGroup"
+            <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:scrollbars="none"
                 android:paddingBottom="16dp"
-                app:singleLine="true"
-                app:singleSelection="false" />
+                android:fillViewport="false">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/selectedTagsChipGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:singleLine="true"
+                    app:singleSelection="false" />
+            </HorizontalScrollView>
 
             <LinearLayout
                 android:id="@+id/notificationLayout"
