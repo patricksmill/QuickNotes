@@ -94,11 +94,12 @@
                     android:layout_weight="1"
                     app:endIconMode="custom">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/noteTagsText"
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/tagInputView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/tags_comma_separated"
+                        android:hint="@string/tags_add_hint"
+                        android:imeOptions="actionDone"
                         android:inputType="text" />
 
                 </com.google.android.material.textfield.TextInputLayout>
@@ -125,6 +126,14 @@
                     app:trackCornerRadius="8dp" />
 
             </LinearLayout>
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/selectedTagsChipGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="16dp"
+                app:singleLine="true"
+                app:singleSelection="false" />
 
             <LinearLayout
                 android:id="@+id/notificationLayout"

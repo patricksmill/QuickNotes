@@ -506,6 +506,11 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
         }
     }
 
+    // Expose a public refresh to update notes list and tag chips immediately
+    fun refreshNotesAndTags() {
+        updateNotesView()
+    }
+
     // OnboardingListener implementation
     override fun onOnboardingStarted() {
         isOnboardingActive = true

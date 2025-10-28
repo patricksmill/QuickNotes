@@ -1,19 +1,25 @@
 package com.example.quicknotes.view
 
 import android.os.Bundle
-import android.text.TextUtils
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.FrameLayout
+import androidx.core.content.ContextCompat
 import com.example.quicknotes.R
 import com.example.quicknotes.databinding.FragmentManageNoteBinding
 import com.example.quicknotes.model.Note
+import com.example.quicknotes.view.adapters.TagSuggestion
+import com.example.quicknotes.view.adapters.TagSuggestionAdapter
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import java.util.Calendar
@@ -24,10 +30,15 @@ import java.util.Date
  * Handles both new note creation and existing note modification.
  */
 class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
-    private var binding: FragmentManageNoteBinding? = null
-    private var listener: NotesUI.Listener? = null
-    private var currentNote: Note? = null
-    private var isNewNote = false
+	private var binding: FragmentManageNoteBinding? = null
+	private var listener: NotesUI.Listener? = null
+	private var currentNote: Note? = null
+	private var isNewNote = false
+	private val selectedTagNames: MutableSet<String> = linkedSetOf()
+	private var suggestionAdapter: TagSuggestionAdapter? = null
+	private var tagsDirty: Boolean = false
+	private val debounceHandler = Handler(Looper.getMainLooper())
+	private var debounceRunnable: Runnable? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, 
@@ -64,39 +75,191 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
         }
     }
 
-    /**
-     * Sets up all view listeners and event handlers.
-     */
-    private fun setupListeners() {
-        binding?.let { binding ->
-            binding.tagsInputLayout.setEndIconOnClickListener {
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("How to enter tags")
-                    .setMessage("Enter tags separated by commas, like:\n\nwork, urgent, meeting\n\nSpaces are optional but will be trimmed.")
-                    .setPositiveButton("Got it", null)
-                    .show()
-            }
+	/**
+	 * Sets up all view listeners and event handlers.
+	 */
+	private fun setupListeners() {
+		binding?.let { binding ->
 
-            binding.saveButton.setOnClickListener { saveNote() }
-            
-            val aiBtn = view?.findViewById<View>(R.id.aiSuggestButton)
-            val aiProgress = view?.findViewById<View>(R.id.aiSuggestProgress)
-            aiBtn?.setOnClickListener {
-                suggestTagsWithLoading(aiBtn, aiProgress)
-            }
-            
-            val cancel = view?.findViewById<View>(R.id.cancelButton)
-            cancel?.setOnClickListener { dismiss() }
-        }
-    }
+			binding.saveButton.setOnClickListener { saveNote() }
+			setupTagAutocomplete()
+			
+			val aiBtn = view?.findViewById<View>(R.id.aiSuggestButton)
+			val aiProgress = view?.findViewById<View>(R.id.aiSuggestProgress)
+			aiBtn?.setOnClickListener {
+				suggestTagsWithLoading(aiBtn, aiProgress)
+			}
+			
+			val cancel = view?.findViewById<View>(R.id.cancelButton)
+			cancel?.setOnClickListener { dismiss() }
+		}
+	}
 
-    private fun suggestTagsWithLoading(aiBtn: View?, progress: View?) {
-        listener ?: return
-        val aiConfigured = listener!!.onIsAiTaggingConfigured()
-        if (!aiConfigured) {
-            showError("AI tagging is not configured")
-            return
-        }
+	private fun setupTagAutocomplete() {
+		val input = binding?.tagInputView ?: return
+		rebuildSuggestions("")
+		input.setOnItemClickListener { parent, _, position, _ ->
+			val item = suggestionAdapter?.getItem(position)
+			when (item) {
+				is TagSuggestion.Existing -> addTagChip(item.tag.name)
+				is TagSuggestion.Create -> addTagChip(item.query)
+				else -> {}
+			}
+			input.setText("")
+		}
+		input.setOnEditorActionListener { _, actionId, _ ->
+			if (actionId == EditorInfo.IME_ACTION_DONE) {
+				val text = input.text?.toString()?.trim().orEmpty()
+				if (text.isNotEmpty()) addTagChip(text)
+				input.setText("")
+				true
+			} else false
+		}
+		input.addTextChangedListener(object : android.text.TextWatcher {
+			override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+			override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+				debounceRunnable?.let { debounceHandler.removeCallbacks(it) }
+				val q = s?.toString().orEmpty()
+				debounceRunnable = Runnable { rebuildSuggestions(q) }
+				debounceHandler.postDelayed(debounceRunnable!!, 200)
+			}
+			override fun afterTextChanged(s: android.text.Editable?) {}
+		})
+	}
+
+	private fun rebuildSuggestions(query: String) {
+		val input = binding?.tagInputView ?: return
+		val tm = listener?.onManageTags()
+		val all = tm?.allTags?.toList().orEmpty()
+		val lower = query.lowercase()
+		val filtered = all
+			.filter { !selectedTagNames.contains(it.name) }
+			.filter { lower.isEmpty() || it.name.lowercase().contains(lower) }
+			.sortedBy { it.name }
+			.map { TagSuggestion.Existing(it) }
+			.toMutableList<TagSuggestion>()
+		if (query.isNotBlank() && all.none { it.name.equals(query, ignoreCase = true) }) {
+			filtered.add(0, TagSuggestion.Create(query))
+		}
+		if (suggestionAdapter == null) {
+			suggestionAdapter = TagSuggestionAdapter(requireContext(), filtered)
+			input.setAdapter(suggestionAdapter)
+		} else {
+			suggestionAdapter?.updateData(filtered)
+		}
+	}
+
+	private fun addTagChip(name: String) {
+		val trimmed = name.trim()
+		if (trimmed.isEmpty() || selectedTagNames.contains(trimmed)) return
+		selectedTagNames.add(trimmed)
+		tagsDirty = true
+		val chip = Chip(requireContext())
+		chip.text = trimmed
+		chip.isCloseIconVisible = true
+		chip.setOnCloseIconClickListener {
+			binding?.selectedTagsChipGroup?.removeView(chip)
+			selectedTagNames.remove(trimmed)
+			tagsDirty = true
+			rebuildSuggestions(binding?.tagInputView?.text?.toString().orEmpty())
+			persistSelectedTags()
+		}
+		chip.setOnClickListener {
+			showTagActions(trimmed, chip)
+		}
+		// Try colorize from existing tags
+		val colorRes = listener?.onManageTags()?.allTags?.firstOrNull { it.name.equals(trimmed, true) }?.colorResId
+		if (colorRes != null) {
+			chip.chipBackgroundColor = android.content.res.ColorStateList.valueOf(
+				ContextCompat.getColor(requireContext(), colorRes)
+			)
+		}
+		binding?.selectedTagsChipGroup?.addView(chip)
+		rebuildSuggestions("")
+		persistSelectedTags()
+	}
+
+	private fun showTagActions(tagName: String, chip: Chip) {
+		val actions = arrayOf("Change color", "Rename", "Delete")
+		MaterialAlertDialogBuilder(requireContext())
+			.setTitle(tagName)
+			.setItems(actions) { _, which ->
+				when (which) {
+					0 -> showColorPickerForTag(tagName, chip)
+					1 -> promptRenameTag(tagName, chip)
+					2 -> confirmDeleteTag(tagName, chip)
+				}
+			}
+			.show()
+	}
+
+	private fun showColorPickerForTag(tagName: String, chip: Chip) {
+		val options = listener?.onGetAvailableColors()?.filterNotNull() ?: return
+		val names = options.map { it.name }.toTypedArray()
+		val resIds = options.map { it.resId }.toIntArray()
+		MaterialAlertDialogBuilder(requireContext())
+			.setTitle("Select color for '$tagName'")
+			.setItems(names) { _, which ->
+				val chosen = resIds[which]
+				listener?.onSetTagColor(tagName, chosen)
+				val color = ContextCompat.getColor(requireContext(), chosen)
+				chip.chipBackgroundColor = android.content.res.ColorStateList.valueOf(color)
+				(activity as? com.example.quicknotes.controller.ControllerActivity)?.refreshNotesAndTags()
+			}
+			.show()
+	}
+
+	private fun promptRenameTag(oldName: String, chip: Chip) {
+		val input = EditText(requireContext())
+		input.setText(oldName)
+		MaterialAlertDialogBuilder(requireContext())
+			.setTitle("Rename tag")
+			.setView(input)
+			.setNegativeButton(android.R.string.cancel, null)
+			.setPositiveButton("Rename") { _, _ ->
+				val newName = input.text?.toString()?.trim().orEmpty()
+				if (newName.isNotEmpty() && !newName.equals(oldName, true)) {
+					listener?.onRenameTag(oldName, newName)
+					selectedTagNames.remove(oldName)
+					selectedTagNames.add(newName)
+					chip.text = newName
+					tagsDirty = true
+					rebuildSuggestions(binding?.tagInputView?.text?.toString().orEmpty())
+					// Re-resolve color for the new name
+					listener?.onManageTags()?.allTags?.firstOrNull { it.name.equals(newName, true) }?.let { t ->
+						chip.chipBackgroundColor = android.content.res.ColorStateList.valueOf(
+							ContextCompat.getColor(requireContext(), t.colorResId)
+						)
+					}
+					persistSelectedTags()
+				}
+			}
+			.show()
+	}
+
+	private fun confirmDeleteTag(tagName: String, chip: Chip) {
+		MaterialAlertDialogBuilder(requireContext())
+			.setTitle("Delete tag")
+			.setMessage("Remove '$tagName' from all notes?")
+			.setNegativeButton(android.R.string.cancel, null)
+			.setPositiveButton("Delete") { _, _ ->
+				listener?.onDeleteTag(tagName)
+				binding?.selectedTagsChipGroup?.removeView(chip)
+				selectedTagNames.remove(tagName)
+				tagsDirty = true
+				rebuildSuggestions(binding?.tagInputView?.text?.toString().orEmpty())
+				persistSelectedTags()
+			}
+			.show()
+	}
+
+	private fun suggestTagsWithLoading(aiBtn: View?, progress: View?) {
+		listener ?: return
+		val aiConfigured = listener!!.onIsAiTaggingConfigured()
+		if (!aiConfigured) {
+			showError("AI tagging is not configured")
+			return
+		}
 
         val title = getText(binding!!.noteTitleText).trim()
         val content = getText(binding!!.noteContentText).trim()
@@ -108,8 +271,8 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
         val temp = Note(title, content, null)
         aiBtn?.isEnabled = false
         progress?.visibility = View.VISIBLE
-        
-        listener!!.onAiSuggestTags(temp, 5, 
+
+        listener!!.onAiSuggestTags(temp, 5,
             { suggestions ->
                 if (suggestions.isNullOrEmpty()) {
                     showError("No suggestions")
@@ -118,7 +281,7 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
                 }
                 aiBtn?.isEnabled = true
                 progress?.visibility = View.GONE
-            }, 
+            },
             { err ->
                 showError("Suggest failed: $err")
                 aiBtn?.isEnabled = true
@@ -127,30 +290,26 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
         )
     }
 
-    private fun showSuggestionDialog(suggestions: List<String>) {
-        val items = suggestions.toTypedArray()
-        val checked = BooleanArray(items.size)
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("AI tag suggestions")
-            .setMultiChoiceItems(
-                items,
-                checked
-            ) { _, which, isChecked ->
-                checked[which] = isChecked
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .setPositiveButton("Apply") { _, _ ->
-                val chosen = mutableListOf<String?>()
-                for (i in items.indices) {
-                    if (checked[i]) chosen.add(items[i])
-                }
-                if (chosen.isNotEmpty() && listener != null) {
-                    listener!!.onSetTags(currentNote!!, chosen)
-                    bindNoteFields()
-                }
-            }
-            .show()
-    }
+	private fun showSuggestionDialog(suggestions: List<String>) {
+		val items = suggestions.toTypedArray()
+		val checked = BooleanArray(items.size)
+		MaterialAlertDialogBuilder(requireContext())
+			.setTitle("AI tag suggestions")
+			.setMultiChoiceItems(
+				items,
+				checked
+			) { _, which, isChecked ->
+				checked[which] = isChecked
+			}
+			.setNegativeButton(android.R.string.cancel, null)
+			.setPositiveButton("Apply") { _, _ ->
+				for (i in items.indices) {
+					if (checked[i]) addTagChip(items[i])
+				}
+				persistSelectedTags()
+			}
+			.show()
+	}
 
     /**
      * Handles saving the current note.
@@ -161,25 +320,20 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
             return
         }
 
-        val title = getText(binding!!.noteTitleText).trim()
-        val content = getText(binding!!.noteContentText).trim()
-        val tagsString = getText(binding!!.noteTagsText)
+		val title = getText(binding!!.noteTitleText).trim()
+		val content = getText(binding!!.noteContentText).trim()
+		// Tags from chip selection
 
         if (title.isEmpty() || content.isEmpty()) {
             showError(getString(R.string.missing_item_field_error))
             return
         }
 
-        val tagNames = tagsString.split(",")
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .map { it as String? }
-            .toMutableList()
-
-        currentNote!!.title = title
-        currentNote!!.content = content
-        currentNote!!.tags.clear()
-        listener!!.onSetTags(currentNote!!, tagNames)
+		currentNote!!.title = title
+		currentNote!!.content = content
+		if (tagsDirty) {
+			persistSelectedTags()
+		}
 
         // If AI confirmation is enabled and this is a new note, show suggestions dialog instead of auto-applying
         if (isNewNote && listener!!.onShouldConfirmAiSuggestions() && listener!!.onIsAiTaggingConfigured()) {
@@ -261,12 +415,15 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
     private fun bindNoteFields() {
         currentNote ?: return
 
-        binding?.let { binding ->
-            binding.noteTitleText.setText(currentNote!!.title)
-            binding.noteContentText.setText(currentNote!!.content)
-            binding.noteTagsText.setText(
-                TextUtils.join(", ", currentNote!!.tagNames)
-            )
+		binding?.let { binding ->
+			binding.noteTitleText.setText(currentNote!!.title)
+			binding.noteContentText.setText(currentNote!!.content)
+			val initialTags = currentNote!!.tagNames.toList()
+			selectedTagNames.clear()
+			binding.selectedTagsChipGroup.removeAllViews()
+			for (t in initialTags) addTagChip(t)
+			binding.tagInputView.setText("")
+			tagsDirty = false
 
             setupNotificationFields()
         }
@@ -333,12 +490,21 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
         binding!!.timePicker.minute = defaultTime.get(Calendar.MINUTE)
     }
 
-    /**
-     * Sets the note to be edited in this fragment.
-     */
-    fun setNoteToEdit(note: Note?) {
-        this.currentNote = note
-        this.isNewNote = currentNote?.let { it.title.isEmpty() && it.content.isEmpty() } ?: false
-        binding?.let { bindNoteFields() }
-    }
+	/**
+	 * Sets the note to be edited in this fragment.
+	 */
+	fun setNoteToEdit(note: Note?) {
+		this.currentNote = note
+		this.isNewNote = currentNote?.let { it.title.isEmpty() && it.content.isEmpty() } ?: false
+		binding?.let { bindNoteFields() }
+	}
+
+	private fun persistSelectedTags() {
+		if (listener == null || currentNote == null) return
+		if (!tagsDirty) return
+		currentNote!!.tags.clear()
+		val tagNames = selectedTagNames.map { it as String? }.toMutableList()
+		listener!!.onSetTags(currentNote!!, tagNames)
+		tagsDirty = false
+	}
 }
