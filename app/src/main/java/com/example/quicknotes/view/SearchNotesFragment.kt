@@ -26,6 +26,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.Date
 
 /**
  * Fragment responsible for displaying and managing the main notes view.
@@ -40,6 +41,18 @@ class SearchNotesFragment : Fragment(), NotesUI {
     private val activeTagFilters: MutableSet<String> = mutableSetOf()
     private var baseNotes: MutableList<Note> = mutableListOf()
     private var currentSortBy = "date"
+
+    private data class RenderNote(
+        val source: Note,
+        val id: String,
+        val title: String,
+        val content: String,
+        val lastModified: Date,
+        val tagNames: List<String>,
+        val isPinned: Boolean,
+        val isNotificationsEnabled: Boolean,
+        val notificationDate: Date?
+    )
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -56,6 +69,7 @@ class SearchNotesFragment : Fragment(), NotesUI {
         setupSearchView()
         setupClickListeners()
         setupSwipeToDelete()
+        refreshTagChips()
         listener?.let { updateView(it.onGetNotes()) }
     }
 
@@ -132,8 +146,8 @@ class SearchNotesFragment : Fragment(), NotesUI {
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
-                    val note = notesListAdapter.listNotes[position]
-                    listener?.onDeleteNote(note)
+                    val item = notesListAdapter.listNotes[position]
+                    listener?.onDeleteNote(item.source)
                     Snackbar.make(
                         binding?.root ?: return,
                         "Note deleted",
@@ -153,7 +167,13 @@ class SearchNotesFragment : Fragment(), NotesUI {
     fun updateView(notes: List<Note>) {
         baseNotes.clear()
         baseNotes.addAll(notes)
+        refreshTagChips()
         displayNotes()
+    }
+
+    private fun refreshTagChips() {
+        val tags = listener?.onGetAllTags() ?: mutableSetOf()
+        tagAdapter.updateData(tags)
     }
 
     private fun displayNotes() {
@@ -168,11 +188,15 @@ class SearchNotesFragment : Fragment(), NotesUI {
             }.toMutableList()
         }
 
-        // Sort notes
+        // Sort notes: pinned first, then by current sort
         notes.sortWith { a, b ->
-            when (currentSortBy) {
-                "title" -> a.title.compareTo(b.title, ignoreCase = true)
-                else -> b.lastModified.compareTo(a.lastModified)
+            if (a.isPinned != b.isPinned) {
+                if (a.isPinned) -1 else 1
+            } else {
+                when (currentSortBy) {
+                    "title" -> a.title.compareTo(b.title, ignoreCase = true)
+                    else -> b.lastModified.compareTo(a.lastModified)
+                }
             }
         }
 
@@ -236,6 +260,44 @@ class SearchNotesFragment : Fragment(), NotesUI {
 
         override fun getItemId(position: Int): Long = listTags[position].name.hashCode().toLong()
 
+        fun updateData(tags: Collection<Tag>) {
+            val newList = tags.toMutableList()
+            val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+                override fun getOldListSize(): Int = listTags.size
+                override fun getNewListSize(): Int = newList.size
+
+                override fun areItemsTheSame(
+                    oldItemPosition: Int,
+                    newItemPosition: Int
+                ): Boolean {
+                    return listTags[oldItemPosition].name == newList[newItemPosition].name
+                }
+
+                override fun areContentsTheSame(
+                    oldItemPosition: Int,
+                    newItemPosition: Int
+                ): Boolean {
+                    val a = listTags[oldItemPosition]
+                    val b = newList[newItemPosition]
+                    return a.name == b.name && a.colorResId == b.colorResId
+                }
+            })
+            this.listTags = newList
+            diff.dispatchUpdatesTo(this)
+        }
+
+        fun setSelectedTags(names: Set<String>) {
+            val previous = selectedTags.toMutableSet()
+            selectedTags.clear()
+            selectedTags.addAll(names)
+
+            val changed = previous + selectedTags
+            for (name in changed) {
+                val pos = findTagPositionByName(name)
+                if (pos >= 0) notifyItemChanged(pos)
+            }
+        }
+
         fun findTagPositionByName(name: String): Int {
             return listTags.indexOfFirst { it.name == name }
         }
@@ -284,7 +346,7 @@ class SearchNotesFragment : Fragment(), NotesUI {
     }
 
     private inner class NotesListAdapter : RecyclerView.Adapter<NotesListAdapter.ViewHolder>() {
-        var listNotes: MutableList<Note> = mutableListOf()
+        var listNotes: MutableList<RenderNote> = mutableListOf()
 
         init {
             setHasStableIds(true)
@@ -309,7 +371,19 @@ class SearchNotesFragment : Fragment(), NotesUI {
         override fun getItemId(position: Int): Long = listNotes[position].id.hashCode().toLong()
 
         fun updateData(notes: List<Note>) {
-            val newList = notes.toMutableList()
+            val newList = notes.map { n ->
+                RenderNote(
+                    source = n,
+                    id = n.id,
+                    title = n.title,
+                    content = n.content,
+                    lastModified = n.lastModified,
+                    tagNames = n.tagNames.toList(),
+                    isPinned = n.isPinned,
+                    isNotificationsEnabled = n.isNotificationsEnabled,
+                    notificationDate = n.notificationDate
+                )
+            }.toMutableList()
             val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
                 override fun getOldListSize(): Int = listNotes.size
                 override fun getNewListSize(): Int = newList.size
@@ -333,12 +407,9 @@ class SearchNotesFragment : Fragment(), NotesUI {
                     if (a.lastModified != b.lastModified) return false
                     if (a.isNotificationsEnabled != b.isNotificationsEnabled) return false
                     if (a.notificationDate != b.notificationDate) return false
-                    
-                    // Compare tag names (ordering not guaranteed)
-                    val at = a.tagNames.toMutableList()
-                    val bt = b.tagNames.toMutableList()
-                    at.sort()
-                    bt.sort()
+
+                    val at = a.tagNames.toMutableList().apply { sort() }
+                    val bt = b.tagNames.toMutableList().apply { sort() }
                     return at == bt
                 }
             })
@@ -348,14 +419,14 @@ class SearchNotesFragment : Fragment(), NotesUI {
 
         inner class ViewHolder(private val binding: ListNoteBinding) :
             RecyclerView.ViewHolder(binding.root) {
-            fun bind(note: Note) {
+            fun bind(note: RenderNote) {
                 binding.noteNameText.text = note.title
                 binding.noteContentText.text = note.content
                 binding.noteDateText.text = DATE_FORMAT.format(note.lastModified)
                 binding.noteTagsText.text = TextUtils.join(", ", note.tagNames)
-                setupPins(binding.notePinIcon, note)
+                setupPins(binding.notePinIcon, note.source)
                 
-                val showNotif = listener?.onShouldShowNotificationIcon(note) == true
+                val showNotif = listener?.onShouldShowNotificationIcon(note.source) == true
                 if (showNotif) {
                     binding.noteTagsText.setCompoundDrawablesWithIntrinsicBounds(
                         R.drawable.ic_bell, 0, 0, 0
@@ -365,7 +436,7 @@ class SearchNotesFragment : Fragment(), NotesUI {
                 }
                 
                 binding.root.setOnClickListener {
-                    listener?.onManageNotes(note)
+                    listener?.onManageNotes(note.source)
                 }
             }
         }
