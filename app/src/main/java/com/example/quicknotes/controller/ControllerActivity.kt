@@ -148,7 +148,6 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
                     notifier!!.requestExactAlarmPermission()
                 }
                 .setNegativeButton("Later", null)
-                .setIcon(android.R.drawable.ic_dialog_info)
                 .show()
         }
     }
