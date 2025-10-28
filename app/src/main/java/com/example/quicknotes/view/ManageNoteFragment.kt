@@ -51,6 +51,7 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        @Suppress("DEPRECATION")
         dialog?.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         bindNoteFields()
         setupListeners()
@@ -210,8 +211,12 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
 	}
 
 	private fun promptRenameTag(oldName: String, chip: Chip) {
-		val input = EditText(requireContext())
+        val input = EditText(requireContext())
 		input.setText(oldName)
+        val hPad = resources.getDimensionPixelSize(R.dimen.spacing_lg)
+        val vPad = resources.getDimensionPixelSize(R.dimen.spacing_sm)
+        input.setPadding(hPad, vPad, hPad, vPad)
+        input.setSelection(input.text?.length ?: 0)
 		MaterialAlertDialogBuilder(requireContext())
 			.setTitle("Rename tag")
 			.setView(input)
