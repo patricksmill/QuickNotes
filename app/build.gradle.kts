@@ -61,6 +61,7 @@ android {
 
 
 dependencies {
+    implementation(kotlin("stdlib"))
     implementation(libs.openai.java)
     implementation(libs.gson)
     implementation(libs.androidx.security.crypto)
