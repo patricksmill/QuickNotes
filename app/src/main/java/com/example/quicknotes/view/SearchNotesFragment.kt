@@ -1,6 +1,5 @@
 package com.example.quicknotes.view
 
-import android.content.DialogInterface
 import android.content.res.ColorStateList
 import android.os.Bundle
 import android.text.TextUtils
@@ -77,7 +76,7 @@ class SearchNotesFragment : Fragment(), NotesUI {
         val searchView = binding?.searchBar ?: return
         searchView.setOnCloseListener {
             searchView.setQuery("", false)
-            listener?.onSearchNotes("", true, true, true)
+            listener?.onSearchNotes("", title = true, content = true, tag = true)
             false
         }
 
@@ -91,7 +90,7 @@ class SearchNotesFragment : Fragment(), NotesUI {
             }
 
             private fun handleSearch(query: String): Boolean {
-                listener?.onSearchNotes(query, true, true, true)
+                listener?.onSearchNotes(query, title = true, content = true, tag = true)
                 return true
             }
         })
@@ -203,11 +202,11 @@ class SearchNotesFragment : Fragment(), NotesUI {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Sort Notes")
             .setItems(
-                arrayOf("Sort by Date", "Sort by Title"),
-                DialogInterface.OnClickListener { _, which ->
-                    currentSortBy = if (which == 1) "title" else "date"
-                    displayNotes()
-                })
+                arrayOf("Sort by Date", "Sort by Title")
+            ) { _, which ->
+                currentSortBy = if (which == 1) "title" else "date"
+                displayNotes()
+            }
             .show()
     }
 
@@ -237,45 +236,6 @@ class SearchNotesFragment : Fragment(), NotesUI {
 
         override fun getItemId(position: Int): Long = listTags[position].name.hashCode().toLong()
 
-        fun updateData(tags: Collection<Tag>) {
-            val newList = tags.toMutableList()
-            val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
-                override fun getOldListSize(): Int = listTags.size
-                override fun getNewListSize(): Int = newList.size
-
-                override fun areItemsTheSame(
-                    oldItemPosition: Int,
-                    newItemPosition: Int
-                ): Boolean {
-                    return listTags[oldItemPosition].name == newList[newItemPosition].name
-                }
-
-                override fun areContentsTheSame(
-                    oldItemPosition: Int,
-                    newItemPosition: Int
-                ): Boolean {
-                    val a = listTags[oldItemPosition]
-                    val b = newList[newItemPosition]
-                    return a.name == b.name && a.colorResId() == b.colorResId()
-                }
-            })
-            this.listTags = newList
-            diff.dispatchUpdatesTo(this)
-        }
-
-        fun setSelectedTags(names: Set<String>) {
-            val previous = selectedTags.toMutableSet()
-            selectedTags.clear()
-            selectedTags.addAll(names)
-
-            // Notify only affected chips
-            val changed = previous + selectedTags
-            for (name in changed) {
-                val pos = findTagPositionByName(name)
-                if (pos >= 0) notifyItemChanged(pos)
-            }
-        }
-
         fun findTagPositionByName(name: String): Int {
             return listTags.indexOfFirst { it.name == name }
         }
@@ -287,7 +247,7 @@ class SearchNotesFragment : Fragment(), NotesUI {
                 val chip = binding.tagChip
                 chip.text = tag.name
                 chip.isChecked = isSelected
-                val baseColor = ContextCompat.getColor(requireContext(), tag.colorResId())
+                val baseColor = ContextCompat.getColor(requireContext(), tag.colorResId)
                 chip.chipBackgroundColor = ColorStateList.valueOf(baseColor)
                 
                 // Choose readable text color based on luminance

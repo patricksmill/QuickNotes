@@ -1,51 +1,57 @@
-package com.example.quicknotes.model;
+package com.example.quicknotes.model
 
-import android.content.Context;
-
-import androidx.annotation.NonNull;
-
-import java.util.List;
-import java.util.Set;
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import android.widget.Toast
+import com.example.quicknotes.model.AutoTaggingService.TagAssignmentCallback
+import com.example.quicknotes.model.AutoTaggingService.TagSuggestionsCallback
+import com.example.quicknotes.model.TagColorManager.ColorOption
+import java.util.function.Consumer
 
 /**
  * ManageTags serves as a facade for tag-related operations.
  * It coordinates between TagColorManager, TagOperationsManager, AutoTaggingService, and TagSettingsManager
  * to provide a unified interface for tag management in the NoteLibrary.
  */
-public class TagManager {
-    private final android.content.Context ctx;
-    private final TagColorManager colorManager;
-    private final TagOperationsManager operationsManager;
-    private final AutoTaggingService autoTaggingService;
-    private final TagSettingsManager settingsManager;
+class TagManager(noteLibrary: NoteLibrary) {
+    private val ctx: Context
+    private val colorManager: TagColorManager
+    private val operationsManager: TagOperationsManager
+    private val autoTaggingService: AutoTaggingService
+    private val settingsManager: TagSettingsManager
 
     /**
      * Constructs a ManageTags instance for the given NoteLibrary.
      *
      * @param noteLibrary The NoteLibrary to manage tags for.
      */
-    public TagManager(@NonNull NoteLibrary noteLibrary) {
-        Context ctx = noteLibrary.getContext();
-        this.ctx = ctx;
-        
+    init {
+        val ctx = noteLibrary.context
+        this.ctx = ctx
+
+
         // Initialize component managers
-        this.colorManager = new TagColorManager(ctx);
-        this.operationsManager = new TagOperationsManager(ctx, noteLibrary, colorManager);
-        this.autoTaggingService = new AutoTaggingService(ctx, operationsManager);
-        this.settingsManager = new TagSettingsManager(ctx);
-        
+        this.colorManager = TagColorManager(ctx)
+        this.operationsManager = TagOperationsManager(ctx, noteLibrary, colorManager)
+        this.autoTaggingService = AutoTaggingService(ctx, operationsManager)
+        this.settingsManager = TagSettingsManager(ctx)
+
+
         // Initialize existing tag colors
-        initializeExistingTagColors();
+        initializeExistingTagColors()
     }
 
-    /**
-     * Returns the list of available color options for tags.
-     *
-     * @return List of ColorOption
-     */
-    public List<TagColorManager.ColorOption> getAvailableColors() {
-        return colorManager.getAvailableColors();
-    }
+    val availableColors: MutableList<ColorOption?>
+        /**
+         * Returns the list of available color options for tags.
+         *
+         * @return List of ColorOption
+         */
+        get() = colorManager.availableColors
 
 
     /**
@@ -54,18 +60,8 @@ public class TagManager {
      * @param tagName The name of the tag
      * @param resId   The color resource ID
      */
-    public void setTagColor(@NonNull String tagName, int resId) {
-        colorManager.setTagColor(tagName, resId);
-    }
-
-    /**
-     * Sets a tag for the given note, creating the tag if necessary.
-     *
-     * @param note The note to tag
-     * @param name The tag name
-     */
-    public void setTag(@NonNull Note note, @NonNull String name) {
-        operationsManager.setTag(note, name);
+    fun setTagColor(tagName: String, resId: Int) {
+        colorManager.setTagColor(tagName, resId)
     }
 
     /**
@@ -73,74 +69,61 @@ public class TagManager {
      * @param note The note to tag
      * @param names List of tag names
      */
-    public void setTags(@NonNull Note note, @NonNull java.util.List<String> names) {
-        operationsManager.setTags(note, names);
+    fun setTags(note: Note, names: MutableList<String?>) {
+        operationsManager.setTags(note, names)
     }
 
-    /**
-     * Returns all tags used in the note library.
-     *
-     * @return Set of Tag objects
-     */
-    public Set<Tag> getAllTags() {
-        return operationsManager.getAllTags();
-    }
-
-    /**
-     * Filters notes by the given set of tag names.
-     *
-     * @param activeTagNames The set of tag names to filter by
-     * @return List of notes containing at least one of the specified tags
-     */
-    public List<Note> filterNotesByTags(Set<String> activeTagNames) {
-        return operationsManager.filterNotesByTags(activeTagNames);
-    }
+    val allTags: MutableSet<Tag>
+        /**
+         * Returns all tags used in the note library.
+         *
+         * @return Set of Tag objects
+         */
+        get() = operationsManager.allTags
 
     /**
      * Removes color assignments for tags that are no longer used in any note.
      */
-    public void cleanupUnusedTags() {
-        operationsManager.cleanupUnusedTags();
+    fun cleanupUnusedTags() {
+        operationsManager.cleanupUnusedTags()
     }
 
     /**
      * Renames a tag across all notes.
      */
-    public void renameTag(@NonNull String oldName, @NonNull String newName) {
-        operationsManager.renameTag(oldName, newName);
+    fun renameTag(oldName: String, newName: String) {
+        operationsManager.renameTag(oldName, newName)
     }
 
     /**
      * Deletes a tag from all notes.
      */
-    public void deleteTag(@NonNull String tagName) {
-        operationsManager.deleteTag(tagName);
+    fun deleteTag(tagName: String) {
+        operationsManager.deleteTag(tagName)
     }
 
     /**
      * Merges source tags into a target tag across all notes.
      */
-    public void mergeTags(@NonNull java.util.Collection<String> sources, @NonNull String target) {
-        operationsManager.mergeTags(sources, target);
+    fun mergeTags(sources: MutableCollection<String?>, target: String) {
+        operationsManager.mergeTags(sources, target)
     }
 
-    /**
-     * Checks if AI-powered auto-tagging is enabled.
-     *
-     * @return true if AI mode is enabled, false for keyword-based tagging
-     */
-    public boolean isAiMode() {
-        return settingsManager.isAiMode();
-    }
+    val isAiMode: Boolean
+        /**
+         * Checks if AI-powered auto-tagging is enabled.
+         *
+         * @return true if AI mode is enabled, false for keyword-based tagging
+         */
+        get() = settingsManager.isAiMode
 
-    /**
-     * Gets the maximum number of tags to assign during auto-tagging.
-     *
-     * @return The auto-tag limit
-     */
-    public int getAutoTagLimit() {
-        return settingsManager.getAutoTagLimit();
-    }
+    val autoTagLimit: Int
+        /**
+         * Gets the maximum number of tags to assign during auto-tagging.
+         *
+         * @return The auto-tag limit
+         */
+        get() = settingsManager.autoTagLimit
 
     /**
      * Performs auto-tagging on a note using the configured strategy.
@@ -149,9 +132,9 @@ public class TagManager {
      * @param note  The note to auto-tag
      * @param limit The maximum number of tags to assign
      */
-    public void simpleAutoTag(@NonNull Note note, int limit) {
-        android.util.Log.d("AutoTagging", "Invoking simpleAutoTag, limit=" + limit + ", note=" + note.getTitle());
-        autoTaggingService.performSimpleAutoTag(note, limit);
+    fun simpleAutoTag(note: Note, limit: Int) {
+        Log.d("AutoTagging", "Invoking simpleAutoTag, limit=" + limit + ", note=" + note.title)
+        autoTaggingService.performSimpleAutoTag(note, limit)
     }
 
     /**
@@ -160,75 +143,94 @@ public class TagManager {
      * @param note  The note to auto-tag
      * @param limit The maximum number of tags to assign
      */
-    public void aiAutoTag(@NonNull Note note, int limit) {
-        if (!settingsManager.isAiTaggingConfigured()) {
+    fun aiAutoTag(note: Note, limit: Int) {
+        if (!settingsManager.isAiTaggingConfigured) {
             // Fall back to simple tagging if AI is not configured
-            android.util.Log.d("AutoTagging", "AI not configured. Falling back to simple tagging.");
-            simpleAutoTag(note, limit);
-            return;
+            Log.d("AutoTagging", "AI not configured. Falling back to simple tagging.")
+            simpleAutoTag(note, limit)
+            return
         }
-        if (!isOnline()) {
+        if (!this.isOnline) {
             // Offline fallback to simple tagging with user notification
-            android.util.Log.d("AutoTagging", "Offline detected. Falling back to simple tagging.");
-            simpleAutoTag(note, limit);
-            android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
-            h.post(() -> android.widget.Toast.makeText(ctx, "Offline: using keyword tagging", android.widget.Toast.LENGTH_SHORT).show());
-            return;
+            Log.d("AutoTagging", "Offline detected. Falling back to simple tagging.")
+            simpleAutoTag(note, limit)
+            val h = Handler(Looper.getMainLooper())
+            h.post {
+                Toast.makeText(
+                    ctx,
+                    "Offline: using keyword tagging",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            return
         }
 
-        String apiKey = settingsManager.getApiKey();
-        Set<String> existingTagNames = operationsManager.getAllTagNames();
-        
-        autoTaggingService.performAiAutoTag(note, limit, apiKey, existingTagNames, 
-            tagName -> operationsManager.setTag(note, tagName));
+        val apiKey = settingsManager.apiKey ?: return
+        val existingTagNames = operationsManager.allTagNames
+            .filterNotNull()
+            .toSet()
+
+        autoTaggingService.performAiAutoTag(
+            note, limit, apiKey, existingTagNames,
+            object : TagAssignmentCallback {
+                override fun onTagAssigned(tagName: String) {
+                    operationsManager.setTag(note, tagName)
+                }
+            })
     }
 
     /**
      * Requests AI tag suggestions without applying them.
      */
-    public void aiSuggestTags(@NonNull Note note, int limit, @NonNull java.util.function.Consumer<java.util.List<String>> onSuggestions,
-                              @NonNull java.util.function.Consumer<String> onError) {
-        if (!settingsManager.isAiTaggingConfigured()) {
-            onSuggestions.accept(java.util.Collections.emptyList());
-            return;
+    fun aiSuggestTags(
+        note: Note, limit: Int, onSuggestions: Consumer<MutableList<String?>?>,
+        onError: Consumer<String?>
+    ) {
+        if (!settingsManager.isAiTaggingConfigured) {
+            onSuggestions.accept(mutableListOf())
+            return
         }
-        if (!isOnline()) {
-            android.util.Log.d("AutoTagging", "Offline detected. Suggest will return error.");
-            onError.accept("Offline");
-            return;
+        if (!this.isOnline) {
+            Log.d("AutoTagging", "Offline detected. Suggest will return error.")
+            onError.accept("Offline")
+            return
         }
-        String apiKey = settingsManager.getApiKey();
-        Set<String> existingTagNames = operationsManager.getAllTagNames();
-        autoTaggingService.performAiSuggest(note, limit, apiKey, existingTagNames,
-                new AutoTaggingService.TagSuggestionsCallback() {
-                    @Override
-                    public void onSuggestions(@NonNull java.util.List<String> suggestions) {
-                        onSuggestions.accept(suggestions);
-                    }
+        val apiKey = settingsManager.apiKey
+        val existingTagNames = operationsManager.allTagNames
+            .filterNotNull()
+            .toSet()
+        
+        autoTaggingService.performAiSuggest(
+            note, limit, apiKey, existingTagNames,
+            object : TagSuggestionsCallback {
+                override fun onSuggestions(suggestions: List<String>) {
+                    onSuggestions.accept(suggestions.map { it as String? }.toMutableList())
+                }
 
-                    @Override
-                    public void onError(@NonNull String message) {
-                        onError.accept(message);
-                    }
-                });
+                override fun onError(message: String) {
+                    onError.accept(message)
+                }
+            })
     }
 
-    private boolean isOnline() {
-        android.net.ConnectivityManager cm = (android.net.ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm == null) return false;
-        android.net.Network network = cm.getActiveNetwork();
-        if (network == null) return false;
-        android.net.NetworkCapabilities caps = cm.getNetworkCapabilities(network);
-        return caps != null && caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET);
-    }
+    private val isOnline: Boolean
+        get() {
+            val cm =
+                ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager?
+            if (cm == null) return false
+            val network = cm.activeNetwork
+            if (network == null) return false
+            val caps = cm.getNetworkCapabilities(network)
+            return caps != null && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        }
 
     /**
      * Initializes colors for existing tags in the note library.
      */
-    private void initializeExistingTagColors() {
-        Set<String> existingTagNames = operationsManager.getAllTagNames();
-        for (String tagName : existingTagNames) {
-            colorManager.getTagColorRes(tagName); // This will assign a color if not already assigned
+    private fun initializeExistingTagColors() {
+        val existingTagNames = operationsManager.allTagNames.filterNotNull()
+        for (tagName in existingTagNames) {
+            colorManager.getTagColorRes(tagName) // This will assign a color if not already assigned
         }
     }
 }

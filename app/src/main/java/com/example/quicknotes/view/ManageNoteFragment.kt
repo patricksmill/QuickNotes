@@ -1,6 +1,5 @@
 package com.example.quicknotes.view
 
-import android.content.DialogInterface.OnMultiChoiceClickListener
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.LayoutInflater
@@ -106,7 +105,7 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
             return
         }
 
-        val temp = Note(title, content, emptySet())
+        val temp = Note(title, content, null)
         aiBtn?.isEnabled = false
         progress?.visibility = View.VISIBLE
         
@@ -115,7 +114,7 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
                 if (suggestions.isNullOrEmpty()) {
                     showError("No suggestions")
                 } else {
-                    showSuggestionDialog(suggestions)
+                    showSuggestionDialog(suggestions.filterNotNull())
                 }
                 aiBtn?.isEnabled = true
                 progress?.visibility = View.GONE
@@ -135,13 +134,13 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
             .setTitle("AI tag suggestions")
             .setMultiChoiceItems(
                 items,
-                checked,
-                OnMultiChoiceClickListener { _, which, isChecked ->
-                    checked[which] = isChecked
-                })
+                checked
+            ) { _, which, isChecked ->
+                checked[which] = isChecked
+            }
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton("Apply") { _, _ ->
-                val chosen = mutableListOf<String>()
+                val chosen = mutableListOf<String?>()
                 for (i in items.indices) {
                     if (checked[i]) chosen.add(items[i])
                 }
@@ -174,6 +173,8 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
         val tagNames = tagsString.split(",")
             .map { it.trim() }
             .filter { it.isNotEmpty() }
+            .map { it as String? }
+            .toMutableList()
 
         currentNote!!.title = title
         currentNote!!.content = content
@@ -185,7 +186,7 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
             // Do not navigate away yet; show suggestions first
             listener!!.onAiSuggestTags(currentNote!!, 5, 
                 { suggestions ->
-                    if (!suggestions.isNullOrEmpty()) showSuggestionDialog(suggestions)
+                    if (!suggestions.isNullOrEmpty()) showSuggestionDialog(suggestions.filterNotNull())
                 }, 
                 { }
             )

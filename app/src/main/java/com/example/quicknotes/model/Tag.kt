@@ -1,24 +1,19 @@
-package com.example.quicknotes.model;
-import androidx.annotation.ColorRes;
+package com.example.quicknotes.model
 
-public record Tag(String name, @ColorRes int colorResId) {
-    @Override
-    public int colorResId() {
-        return colorResId;
+import androidx.annotation.ColorRes
+import java.util.Locale
+
+@JvmRecord
+data class Tag(@JvmField val name: String, @JvmField @field:ColorRes @param:ColorRes val colorResId: Int) {
+
+    override fun equals(o: Any?): Boolean {
+        if (this === o) return true
+        if (o !is Tag) return false
+        return name.equals(o.name, ignoreCase = true)
     }
 
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Tag other)) return false;
-        return name.equalsIgnoreCase(other.name);
+    override fun hashCode(): Int {
+        return name.lowercase(Locale.getDefault()).hashCode()
     }
-
-    @Override
-    public int hashCode() {
-        return name.toLowerCase().hashCode();
-    }
-
 }
 

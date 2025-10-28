@@ -30,7 +30,7 @@ class NoteLibrary(ctx: Context) {
     }
 
     /**
-     * Returns a list of all notes in the library.
+     * Returns a snapshot list of all notes in the library.
      */
     fun getNotes(): List<Note> = notes.toList()
 
