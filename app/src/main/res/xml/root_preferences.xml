@@ -1,14 +1,13 @@
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory 
         android:title="Notifications">
 
-        <SwitchPreferenceCompat
-            android:key="pref_noti"
-            android:title="Allow Notifications"
-            android:summary="Get reminded about your notes"
-            app:defaultValue="false" />
+        <Preference
+            android:key="pref_manage_notifications"
+            android:title="Manage notifications"
+            android:summary="Open system notification settings"
+            android:icon="@drawable/ic_bell"/>
     </PreferenceCategory>
     
     <PreferenceCategory
@@ -21,18 +20,9 @@
             android:summary="%s tags per note"
             android:defaultValue="3"
             android:min="0"
-            android:max="5" />
+            android:max="5"
+            android:icon="@drawable/ic_autotag" />
 
-        <Preference
-            android:key="pref_edit_tag_colors"
-            android:title="Edit Tag Colors"
-            android:fragment="com.example.quicknotes.view.TagColorSettingsFragment"
-            android:summary="Customize the appearance of your tags" />
-
-        <Preference
-            android:key="pref_manage_tags"
-            android:title="Manage Tags"
-            android:summary="Rename, delete, and merge tags" />
 
     </PreferenceCategory>
 
@@ -45,28 +35,23 @@
             android:title="AI-powered Auto-Tagging"
             android:summaryOff="Using keyword-based tagging"
             android:summaryOn="Using AI tagging"
-            android:defaultValue="false" />
+            android:defaultValue="false"
+            android:icon="@drawable/ic_autotag" />
 
         <SwitchPreferenceCompat
             android:key="pref_ai_confirm"
             android:title="Confirm AI tag suggestions"
             android:summary="Show suggestions before applying tags"
-            android:defaultValue="false" />
-
-        <ListPreference
-            android:key="pref_ai_model"
-            android:title="AI Model"
-            android:entries="@array/ai_model_names"
-            android:entryValues="@array/ai_model_values"
-            android:defaultValue="GPT_4_1_NANO"
-            android:summary="%s" />
+            android:defaultValue="false"
+            android:icon="@drawable/ic_check" />
 
         <EditTextPreference
             android:key="openai_api_key"
             android:title="OpenAI API Key"
             android:summary="Required for AI features"
             android:dialogTitle="Enter OpenAI API Key"
-            android:inputType="textPassword" />
+            android:inputType="textPassword"
+            android:icon="@drawable/ic_key" />
 
     </PreferenceCategory>
 
@@ -77,7 +62,8 @@
         <Preference
             android:key="pref_delete_all"
             android:title="Delete All Notes"
-            android:summary="Permanently remove all notes (CANNOT BE UNDONE)" />
+            android:summary="Permanently remove all notes (CANNOT BE UNDONE)"
+            android:icon="@drawable/ic_delete" />
 
     </PreferenceCategory>
 
@@ -88,7 +74,7 @@
             android:key="pref_replay_tutorial"
             android:title="Replay Tutorial"
             android:summary="Go through the onboarding tutorial again"
-            android:icon="@android:drawable/ic_dialog_info" />
+            android:icon="@drawable/ic_replay" />
 
     </PreferenceCategory>
 
@@ -99,7 +85,8 @@
             android:key="app_version"
             android:title="QuickNotes"
             android:summary="Version 1.0.0 - Your intelligent note companion"
-            android:selectable="false" />
+            android:selectable="false"
+            android:icon="@drawable/ic_info" />
 
     </PreferenceCategory>
 

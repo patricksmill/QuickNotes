@@ -1,16 +1,10 @@
 package com.example.quicknotes.model
 
-import android.Manifest
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
-import android.os.Build
-import android.provider.Settings
 import android.view.View
-import androidx.annotation.RequiresPermission
-import androidx.preference.PreferenceManager
 import com.example.quicknotes.R
 import com.example.quicknotes.controller.NotificationReceiver
 import com.google.android.material.snackbar.Snackbar
@@ -38,39 +32,9 @@ class Notifier(private val ctx: Context) {
         // This is better than using Toast which doesn't fit the app's design
     }
 
-    private val prefs: SharedPreferences?
-        get() = PreferenceManager.getDefaultSharedPreferences(ctx)
-
     fun globalNotificationsAllowed(): Boolean {
-        return this.prefs!!.getBoolean("pref_noti", false)
-    }
-
-    /**
-     * Checks if the app has permission to schedule exact alarms.
-     * @return true if permission is granted, false otherwise
-     */
-    fun canScheduleExactAlarms(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val alarmManager = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager?
-            return alarmManager != null && alarmManager.canScheduleExactAlarms()
-        }
-        return true // No permission needed for Android 11 and below
-    }
-
-    /**
-     * Opens the system settings to request exact alarm permission.
-     */
-    fun requestExactAlarmPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            try {
-                ctx.startActivity(intent)
-                showMessage(ctx.getString(R.string.alarm_permission_request), Snackbar.LENGTH_LONG)
-            } catch (_: Exception) {
-                showMessage(ctx.getString(R.string.alarm_permission_error), Snackbar.LENGTH_LONG)
-            }
-        }
+        // Always allow at app level; OS-level notification state is handled by ControllerActivity banner
+        return true
     }
 
     /**
@@ -109,7 +73,6 @@ class Notifier(private val ctx: Context) {
         }
     }
 
-    @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
     fun scheduleNotification(note: Note) {
         // Always cancel any existing notification first
         cancelNotification(note)
@@ -133,11 +96,6 @@ class Notifier(private val ctx: Context) {
             return
         }
 
-        if (!canScheduleExactAlarms()) {
-            requestExactAlarmPermission()
-            return
-        }
-
         try {
             val intent = Intent(ctx, NotificationReceiver::class.java)
             intent.putExtra(titleExtra, note.title)
@@ -151,7 +109,8 @@ class Notifier(private val ctx: Context) {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            alarmManager.setExactAndAllowWhileIdle(
+            // Use inexact scheduling; system may batch for battery efficiency
+            alarmManager.setAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
                 notifyDate!!.time,
                 pendingIntent
@@ -159,8 +118,7 @@ class Notifier(private val ctx: Context) {
 
             showMessage(ctx.getString(R.string.notification_scheduled), Snackbar.LENGTH_SHORT)
         } catch (_: SecurityException) {
-            showMessage(ctx.getString(R.string.alarm_permission_error), Snackbar.LENGTH_LONG)
-            requestExactAlarmPermission()
+            showMessage(ctx.getString(R.string.notification_schedule_error), Snackbar.LENGTH_SHORT)
         } catch (_: Exception) {
             showMessage(ctx.getString(R.string.notification_schedule_error), Snackbar.LENGTH_SHORT)
         }

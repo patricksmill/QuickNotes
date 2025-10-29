@@ -2,7 +2,6 @@ package com.example.quicknotes.view
 
 import android.os.Bundle
 import androidx.preference.EditTextPreference
-import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SeekBarPreference
@@ -61,11 +60,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     private fun setupNotifications() {
-        val notiPref = findPreference<SwitchPreferenceCompat>("pref_noti")
-        notiPref?.setOnPreferenceChangeListener { _, newValue ->
-            if (newValue as Boolean) {
-                (activity as? com.example.quicknotes.controller.ControllerActivity)?.requestPostNotificationsPermissionFromSettings()
-            }
+        findPreference<Preference>("pref_manage_notifications")?.setOnPreferenceClickListener {
+            (activity as? com.example.quicknotes.controller.ControllerActivity)?.openSystemNotificationSettings()
             true
         }
     }
@@ -94,13 +90,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
             true
         }
 
-        val modelPref = findPreference<ListPreference>("pref_ai_model")
-        modelPref?.summary = tagSettingsManager.getSelectedAiModelName()
-        modelPref?.setOnPreferenceChangeListener { _, newValue ->
-            tagSettingsManager.setSelectedAiModel(newValue as String)
-            modelPref.summary = tagSettingsManager.getSelectedAiModelName()
-            true
-        }
 
         val apiKeyPref = findPreference<EditTextPreference>("openai_api_key")
         apiKeyPref?.setOnPreferenceChangeListener { _, newValue ->
