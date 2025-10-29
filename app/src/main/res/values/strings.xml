@@ -15,7 +15,6 @@
     <string name="save">Save</string>
     <string name="tags_add_hint">Add tag</string>
     <string name="create_tag_label">Create &quot;%1$s&quot;</string>
-    <string name="tags_comma_separated">Tags (comma separated)</string>
     <string name="no_notes_msg">No notes, press the button in the bottom right to create a note!</string>
     <string name="sort">sort notes</string>
     <string name="manage_tags">Manage tags</string>

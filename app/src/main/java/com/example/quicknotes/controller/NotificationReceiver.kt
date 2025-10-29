@@ -23,9 +23,7 @@ class NotificationReceiver : BroadcastReceiver() {
             if (notificationId != -1) {
                 val manager =
                     context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
-                if (manager != null) {
-                    manager.cancel(notificationId)
-                }
+                manager?.cancel(notificationId)
             }
             return
         } else if (ACTION_DELETE == action) {
@@ -41,9 +39,7 @@ class NotificationReceiver : BroadcastReceiver() {
             if (notificationId != -1) {
                 val manager =
                     context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
-                if (manager != null) {
-                    manager.cancel(notificationId)
-                }
+                manager?.cancel(notificationId)
             }
             return
         }
@@ -131,9 +127,7 @@ class NotificationReceiver : BroadcastReceiver() {
                     .setSummaryText("QuickNotes Reminder")
             )
 
-        if (manager != null) {
-            manager.notify(notificationId, builder.build())
-        }
+        manager?.notify(notificationId, builder.build())
     }
 
     companion object {

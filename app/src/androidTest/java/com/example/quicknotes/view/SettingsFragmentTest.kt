@@ -20,13 +20,13 @@ import org.junit.Test
 class SettingsFragmentTest {
     @Rule
     var activityRule: ActivityScenarioRule<ControllerActivity?> =
-        ActivityScenarioRule<ControllerActivity?>(ControllerActivity::class.java)
+        ActivityScenarioRule(ControllerActivity::class.java)
 
     @Before
     fun setUp() {
         val ctx = InstrumentationRegistry
             .getInstrumentation()
-            .getTargetContext()
+            .targetContext
         ctx.deleteFile("notes.json")
         navigateToSettings()
     }

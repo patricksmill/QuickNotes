@@ -1,6 +1,5 @@
 package com.example.quicknotes.view
 
-import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.action.ViewActions
@@ -22,7 +21,7 @@ import org.junit.Test
 class ManageNoteFragmentTest {
     @Rule
     var activityRule: ActivityScenarioRule<ControllerActivity?> =
-        ActivityScenarioRule<ControllerActivity?>(ControllerActivity::class.java)
+        ActivityScenarioRule(ControllerActivity::class.java)
 
     @Before
     fun clearData() {
@@ -105,7 +104,7 @@ class ManageNoteFragmentTest {
         Espresso.onView(ViewMatchers.withId(R.id.noteTitleText))
             .check(ViewAssertions.doesNotExist())
         Espresso.onView(ViewMatchers.withId(R.id.notesRecyclerView))
-            .check(ViewAssertions.matches(Matchers.not<View?>(ViewMatchers.isDisplayed())))
+            .check(ViewAssertions.matches(Matchers.not(ViewMatchers.isDisplayed())))
         Espresso.onView(ViewMatchers.withText(tempNoteName))
             .check(ViewAssertions.doesNotExist())
     }

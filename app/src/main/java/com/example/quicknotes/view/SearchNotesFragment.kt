@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.quicknotes.R
-import com.example.quicknotes.controller.ControllerActivity
 import com.example.quicknotes.databinding.FragmentSearchNotesBinding
 import com.example.quicknotes.databinding.ListNoteBinding
 import com.example.quicknotes.databinding.TagChipBinding
@@ -25,8 +24,8 @@ import com.example.quicknotes.model.Tag
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import java.text.SimpleDateFormat
-import java.util.Locale
 import java.util.Date
+import java.util.Locale
 
 /**
  * Fragment responsible for displaying and managing the main notes view.
@@ -114,12 +113,9 @@ class SearchNotesFragment : Fragment(), NotesUI {
         binding?.let { binding ->
             binding.sortButton.setOnClickListener { showSortDialog() }
             binding.manageTagsButton.setOnClickListener {
-                if (activity is ControllerActivity) {
-                    parentFragmentManager.beginTransaction()
-                        .replace(R.id.fragmentContainerView, ManageTagsFragment())
-                        .addToBackStack(null)
-                        .commit()
-                }
+                val sheet = ManageTagsFragment()
+                sheet.setListener(listener)
+                sheet.show(parentFragmentManager, "ManageTags")
             }
             binding.addNoteFab.setOnClickListener { listener?.onNewNote() }
             binding.addNoteFab.setOnLongClickListener {
@@ -284,18 +280,6 @@ class SearchNotesFragment : Fragment(), NotesUI {
             })
             this.listTags = newList
             diff.dispatchUpdatesTo(this)
-        }
-
-        fun setSelectedTags(names: Set<String>) {
-            val previous = selectedTags.toMutableSet()
-            selectedTags.clear()
-            selectedTags.addAll(names)
-
-            val changed = previous + selectedTags
-            for (name in changed) {
-                val pos = findTagPositionByName(name)
-                if (pos >= 0) notifyItemChanged(pos)
-            }
         }
 
         fun findTagPositionByName(name: String): Int {

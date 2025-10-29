@@ -5,5 +5,5 @@
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
-    <style name="Theme.QuickNotes" parent="Base.Theme.QuickNotes" ></style>
+    <style name="Theme.QuickNotes" parent="Base.Theme.QuickNotes" />
 </resources>

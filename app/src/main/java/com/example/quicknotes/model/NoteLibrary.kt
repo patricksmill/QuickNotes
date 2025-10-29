@@ -25,7 +25,6 @@ class NoteLibrary(ctx: Context) {
 
     init {
         notes.addAll(Persistence.loadNotes(context))
-        ensureNoteIds()
         this.manageTags = TagManager(this)
     }
 
@@ -170,17 +169,6 @@ class NoteLibrary(ctx: Context) {
      */
     private fun updateNoteDate(note: Note) {
         note.lastModified = Date()
-    }
-
-    /**
-     * Ensures all notes have a stable unique ID. 
-     * Since Note.id is immutable, we don't need to check for empty IDs
-     * as they are always generated during Note construction.
-     */
-    private fun ensureNoteIds() {
-        // Note: Since Note.id is a val property that's always initialized with UUID.randomUUID(),
-        // we don't need to check for empty IDs. All notes should already have valid IDs.
-        // This method is kept for compatibility but doesn't need to do anything.
     }
 
     /**
