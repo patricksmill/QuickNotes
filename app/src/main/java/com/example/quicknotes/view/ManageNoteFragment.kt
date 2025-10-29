@@ -211,12 +211,12 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
 	}
 
 	private fun promptRenameTag(oldName: String, chip: Chip) {
-        val input = EditText(requireContext())
+		val input = EditText(requireContext())
 		input.setText(oldName)
-        val hPad = resources.getDimensionPixelSize(R.dimen.spacing_lg)
-        val vPad = resources.getDimensionPixelSize(R.dimen.spacing_sm)
-        input.setPadding(hPad, vPad, hPad, vPad)
-        input.setSelection(input.text?.length ?: 0)
+		val hPad = resources.getDimensionPixelSize(R.dimen.spacing_lg)
+		val vPad = resources.getDimensionPixelSize(R.dimen.spacing_sm)
+		input.setPadding(hPad, vPad, hPad, vPad)
+		input.setSelection(input.text?.length ?: 0)
 		MaterialAlertDialogBuilder(requireContext())
 			.setTitle("Rename tag")
 			.setView(input)
@@ -230,7 +230,6 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
 					chip.text = newName
 					tagsDirty = true
 					rebuildSuggestions(binding?.tagInputView?.text?.toString().orEmpty())
-					// Re-resolve color for the new name
 					listener?.onManageTags()?.allTags?.firstOrNull { it.name.equals(newName, true) }?.let { t ->
 						chip.chipBackgroundColor = android.content.res.ColorStateList.valueOf(
 							ContextCompat.getColor(requireContext(), t.colorResId)
@@ -320,19 +319,19 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
      * Handles saving the current note.
      */
     private fun saveNote() {
-        listener ?: run {
+		listener ?: run {
             showError("Unable to save note at this time")
             return
-        }
+		}
 
 		val title = getText(binding!!.noteTitleText).trim()
 		val content = getText(binding!!.noteContentText).trim()
 		// Tags from chip selection
 
-        if (title.isEmpty() || content.isEmpty()) {
+		if (title.isEmpty() || content.isEmpty()) {
             showError(getString(R.string.missing_item_field_error))
             return
-        }
+		}
 
 		currentNote!!.title = title
 		currentNote!!.content = content
@@ -418,7 +417,7 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
      * Binds note data to the UI fields.
      */
     private fun bindNoteFields() {
-        currentNote ?: return
+		currentNote ?: return
 
 		binding?.let { binding ->
 			binding.noteTitleText.setText(currentNote!!.title)

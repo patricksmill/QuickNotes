@@ -32,7 +32,7 @@ class SearchNotesFragmentTest {
 
     @Before
     fun setup() {
-        ctx = ApplicationProvider.getApplicationContext<Context>()
+        ctx = ApplicationProvider.getApplicationContext()
         ctx!!.deleteFile("notes.json")
     }
 

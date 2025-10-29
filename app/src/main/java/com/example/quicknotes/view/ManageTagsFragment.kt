@@ -1,206 +1,140 @@
 package com.example.quicknotes.view
 
-import android.R
-import android.content.Context
 import android.os.Bundle
-import android.text.InputType
+import android.view.LayoutInflater
 import android.view.View
-import android.widget.EditText
+import android.view.ViewGroup
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.toDrawable
-import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
-import com.example.quicknotes.controller.ControllerActivity
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.quicknotes.databinding.ItemManageTagBinding
+import com.example.quicknotes.databinding.SheetManageTagsBinding
 import com.example.quicknotes.model.Tag
-import com.example.quicknotes.model.TagColorManager
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /**
- * ManageTagsFragment provides a dedicated screen to view and manage all tags:
- * rename, delete, merge, and change colors.
+ * Bottom sheet to manage tags (color, rename, delete) from the search screen.
  */
-class ManageTagsFragment : PreferenceFragmentCompat(), NotesUI {
+class ManageTagsFragment : BottomSheetDialogFragment() {
+    private var binding: SheetManageTagsBinding? = null
     private var listener: NotesUI.Listener? = null
-    private lateinit var colorResIds: IntArray
-    private var colorNames: Array<String>? = null
+    private val adapter = TagListAdapter()
+
+    fun setListener(l: NotesUI.Listener?) { listener = l }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        binding = SheetManageTagsBinding.inflate(inflater, container, false)
+        return binding?.root
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        if (activity is ControllerActivity) {
-            setListener(activity as NotesUI.Listener?)
-        }
+        binding?.recycler?.layoutManager = LinearLayoutManager(requireContext())
+        binding?.recycler?.adapter = adapter
+        binding?.closeButton?.setOnClickListener { dismiss() }
+        loadTags()
     }
 
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        val ctx = requireContext()
-        if (activity is ControllerActivity) {
-            setListener(activity as NotesUI.Listener?)
+    private fun loadTags() {
+        val tags = (listener?.onGetAllTags() ?: mutableSetOf()).toList().sortedBy { it.name }
+        adapter.updateData(tags)
+    }
+
+    private inner class TagListAdapter : RecyclerView.Adapter<TagListAdapter.VH>() {
+        private var items: List<Tag> = emptyList()
+
+        fun updateData(newData: List<Tag>) {
+            val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+                override fun getOldListSize() = items.size
+                override fun getNewListSize() = newData.size
+                override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
+                    items[oldItemPosition].name.equals(newData[newItemPosition].name, true)
+                override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                    val a = items[oldItemPosition]; val b = newData[newItemPosition]
+                    return a.name == b.name && a.colorResId == b.colorResId
+                }
+            })
+            items = newData
+            diff.dispatchUpdatesTo(this)
         }
 
-        val colorOptions =
-            if (listener != null) listener!!.onGetAvailableColors() else TagColorManager(ctx).availableColors
-        val allTags = if (listener != null) listener!!.onGetAllTags() else mutableSetOf()
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
+            VH(ItemManageTagBinding.inflate(LayoutInflater.from(parent.context), parent, false))
 
-        // Use mapNotNull to safely handle nullable elements and create non-null collections.
-        colorResIds = colorOptions?.mapNotNull { it?.resId }?.toIntArray() ?: intArrayOf()
-        colorNames = colorOptions?.mapNotNull { it?.name }?.toTypedArray()
+        override fun getItemCount(): Int = items.size
 
-        val screen = preferenceManager.createPreferenceScreen(ctx)
-        preferenceScreen = screen
+        override fun onBindViewHolder(holder: VH, position: Int) = holder.bind(items[position])
 
-        // Filter out null tags before processing.
-        val validTags = allTags.toList()
-        if (validTags.isEmpty()) {
-            val noTagsPref = Preference(ctx)
-            noTagsPref.title = "No tags available"
-            noTagsPref.summary = "Create tags by editing notes"
-            noTagsPref.isSelectable = false
-            screen.addPreference(noTagsPref)
-        } else {
-            // Sort non-null tags alphabetically.
-            val tagList: List<Tag> = validTags.sortedBy { it.name }
-            for (tag in tagList) {
-                screen.addPreference(createTagPreference(ctx, tag))
+        inner class VH(private val b: ItemManageTagBinding) : RecyclerView.ViewHolder(b.root) {
+            fun bind(tag: Tag) {
+                b.tagName.text = tag.name
+                b.colorDot.background.setTint(ContextCompat.getColor(requireContext(), tag.colorResId))
+                b.root.setOnClickListener { showActions(tag) }
             }
         }
-
-        val mergePref = Preference(ctx)
-        mergePref.title = "Merge Tags"
-        mergePref.summary = "Combine multiple tags into one"
-        mergePref.setOnPreferenceClickListener {
-            showMergeDialog()
-            true
-        }
-        screen.addPreference(mergePref)
     }
 
-    private fun createTagPreference(ctx: Context, tag: Tag): Preference {
-        val pref = Preference(ctx)
-        val tagName = tag.name
-        pref.key = "manage_tag_$tagName"
-        pref.title = tagName
-        val currentColorRes = tag.colorResId
-        val currentColor = ContextCompat.getColor(ctx, currentColorRes)
-        pref.icon = currentColor.toDrawable()
-        pref.isIconSpaceReserved = true
-        pref.summary = "Tap to rename, delete, or change color"
-        pref.setOnPreferenceClickListener {
-            showTagOptionsDialog(tagName, pref)
-            true
-        }
-        return pref
-    }
-
-    private fun showTagOptionsDialog(tagName: String, pref: Preference) {
-        val options = arrayOf("Rename", "Delete", "Change Color")
+    private fun showActions(tag: Tag) {
+        val actions = arrayOf("Change color", "Rename", "Delete")
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Manage '$tagName'")
-            .setItems(options) { _, which ->
+            .setTitle(tag.name)
+            .setItems(actions) { _, which ->
                 when (which) {
-                    0 -> showRenameDialog(tagName)
-                    1 -> showDeleteConfirm(tagName)
-                    2 -> showColorPicker(tagName, pref)
+                    0 -> showColorPicker(tag)
+                    1 -> promptRename(tag)
+                    2 -> confirmDelete(tag)
                 }
             }
             .show()
     }
 
-    private fun showRenameDialog(oldName: String) {
-        val input = EditText(requireContext())
-        input.inputType = InputType.TYPE_CLASS_TEXT
-        input.setText(oldName)
+    private fun showColorPicker(tag: Tag) {
+        val options = listener?.onGetAvailableColors()?.filterNotNull() ?: return
+        val names = options.map { it.name }.toTypedArray()
+        val res = options.map { it.resId }.toIntArray()
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Rename Tag")
+            .setTitle("Select color for '${tag.name}'")
+            .setItems(names) { _, idx ->
+                listener?.onSetTagColor(tag.name, res[idx])
+                loadTags()
+            }
+            .show()
+    }
+
+    private fun promptRename(tag: Tag) {
+        val input = android.widget.EditText(requireContext())
+        input.setText(tag.name)
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Rename tag")
             .setView(input)
-            .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.ok) { _, _ ->
-                val newName = input.text?.toString()?.trim() ?: ""
-                if (newName.isNotEmpty() && listener != null) {
-                    listener!!.onRenameTag(oldName, newName)
-                    refreshScreen()
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton("Rename") { _, _ ->
+                val newName = input.text?.toString()?.trim().orEmpty()
+                if (newName.isNotEmpty() && !newName.equals(tag.name, true)) {
+                    listener?.onRenameTag(tag.name, newName)
+                    loadTags()
                 }
             }
             .show()
     }
 
-    private fun showDeleteConfirm(tagName: String) {
+    private fun confirmDelete(tag: Tag) {
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Delete Tag")
-            .setMessage("Remove tag '$tagName' from all notes?")
-            .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.ok) { _, _ ->
-                if (listener != null) {
-                    listener!!.onDeleteTag(tagName)
-                    refreshScreen()
-                }
+            .setTitle("Delete tag")
+            .setMessage("Remove '${tag.name}' from all notes?")
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton("Delete") { _, _ ->
+                listener?.onDeleteTag(tag.name)
+                loadTags()
             }
             .show()
-    }
-
-    private fun showColorPicker(tagName: String, pref: Preference) {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Select color for '$tagName'")
-            .setItems(colorNames) { _, which ->
-                val chosen = colorResIds[which]
-                if (listener != null) {
-                    listener!!.onSetTagColor(tagName, chosen)
-                    val color = ContextCompat.getColor(requireContext(), chosen)
-                    pref.icon = color.toDrawable()
-                }
-            }
-            .show()
-    }
-
-    private fun showMergeDialog() {
-        if (listener == null) return
-        val allTags = listener!!.onGetAllTags()
-        val validTags = allTags.toList()
-        if (validTags.isEmpty()) return
-
-        val names: List<String> = validTags.map { it.name }.sortedWith(String.CASE_INSENSITIVE_ORDER)
-        val items = names.toTypedArray()
-        val checked = BooleanArray(items.size)
-
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Select tags to merge")
-            .setMultiChoiceItems(items, checked) { _, which, isChecked ->
-                checked[which] = isChecked
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton("Next") { _, _ ->
-                val selected = items.filterIndexed { index, _ -> checked[index] }
-                if (selected.isEmpty()) return@setPositiveButton
-                showMergeTargetDialog(selected)
-            }
-            .show()
-    }
-
-    private fun showMergeTargetDialog(sources: List<String>) {
-        val input = EditText(requireContext())
-        input.inputType = InputType.TYPE_CLASS_TEXT
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Merge into tag")
-            .setView(input)
-            .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton("Merge") { _, _ ->
-                val target = input.text?.toString()?.trim() ?: ""
-                if (target.isEmpty() || listener == null) return@setPositiveButton
-                // De-duplicate sources and remove target if present
-                val unique = sources.toMutableSet()
-                unique.removeIf { s -> s.equals(target, ignoreCase = true) }
-                if (unique.isEmpty()) return@setPositiveButton
-                listener!!.onMergeTags(ArrayList(unique), target)
-                refreshScreen()
-            }
-            .show()
-    }
-
-    private fun refreshScreen() {
-        // Rebuild preferences to reflect latest tag set/colors
-        onCreatePreferences(null, null)
-    }
-
-    private fun setListener(listener: NotesUI.Listener?) {
-        this.listener = listener
     }
 }
+
+
