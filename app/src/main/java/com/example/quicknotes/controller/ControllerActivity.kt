@@ -8,9 +8,11 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import com.example.quicknotes.R
 import com.example.quicknotes.model.Note
 import com.example.quicknotes.model.NoteLibrary
@@ -42,7 +44,6 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
     private var currentSearchFragment: SearchNotesFragment? = null
     private var notifier: Notifier? = null
     private var onboardingManager: OnboardingManager? = null
-    private var wasWaitingForPermission = false
     private var wasWaitingForNotificationPermission = false
     private var isOnboardingActive = false
 
@@ -71,7 +72,6 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
 
         setupFragments(savedInstanceState)
         handleNotificationIntent(intent)
-        checkAlarmPermission()
 
 
         // Start onboarding for first-time users (after UI is set up)
@@ -126,52 +126,8 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
         onboardingManager?.forceStartOnboarding(this)
     }
 
-    fun requestPostNotificationsPermissionFromSettings() {
-        requestPostNotificationsPermission()
-    }
 
-    /**
-     * Checks and requests alarm permission if needed, with user-friendly messaging.
-     */
-    private fun checkAlarmPermission() {
-        if (!notifier!!.canScheduleExactAlarms()) {
-            MaterialAlertDialogBuilder(this)
-                .setTitle("Notification Permission Required")
-                .setMessage(
-                    "QuickNotes needs permission to schedule exact alarms for note reminders. " +
-                            "This allows you to get notified at the exact time you set for your notes."
-                )
-                .setPositiveButton(
-                    "Grant Permission"
-                ) { dialog: DialogInterface?, which: Int ->
-                    wasWaitingForPermission = true
-                    notifier!!.requestExactAlarmPermission()
-                }
-                .setNegativeButton("Later", null)
-                .show()
-        }
-    }
 
-    override fun onResume() {
-        super.onResume()
-        // Check if permission was granted when returning from settings
-        if (wasWaitingForPermission && notifier!!.canScheduleExactAlarms()) {
-            wasWaitingForPermission = false
-            Snackbar.make(
-                mainUI!!.getRootView(), "Alarm permission granted! You can now set note reminders.",
-                Snackbar.LENGTH_LONG
-            ).show()
-        }
-
-        if (wasWaitingForNotificationPermission && hasPostNotificationsPermission()) {
-            wasWaitingForNotificationPermission = false
-            Snackbar.make(
-                mainUI!!.getRootView(),
-                "Notification permission granted!",
-                Snackbar.LENGTH_LONG
-            ).show()
-        }
-    }
 
     /**
      * Sets up initial fragments based on saved state.
@@ -384,29 +340,7 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
             return
         }
 
-        // Check alarm permission before setting notification
-        if (enabled && !notifier!!.canScheduleExactAlarms()) {
-            MaterialAlertDialogBuilder(this)
-                .setTitle("Permission Required")
-                .setMessage("To set note reminders, QuickNotes needs permission to schedule exact alarms.")
-                .setPositiveButton(
-                    "Grant Permission"
-                ) { dialog: DialogInterface?, which: Int ->
-                    wasWaitingForPermission = true
-                    notifier!!.requestExactAlarmPermission()
-                }
-                .setNegativeButton(
-                    "Cancel"
-                ) { dialog: DialogInterface?, which: Int ->
-                    Snackbar.make(
-                        mainUI!!.getRootView(), "Notification not set - permission required",
-                        Snackbar.LENGTH_SHORT
-                    ).show()
-                }
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .show()
-            return
-        }
+        // Exact alarm not required; proceed directly
 
         notifier!!.updateNotification(note, enabled, date)
         noteLibrary!!.updateNoteNotificationSettings(note, enabled, date)
@@ -550,6 +484,25 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
             )
         }
     }
+
+
+    fun openSystemNotificationSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            startActivity(intent)
+            wasWaitingForNotificationPermission = true
+        } catch (_: Exception) {
+            // Fallback to general app settings
+            try {
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    .setData("package:$packageName".toUri())
+                startActivity(intent)
+            } catch (_: Exception) {}
+        }
+    }
+
+
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
