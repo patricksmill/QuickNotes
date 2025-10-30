@@ -83,6 +83,11 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: write
+    env:
+      SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+      SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+      SIGNING_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
+      SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -110,15 +115,28 @@ jobs:
       - name: Build Release AAB
         run: ./gradlew :app:bundleRelease --stacktrace
 
+      - name: Assemble Release APK
+        run: ./gradlew :app:assembleRelease --stacktrace
+
+      - name: Determine if signing is available
+        id: signing
+        shell: bash
+        run: |
+          if [ -n "${SIGNING_KEYSTORE_BASE64}" ] && [ -n "${SIGNING_KEY_ALIAS}" ] && [ -n "${SIGNING_KEYSTORE_PASSWORD}" ] && [ -n "${SIGNING_KEY_PASSWORD}" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Sign Release AAB
-        if: ${{ secrets.SIGNING_KEYSTORE_BASE64 != '' }}
+        if: steps.signing.outputs.available == 'true'
         uses: r0adkll/sign-android-release@v1
         with:
           releaseDirectory: app/build/outputs/bundle/release
-          signingKeyBase64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
-          alias: ${{ secrets.SIGNING_KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          signingKeyBase64: ${{ env.SIGNING_KEYSTORE_BASE64 }}
+          alias: ${{ env.SIGNING_KEY_ALIAS }}
+          keyStorePassword: ${{ env.SIGNING_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ env.SIGNING_KEY_PASSWORD }}
 
       - name: Upload Release AAB artifact
         uses: actions/upload-artifact@v4
@@ -127,9 +145,18 @@ jobs:
           path: app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
 
+      - name: Upload Release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/bundle/release/*.aab
+          files: |
+            app/build/outputs/bundle/release/*.aab
+            app/build/outputs/apk/release/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
