@@ -1,2 +1,0 @@
-Initial public release with note creation, tagging, search, reminders, and optional AI-powered auto-tagging.
-
