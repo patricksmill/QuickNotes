@@ -1,0 +1,25 @@
+# Template metadata for QuickNotes submission to fdroiddata.
+# Copy this file into fdroiddata/metadata/ when preparing the merge request.
+Categories:
+  - Writing
+License: Apache-2.0
+SourceCode: https://github.com/patricksmill/QuickNotes
+IssueTracker: https://github.com/patricksmill/QuickNotes/issues
+Changelog: https://github.com/patricksmill/QuickNotes/releases
+Summary: AI-assisted note taking and reminders
+AntiFeatures:
+  - NonFreeNet
+Repo: https://github.com/patricksmill/QuickNotes.git
+Builds:
+  - versionName: 1.0
+    versionCode: 1
+    commit: v1.0.0
+    subdir: app
+    gradle:
+      - yes
+    output: build/outputs/apk/release/app-release-unsigned.apk
+AutoUpdateMode: Version v%v
+UpdateCheckMode: Tags
+CurrentVersion: 1.0
+CurrentVersionCode: 1
+

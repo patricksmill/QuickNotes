@@ -46,3 +46,8 @@ To run the application, you need to press the run button at the top of Android S
 - To edit a note, tap on it.
 - Use the search bar at the top to find notes by title, content, or tags
 - Use the filter button to show notes with specific tags
+
+
+## License
+
+QuickNotes is released under the [Apache License 2.0](LICENSE).

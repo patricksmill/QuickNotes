@@ -1,0 +1,10 @@
+QuickNotes helps you capture, organize, and review ideas quickly.
+
+Key features:
+- Create, edit, and delete notes with instant search across titles, content, and tags.
+- Apply tag-based filters to focus on the ideas that matter right now.
+- Enable optional AI-powered auto-tagging by providing your own OpenAI API key.
+- Schedule reminder notifications so you never miss an important thought.
+
+QuickNotes is free and open source. Set up goes fast—install the app, add your notes, and personalize reminders in just a few taps. Your data stays on-device unless you choose to use AI-assisted tagging via an external API key that you control.
+

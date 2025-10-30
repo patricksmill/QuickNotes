@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import androidx.fragment.app.FragmentManager
 import com.example.quicknotes.R
 import com.example.quicknotes.model.Note
 import com.example.quicknotes.model.NoteLibrary
@@ -46,6 +47,36 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
     private var onboardingManager: OnboardingManager? = null
     private var wasWaitingForNotificationPermission = false
     private var isOnboardingActive = false
+    private val backStackListener = FragmentManager.OnBackStackChangedListener {
+        syncFragmentListeners()
+    }
+    private val fragmentLifecycleCallbacks = object : FragmentManager.FragmentLifecycleCallbacks() {
+        override fun onFragmentViewCreated(
+            fm: FragmentManager,
+            f: androidx.fragment.app.Fragment,
+            v: android.view.View,
+            savedInstanceState: Bundle?
+        ) {
+            when (f) {
+                is SearchNotesFragment -> {
+                    f.setListener(this@ControllerActivity)
+                    currentSearchFragment = f
+                    noteLibrary?.let { library ->
+                        if (f.view != null) {
+                            f.updateView(library.getNotes())
+                        }
+                    }
+                }
+                is ManageNoteFragment -> f.setListener(this@ControllerActivity)
+            }
+        }
+
+        override fun onFragmentDestroyed(fm: FragmentManager, f: androidx.fragment.app.Fragment) {
+            if (f === currentSearchFragment) {
+                currentSearchFragment = null
+            }
+        }
+    }
 
     /**
      * Called when the activity is starting.
@@ -70,7 +101,11 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
         // Set up onboarding listener
         this.onboardingManager!!.setListener(this)
 
+        supportFragmentManager.addOnBackStackChangedListener(backStackListener)
+        supportFragmentManager.registerFragmentLifecycleCallbacks(fragmentLifecycleCallbacks, true)
+
         setupFragments(savedInstanceState)
+        syncFragmentListeners()
         handleNotificationIntent(intent)
 
 
@@ -429,15 +464,53 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
      */
     override fun onOpenSettings() {
         mainUI!!.displayFragment(SettingsFragment(), true)
+        syncFragmentListeners()
     }
 
     /**
      * Updates the notes view with the current state of the note library.
      */
     private fun updateNotesView() {
-        if (currentSearchFragment != null) {
-            currentSearchFragment!!.updateView(noteLibrary!!.getNotes())
+        val library = noteLibrary ?: return
+        val search = currentSearchFragment ?: findSearchFragment()
+        currentSearchFragment = search
+        search?.updateView(library.getNotes())
+    }
+
+    private fun findSearchFragment(): SearchNotesFragment? {
+        return supportFragmentManager.fragments.firstOrNull { it is SearchNotesFragment } as? SearchNotesFragment
+    }
+
+    private fun syncFragmentListeners() {
+        val library = noteLibrary ?: return
+        var visibleSearch: SearchNotesFragment? = null
+
+        fun bindSearch(fragment: SearchNotesFragment) {
+            fragment.setListener(this)
+            if (fragment.view != null) {
+                fragment.updateView(library.getNotes())
+            }
+            if (fragment.isVisible) {
+                visibleSearch = fragment
+            } else if (visibleSearch == null) {
+                visibleSearch = fragment
+            }
         }
+
+        supportFragmentManager.fragments.forEach { fragment ->
+            when (fragment) {
+                is SearchNotesFragment -> bindSearch(fragment)
+                is ManageNoteFragment -> fragment.setListener(this)
+            }
+        }
+
+        currentSearchFragment = visibleSearch ?: currentSearchFragment
+    }
+
+    override fun onDestroy() {
+        supportFragmentManager.removeOnBackStackChangedListener(backStackListener)
+        supportFragmentManager.unregisterFragmentLifecycleCallbacks(fragmentLifecycleCallbacks)
+        super.onDestroy()
     }
 
     // Expose a public refresh to update notes list and tag chips immediately
