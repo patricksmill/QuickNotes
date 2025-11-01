@@ -37,16 +37,18 @@
 
 
 
-            <TextView
-                android:id="@+id/noteDateText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="?attr/textAppearanceLabelSmall"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                android:maxLines="1"
-                android:ellipsize="end" />
+            <ImageView
+                android:id="@+id/noteNotifIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="@string/notifications"
+                android:padding="0dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_notifications"
+                android:scaleType="centerInside"
+                android:adjustViewBounds="true"
+                app:tint="?attr/colorOnSurfaceVariant"
+                android:visibility="gone" />
 
             <ImageView
                 android:id="@+id/notePinIcon"
@@ -72,18 +74,35 @@
             android:maxLines="2"
             android:ellipsize="end" />
 
-        <TextView
-            android:id="@+id/noteTagsText"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:ellipsize="end"
-            android:gravity="end"
-            android:maxLines="1"
-            android:textAppearance="?attr/textAppearanceLabelMedium"
-            android:textColor="?attr/colorSecondary"
-            android:textStyle="italic"
-            android:drawablePadding="8dp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/noteTagsText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="?attr/textAppearanceLabelMedium"
+                android:textColor="?attr/colorSecondary"
+                android:textStyle="italic" />
+
+            <TextView
+                android:id="@+id/noteDateText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?attr/textAppearanceLabelSmall"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:paddingStart="8dp"
+                android:paddingEnd="0dp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
 
     </LinearLayout>
 
