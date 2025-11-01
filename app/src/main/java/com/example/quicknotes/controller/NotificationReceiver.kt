@@ -8,8 +8,8 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.example.quicknotes.R
-import com.example.quicknotes.model.Note
-import com.example.quicknotes.model.NoteLibrary
+import com.example.quicknotes.model.note.Note
+import com.example.quicknotes.model.note.NoteLibrary
 import com.example.quicknotes.model.Notifier
 import java.util.function.Consumer
 

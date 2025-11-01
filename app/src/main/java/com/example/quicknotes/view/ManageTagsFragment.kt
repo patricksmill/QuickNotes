@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.quicknotes.databinding.ItemManageTagBinding
 import com.example.quicknotes.databinding.SheetManageTagsBinding
-import com.example.quicknotes.model.Tag
+import com.example.quicknotes.model.tag.Tag
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 

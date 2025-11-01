@@ -1,6 +1,6 @@
 package com.example.quicknotes.view.adapters
 
-import com.example.quicknotes.model.Tag
+import com.example.quicknotes.model.tag.Tag
 
 sealed class TagSuggestion {
 	data class Existing(val tag: Tag) : TagSuggestion()

@@ -18,8 +18,8 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import com.example.quicknotes.R
 import com.example.quicknotes.controller.ControllerActivity
-import com.example.quicknotes.model.Note
-import com.example.quicknotes.model.NoteLibrary
+import com.example.quicknotes.model.note.Note
+import com.example.quicknotes.model.note.NoteLibrary
 import com.example.quicknotes.model.Persistence
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers

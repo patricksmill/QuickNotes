@@ -1,4 +1,4 @@
-package com.example.quicknotes.model
+package com.example.quicknotes.model.tag
 
 import android.content.Context
 import android.content.SharedPreferences

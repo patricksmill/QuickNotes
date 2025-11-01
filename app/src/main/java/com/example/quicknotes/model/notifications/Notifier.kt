@@ -7,6 +7,7 @@ import android.content.Intent
 import android.view.View
 import com.example.quicknotes.R
 import com.example.quicknotes.controller.NotificationReceiver
+import com.example.quicknotes.model.note.Note
 import com.google.android.material.snackbar.Snackbar
 import java.util.Date
 

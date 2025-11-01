@@ -1,5 +1,6 @@
-package com.example.quicknotes.model
+package com.example.quicknotes.model.note
 
+import com.example.quicknotes.model.tag.Tag
 import java.util.Date
 import java.util.UUID
 

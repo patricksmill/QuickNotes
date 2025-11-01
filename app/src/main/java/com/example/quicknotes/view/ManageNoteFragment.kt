@@ -13,7 +13,7 @@ import android.widget.FrameLayout
 import androidx.core.content.ContextCompat
 import com.example.quicknotes.R
 import com.example.quicknotes.databinding.FragmentManageNoteBinding
-import com.example.quicknotes.model.Note
+import com.example.quicknotes.model.note.Note
 import com.example.quicknotes.view.adapters.TagSuggestion
 import com.example.quicknotes.view.adapters.TagSuggestionAdapter
 import com.google.android.material.bottomsheet.BottomSheetBehavior

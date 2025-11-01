@@ -1,6 +1,7 @@
 package com.example.quicknotes.model
 
 import android.content.Context
+import com.example.quicknotes.model.note.Note
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken

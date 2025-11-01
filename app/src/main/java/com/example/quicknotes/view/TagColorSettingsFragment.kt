@@ -7,14 +7,14 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toDrawable
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
-import com.example.quicknotes.model.Tag
-import com.example.quicknotes.model.TagColorManager
+import com.example.quicknotes.model.tag.Tag
+import com.example.quicknotes.model.tag.TagRepository
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class TagColorSettingsFragment : PreferenceFragmentCompat() {
     private lateinit var colorResIds: IntArray
     private var colorNames: Array<String>? = null
-    private var colorOptions: MutableList<TagColorManager.ColorOption?>? = null
+    private var colorOptions: MutableList<TagRepository.ColorOption?>? = null
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         val ctx = requireContext()

@@ -1,10 +1,11 @@
-package com.example.quicknotes.model
+package com.example.quicknotes.model.tag
 
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
+import com.example.quicknotes.model.note.Note
 import com.openai.client.OpenAIClient
 import com.openai.client.okhttp.OpenAIOkHttpClient
 import com.openai.models.responses.Response
@@ -17,7 +18,7 @@ import java.util.concurrent.Executors
  */
 class AutoTaggingService(
     private val ctx: Context,
-    private val tagOperations: TagOperationsManager
+    private val tagRepository: TagRepository
 ) {
     /**
      * Functional interface for tag assignment callback.
@@ -43,7 +44,7 @@ class AutoTaggingService(
         Log.d(TAG, "Starting simple auto-tag for note: ${note.title}, limit=$limit")
         val combined = extractTextContent(note)
         val words = extractWords(combined)
-        val dictionary = KeywordTagDictionary.loadTagMap(ctx)
+        val dictionary = loadKeywordTagMap(ctx)
         Log.d(TAG, "Simple auto-tag extracted words=${words.size}, dictionary size=${dictionary.size}")
         assignTagsFromDictionary(note, words, dictionary, limit)
     }
@@ -58,10 +59,10 @@ class AutoTaggingService(
      * @param callback Callback for individual tag assignments
      */
     fun performAiAutoTag(
-        note: Note, 
-        limit: Int, 
+        note: Note,
+        limit: Int,
         apiKey: String,
-        existingTags: Set<String>, 
+        existingTags: Set<String>,
         callback: TagAssignmentCallback
     ) {
         val executor = Executors.newSingleThreadExecutor()
@@ -76,7 +77,7 @@ class AutoTaggingService(
                 
                 if (tagNames.isNotEmpty()) {
                     Log.d(TAG, "AI suggested tags: $tagNames")
-                    tagOperations.setTags(note, tagNames.map { it as String? }.toMutableList())
+                    tagRepository.setTags(note, tagNames.map { it as String? }.toMutableList())
                     tagNames.forEach { tagName ->
                         uiHandler.post { callback.onTagAssigned(tagName) }
                     }
@@ -158,9 +159,9 @@ class AutoTaggingService(
      * @param limit Maximum number of tags to assign
      */
     private fun assignTagsFromDictionary(
-        note: Note, 
+        note: Note,
         words: Set<String>,
-        dictionary: Map<String, String>?, 
+        dictionary: Map<String, String>?,
         limit: Int
     ) {
         if (dictionary == null) return
@@ -181,7 +182,7 @@ class AutoTaggingService(
         
         if (toAssign.isNotEmpty()) {
             Log.d(TAG, "Simple auto-tag will assign: $toAssign")
-            tagOperations.setTags(note, toAssign.map { it as String? }.toMutableList())
+            tagRepository.setTags(note, toAssign.map { it as String? }.toMutableList())
             Toast.makeText(
                 ctx,
                 "Auto-tagged ${note.title}: ${toAssign.joinToString(", ")}",
@@ -330,4 +331,30 @@ class AutoTaggingService(
     companion object {
         private const val TAG = "AutoTagging"
     }
+
+    // Loads the keyword->tag map from assets/keyword_tags.json
+    private fun loadKeywordTagMap(context: Context): Map<String, String> {
+        return try {
+            context.assets.open("keyword_tags.json").use { inputStream ->
+                java.io.InputStreamReader(inputStream).use { reader ->
+                    val gson = com.google.gson.Gson()
+                    val listType = object : com.google.gson.reflect.TypeToken<List<KeywordTag>>() {}.type
+                    val list: List<KeywordTag> = gson.fromJson(reader, listType)
+
+                    list.mapNotNull { kt ->
+                        if (kt.keyword != null && kt.tag != null) {
+                            kt.keyword.lowercase() to kt.tag
+                        } else null
+                    }.toMap()
+                }
+            }
+        } catch (_: Exception) {
+            emptyMap()
+        }
+    }
+
+    private data class KeywordTag(
+        val keyword: String? = null,
+        val tag: String? = null
+    )
 }

@@ -25,7 +25,7 @@ import com.example.quicknotes.model.OnboardingManager
 class OnboardingOverlayFragment : Fragment() {
 
     private lateinit var step: OnboardingManager.OnboardingStep
-    private lateinit var onboardingManager: OnboardingManager
+    private var callbacks: Callbacks? = null
     private var overlayView: OverlayView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,16 +63,16 @@ class OnboardingOverlayFragment : Fragment() {
 
         if (step.requiresUserAction) {
             nextButton.setText(R.string.try_it)
-            nextButton.setOnClickListener { onboardingManager.executeStepAction(step.action) }
+            nextButton.setOnClickListener { callbacks?.onAction(step.action) }
         } else {
             nextButton.setText(R.string.next)
             nextButton.setOnClickListener {
-                onboardingManager.executeStepAction(step.action)
-                onboardingManager.nextStep(requireActivity())
+                callbacks?.onAction(step.action)
+                callbacks?.onNext()
             }
         }
 
-        skipButton.setOnClickListener { onboardingManager.skipOnboarding() }
+        skipButton.setOnClickListener { callbacks?.onSkip() }
     }
 
     fun animateOut(onEnd: () -> Unit) {
@@ -86,8 +86,8 @@ class OnboardingOverlayFragment : Fragment() {
             })?.start()
     }
 
-    fun setOnboardingManager(manager: OnboardingManager) {
-        this.onboardingManager = manager
+    fun setCallbacks(callbacks: Callbacks) {
+        this.callbacks = callbacks
     }
 
     private class OverlayView(context: Context, private val targetView: View?) : FrameLayout(context) {
@@ -187,5 +187,11 @@ class OnboardingOverlayFragment : Fragment() {
                 }
             }
         }
+    }
+
+    interface Callbacks {
+        fun onAction(action: OnboardingManager.OnboardingStep.StepAction)
+        fun onNext()
+        fun onSkip()
     }
 }

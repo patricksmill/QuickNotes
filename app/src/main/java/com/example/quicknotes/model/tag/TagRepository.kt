@@ -1,110 +1,120 @@
-package com.example.quicknotes.model
+package com.example.quicknotes.model.tag
 
 import android.content.Context
+import androidx.annotation.ColorRes
+import com.example.quicknotes.R
+import com.example.quicknotes.model.Persistence
+import com.example.quicknotes.model.note.Note
+import com.example.quicknotes.model.note.NoteLibrary
+import java.util.Collections
+import java.util.Random
 import java.util.function.Supplier
 import java.util.stream.Collectors
 
 /**
- * TagOperationsManager handles basic tag operations for notes.
- * It manages tag creation, assignment, retrieval, and filtering operations.
+ * TagRepository centralizes tag operations and color management.
+ * - Assigns/renames/merges/deletes tags across the entire library
+ * - Maintains the persistent mapping of tag name -> color resource id
+ * - Exposes available color options from resources
  */
-class TagOperationsManager(
-    ctx: Context, private val noteLibrary: NoteLibrary,
-    private val colorManager: TagColorManager
+class TagRepository(
+    ctx: Context,
+    private val noteLibrary: NoteLibrary
 ) {
-    private val ctx: Context = ctx.applicationContext
+    private val appContext: Context = ctx.applicationContext
 
-    /**
-     * Sets a tag for the given note, creating the tag if necessary.
-     *
-     * @param note The note to tag
-     * @param name The tag name
-     */
-    fun setTag(note: Note, name: String) {
-        if (name.trim { it <= ' ' }.isEmpty()) return
+    @JvmRecord
+    data class ColorOption(@JvmField val name: String, @JvmField @field:ColorRes val resId: Int)
 
-        val tagName = name.trim { it <= ' ' }
-        val colorRes = colorManager.getTagColorRes(tagName)
-        val tag = Tag(tagName, colorRes)
+    @JvmField
+    val availableColors: MutableList<ColorOption?>
 
-        note.setTag(tag)
-        Persistence.saveNotes(ctx, noteLibrary.getNotes())
+    private val colorMap: MutableMap<String?, Int?>
+    private val random = Random()
+
+    init {
+        this.availableColors = loadAvailableColors()
+        this.colorMap = Persistence.loadTagMap(appContext)
     }
 
-    /**
-     * Adds multiple tags to the given note and persists once.
-     * @param note The note to tag
-     * @param names List of tag names
-     */
+    // ----- Public API: Colors -----
+    fun getTagColorRes(tagName: String): Int {
+        val key = tagName.trim { it <= ' ' }
+        var res = colorMap[key]
+        if (res == null || res == 0) {
+            res = assignRandomColor()
+            colorMap[key] = res
+            saveColorMap()
+        }
+        return res
+    }
+
+    fun setTagColor(tagName: String, @ColorRes resId: Int) {
+        if (tagName.trim { it <= ' ' }.isEmpty()) return
+        colorMap[tagName.trim { it <= ' ' }] = resId
+        saveColorMap()
+    }
+
+    fun cleanupUnusedColors(usedTagNames: MutableSet<String?>) {
+        if (colorMap.keys.removeIf { k: String? -> !usedTagNames.contains(k) }) {
+            saveColorMap()
+        }
+    }
+
+    // ----- Public API: Tag operations -----
+    fun setTag(note: Note, name: String) {
+        if (name.trim { it <= ' ' }.isEmpty()) return
+        val tagName = name.trim { it <= ' ' }
+        val colorRes = getTagColorRes(tagName)
+        val tag = Tag(tagName, colorRes)
+        note.setTag(tag)
+        Persistence.saveNotes(appContext, noteLibrary.getNotes())
+    }
+
     fun setTags(note: Note, names: MutableList<String?>) {
         var changed = false
         for (name in names) {
             if (name == null) continue
             val trimmed = name.trim { it <= ' ' }
             if (trimmed.isEmpty()) continue
-            val colorRes = colorManager.getTagColorRes(trimmed)
+            val colorRes = getTagColorRes(trimmed)
             val tag = Tag(trimmed, colorRes)
             val before = note.tags.size
             note.setTag(tag)
-            if (note.tags.size != before) {
-                changed = true
-            }
+            if (note.tags.size != before) changed = true
         }
         if (changed) {
-            Persistence.saveNotes(ctx, noteLibrary.getNotes())
+            Persistence.saveNotes(appContext, noteLibrary.getNotes())
         }
     }
 
     val allTags: MutableSet<Tag>
-        /**
-         * Returns all tags used in the note library.
-         *
-         * @return Set of Tag objects
-         */
         get() {
             val tagNames = extractAllTagNames()
             return createTagsWithColors(tagNames)
         }
 
-    /**
-     * Removes color assignments for tags that are no longer used in any note.
-     */
     fun cleanupUnusedTags() {
         val usedTagNames = extractAllTagNames()
-        colorManager.cleanupUnusedColors(usedTagNames)
+        cleanupUnusedColors(usedTagNames)
     }
 
     val allTagNames: MutableSet<String?>
-        /**
-         * Gets all unique tag names currently used in the note library.
-         *
-         * @return Set of tag names
-         */
         get() = extractAllTagNames()
 
-    /**
-     * Renames a tag across all notes and updates the color mapping key.
-     * The new tag will retain the color of the old tag (or assigned if missing).
-     *
-     * @param oldName Existing tag name
-     * @param newName New tag name
-     */
     fun renameTag(oldName: String, newName: String) {
         val from = oldName.trim { it <= ' ' }
         val to = newName.trim { it <= ' ' }
         if (from.isEmpty() || to.isEmpty() || from.equals(to, ignoreCase = true)) return
 
-        val colorRes = colorManager.getTagColorRes(from)
+        val colorRes = getTagColorRes(from)
         val newTag = Tag(to, colorRes)
 
         var changed = false
         for (note in noteLibrary.getNotes()) {
-            // Collect matches to remove to avoid ConcurrentModification
             val toRemove = mutableListOf<Tag>()
             for (t in note.tags) {
-                if (t.name.equals(from, ignoreCase = true)) {
-                    toRemove.add(t)
-                }
+                if (t.name.equals(from, ignoreCase = true)) toRemove.add(t)
             }
             if (toRemove.isNotEmpty()) {
                 note.tags.removeAll(toRemove)
@@ -113,23 +123,16 @@ class TagOperationsManager(
             }
         }
 
-        // Move color key mapping if needed
         if (from != to) {
-            colorManager.setTagColor(to, colorRes)
+            setTagColor(to, colorRes)
         }
-        // Clean up unused colors after rename
         cleanupUnusedTags()
 
         if (changed) {
-            Persistence.saveNotes(ctx, noteLibrary.getNotes())
+            Persistence.saveNotes(appContext, noteLibrary.getNotes())
         }
     }
 
-    /**
-     * Deletes a tag from all notes and removes its color mapping.
-     *
-     * @param tagName Tag to delete
-     */
     fun deleteTag(tagName: String) {
         val key = tagName.trim { it <= ' ' }
         if (key.isEmpty()) return
@@ -138,9 +141,7 @@ class TagOperationsManager(
         for (note in noteLibrary.getNotes()) {
             val toRemove = mutableListOf<Tag>()
             for (t in note.tags) {
-                if (t.name.equals(key, ignoreCase = true)) {
-                    toRemove.add(t)
-                }
+                if (t.name.equals(key, ignoreCase = true)) toRemove.add(t)
             }
             if (toRemove.isNotEmpty()) {
                 note.tags.removeAll(toRemove)
@@ -148,28 +149,19 @@ class TagOperationsManager(
             }
         }
 
-        // Remove color mapping if now unused
         cleanupUnusedTags()
 
         if (changed) {
-            Persistence.saveNotes(ctx, noteLibrary.getNotes())
+            Persistence.saveNotes(appContext, noteLibrary.getNotes())
         }
     }
 
-    /**
-     * Merges multiple source tags into a single target tag across all notes.
-     * Retains the color of the target tag (assigns if not present yet).
-     *
-     * @param sourceNames Tags to merge
-     * @param targetName Target tag name
-     */
     fun mergeTags(sourceNames: MutableCollection<String?>, targetName: String) {
         if (sourceNames.isEmpty()) return
         val target = targetName.trim { it <= ' ' }
         if (target.isEmpty()) return
 
-        // Ensure target color exists
-        val targetColor = colorManager.getTagColorRes(target)
+        val targetColor = getTagColorRes(target)
         val targetTag = Tag(target, targetColor)
 
         val sources = sourceNames.asSequence()
@@ -184,9 +176,7 @@ class TagOperationsManager(
             var noteChanged = false
             val toRemove = mutableListOf<Tag>()
             for (t in note.tags) {
-                if (sources.contains(t.name)) {
-                    toRemove.add(t)
-                }
+                if (sources.contains(t.name)) toRemove.add(t)
             }
             if (toRemove.isNotEmpty()) {
                 note.tags.removeAll(toRemove)
@@ -196,19 +186,39 @@ class TagOperationsManager(
             if (noteChanged) changed = true
         }
 
-        // Clean up unused colors for removed tags
         cleanupUnusedTags()
 
         if (changed) {
-            Persistence.saveNotes(ctx, noteLibrary.getNotes())
+            Persistence.saveNotes(appContext, noteLibrary.getNotes())
         }
     }
 
-    /**
-     * Extracts all unique tag names from the note library.
-     *
-     * @return Set of unique tag names
-     */
+    // ----- Internals -----
+    private fun loadAvailableColors(): MutableList<ColorOption?> {
+        val names = appContext.resources.getStringArray(R.array.tag_color_names)
+        val ta = appContext.resources.obtainTypedArray(R.array.tag_color_resources)
+        try {
+            val opts: MutableList<ColorOption?> = ArrayList()
+            var i = 0
+            while (i < ta.length() && i < names.size) {
+                val id = ta.getResourceId(i, 0)
+                if (id != 0) opts.add(ColorOption(names[i], id))
+                i++
+            }
+            return Collections.unmodifiableList<ColorOption?>(opts)
+        } finally {
+            ta.recycle()
+        }
+    }
+
+    private fun assignRandomColor(): Int {
+        return availableColors[random.nextInt(availableColors.size)]!!.resId
+    }
+
+    private fun saveColorMap() {
+        Persistence.saveTagMap(appContext, colorMap)
+    }
+
     private fun extractAllTagNames(): MutableSet<String?> {
         return noteLibrary.getNotes().stream()
             .flatMap { note: Note -> note.tags.stream() }
@@ -216,18 +226,13 @@ class TagOperationsManager(
             .collect(Collectors.toCollection(Supplier { LinkedHashSet() }))
     }
 
-    /**
-     * Creates Tag objects with colors for the given tag names.
-     *
-     * @param tagNames Set of tag names
-     * @return Set of Tag objects with assigned colors
-     */
     private fun createTagsWithColors(tagNames: MutableSet<String?>): MutableSet<Tag> {
         return tagNames.asSequence()
             .filterNotNull()
             .filter { it.isNotBlank() }
-            .map { name -> Tag(name, colorManager.getTagColorRes(name)) }
+            .map { name -> Tag(name, getTagColorRes(name)) }
             .toMutableSet()
     }
-
 }
+
+
