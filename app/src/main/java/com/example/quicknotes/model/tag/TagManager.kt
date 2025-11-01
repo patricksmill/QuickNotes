@@ -1,4 +1,4 @@
-package com.example.quicknotes.model
+package com.example.quicknotes.model.tag
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -7,20 +7,20 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
-import com.example.quicknotes.model.AutoTaggingService.TagAssignmentCallback
-import com.example.quicknotes.model.AutoTaggingService.TagSuggestionsCallback
-import com.example.quicknotes.model.TagColorManager.ColorOption
+import com.example.quicknotes.model.tag.AutoTaggingService.TagAssignmentCallback
+import com.example.quicknotes.model.tag.AutoTaggingService.TagSuggestionsCallback
+import com.example.quicknotes.model.note.Note
+import com.example.quicknotes.model.note.NoteLibrary
 import java.util.function.Consumer
 
 /**
  * ManageTags serves as a facade for tag-related operations.
- * It coordinates between TagColorManager, TagOperationsManager, AutoTaggingService, and TagSettingsManager
+ * It coordinates between TagRepository, AutoTaggingService, and TagSettingsManager
  * to provide a unified interface for tag management in the NoteLibrary.
  */
 class TagManager(noteLibrary: NoteLibrary) {
     private val ctx: Context
-    private val colorManager: TagColorManager
-    private val operationsManager: TagOperationsManager
+    private val repository: TagRepository
     private val autoTaggingService: AutoTaggingService
     private val settingsManager: TagSettingsManager
 
@@ -35,9 +35,8 @@ class TagManager(noteLibrary: NoteLibrary) {
 
 
         // Initialize component managers
-        this.colorManager = TagColorManager(ctx)
-        this.operationsManager = TagOperationsManager(ctx, noteLibrary, colorManager)
-        this.autoTaggingService = AutoTaggingService(ctx, operationsManager)
+        this.repository = TagRepository(ctx, noteLibrary)
+        this.autoTaggingService = AutoTaggingService(ctx, repository)
         this.settingsManager = TagSettingsManager(ctx)
 
 
@@ -45,13 +44,13 @@ class TagManager(noteLibrary: NoteLibrary) {
         initializeExistingTagColors()
     }
 
-    val availableColors: MutableList<ColorOption?>
+    val availableColors: MutableList<TagRepository.ColorOption?>
         /**
          * Returns the list of available color options for tags.
          *
          * @return List of ColorOption
          */
-        get() = colorManager.availableColors
+        get() = repository.availableColors
 
 
     /**
@@ -61,7 +60,7 @@ class TagManager(noteLibrary: NoteLibrary) {
      * @param resId   The color resource ID
      */
     fun setTagColor(tagName: String, resId: Int) {
-        colorManager.setTagColor(tagName, resId)
+        repository.setTagColor(tagName, resId)
     }
 
     /**
@@ -70,7 +69,7 @@ class TagManager(noteLibrary: NoteLibrary) {
      * @param names List of tag names
      */
     fun setTags(note: Note, names: MutableList<String?>) {
-        operationsManager.setTags(note, names)
+        repository.setTags(note, names)
     }
 
     val allTags: MutableSet<Tag>
@@ -79,34 +78,34 @@ class TagManager(noteLibrary: NoteLibrary) {
          *
          * @return Set of Tag objects
          */
-        get() = operationsManager.allTags
+        get() = repository.allTags
 
     /**
      * Removes color assignments for tags that are no longer used in any note.
      */
     fun cleanupUnusedTags() {
-        operationsManager.cleanupUnusedTags()
+        repository.cleanupUnusedTags()
     }
 
     /**
      * Renames a tag across all notes.
      */
     fun renameTag(oldName: String, newName: String) {
-        operationsManager.renameTag(oldName, newName)
+        repository.renameTag(oldName, newName)
     }
 
     /**
      * Deletes a tag from all notes.
      */
     fun deleteTag(tagName: String) {
-        operationsManager.deleteTag(tagName)
+        repository.deleteTag(tagName)
     }
 
     /**
      * Merges source tags into a target tag across all notes.
      */
     fun mergeTags(sources: MutableCollection<String?>, target: String) {
-        operationsManager.mergeTags(sources, target)
+        repository.mergeTags(sources, target)
     }
 
     val isAiMode: Boolean
@@ -166,7 +165,7 @@ class TagManager(noteLibrary: NoteLibrary) {
         }
 
         val apiKey = settingsManager.apiKey ?: return
-        val existingTagNames = operationsManager.allTagNames
+        val existingTagNames = repository.allTagNames
             .filterNotNull()
             .toSet()
 
@@ -174,7 +173,7 @@ class TagManager(noteLibrary: NoteLibrary) {
             note, limit, apiKey, existingTagNames,
             object : TagAssignmentCallback {
                 override fun onTagAssigned(tagName: String) {
-                    operationsManager.setTag(note, tagName)
+                    repository.setTag(note, tagName)
                 }
             })
     }
@@ -196,7 +195,7 @@ class TagManager(noteLibrary: NoteLibrary) {
             return
         }
         val apiKey = settingsManager.apiKey
-        val existingTagNames = operationsManager.allTagNames
+        val existingTagNames = repository.allTagNames
             .filterNotNull()
             .toSet()
         
@@ -228,9 +227,9 @@ class TagManager(noteLibrary: NoteLibrary) {
      * Initializes colors for existing tags in the note library.
      */
     private fun initializeExistingTagColors() {
-        val existingTagNames = operationsManager.allTagNames.filterNotNull()
+        val existingTagNames = repository.allTagNames.filterNotNull()
         for (tagName in existingTagNames) {
-            colorManager.getTagColorRes(tagName) // This will assign a color if not already assigned
+            repository.getTagColorRes(tagName) // This will assign a color if not already assigned
         }
     }
 }

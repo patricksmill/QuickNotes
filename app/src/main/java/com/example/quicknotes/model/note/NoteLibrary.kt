@@ -1,8 +1,11 @@
-package com.example.quicknotes.model
+package com.example.quicknotes.model.note
 
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import com.example.quicknotes.model.Persistence
+import com.example.quicknotes.model.tag.TagManager
+import com.example.quicknotes.model.tag.TagSettingsManager
 import java.util.Date
 
 /**
@@ -14,7 +17,7 @@ class NoteLibrary(ctx: Context) {
      * Returns the application context associated with this library.
      */
     val context: Context = ctx.applicationContext
-    
+
     private val notes: MutableList<Note> = mutableListOf()
     private var recentlyDeletedNote: Note? = null
 
@@ -39,17 +42,17 @@ class NoteLibrary(ctx: Context) {
     fun addNote(note: Note) {
         val title = note.title.trim()
         if (title.isEmpty()) return
-        
+
         // Check if a note with the same title already exists
         if (notes.any { it.title.equals(title, ignoreCase = true) }) {
             return
         }
-        
+
         updateNoteDate(note)
-        
+
         val aiMode = manageTags.isAiMode
         val confirmAi = TagSettingsManager(context).isAiConfirmationEnabled
-        
+
         when {
             aiMode && confirmAi -> {
                 // If AI confirmation is enabled but we're offline, fall back to simple tagging now
@@ -66,7 +69,7 @@ class NoteLibrary(ctx: Context) {
                 manageTags.simpleAutoTag(note, manageTags.autoTagLimit)
             }
         }
-        
+
         notes.add(note)
         Persistence.saveNotes(context, notes)
     }
@@ -86,7 +89,7 @@ class NoteLibrary(ctx: Context) {
      */
     fun undoDelete(): Boolean {
         val deletedNote = recentlyDeletedNote ?: return false
-        
+
         notes.add(deletedNote)
         updateNoteDate(deletedNote)
         Persistence.saveNotes(context, notes)
@@ -107,22 +110,22 @@ class NoteLibrary(ctx: Context) {
         if (trimmedQuery.isEmpty()) {
             return getNotes()
         }
-        
+
         val lowerQuery = trimmedQuery.lowercase()
         val results = mutableSetOf<Note>()
-        
+
         if (title) {
             results.addAll(
                 notes.filter { it.title.lowercase().contains(lowerQuery) }
             )
         }
-        
+
         if (content) {
             results.addAll(
                 notes.filter { it.content.lowercase().contains(lowerQuery) }
             )
         }
-        
+
         if (tag) {
             results.addAll(
                 notes.filter { note ->
@@ -132,7 +135,7 @@ class NoteLibrary(ctx: Context) {
                 }
             )
         }
-        
+
         return results.toList()
     }
 
@@ -178,7 +181,7 @@ class NoteLibrary(ctx: Context) {
         get() {
             val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
                 ?: return false
-            
+
             val network = cm.activeNetwork ?: return false
             val caps = cm.getNetworkCapabilities(network)
             return caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true

@@ -5,9 +5,7 @@ import android.content.SharedPreferences
 import android.os.Parcel
 import android.os.Parcelable
 import androidx.core.content.edit
-import androidx.fragment.app.FragmentActivity
 import androidx.preference.PreferenceManager
-import com.example.quicknotes.view.OnboardingOverlayFragment
 
 /**
  * OnboardingManager handles the interactive tutorial system for first-time users.
@@ -22,8 +20,6 @@ class OnboardingManager(context: Context) {
 
     private val preferences: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
     private val steps: List<OnboardingStep> = createOnboardingSteps()
-    
-    private var currentOverlay: OnboardingOverlayFragment? = null
     private var listener: OnboardingListener? = null
     private var currentStepIndex = 0
 
@@ -35,6 +31,8 @@ class OnboardingManager(context: Context) {
         fun onOnboardingCompleted()
         fun onCreateFirstNote()
         fun onShowDemoNotes()
+        fun onShowOnboardingStep(step: OnboardingStep)
+        fun onHideOnboardingOverlay()
     }
 
     /**
@@ -98,30 +96,30 @@ class OnboardingManager(context: Context) {
     /**
      * Starts the onboarding flow
      */
-    fun startOnboarding(activity: FragmentActivity) {
+    fun startOnboarding() {
         listener?.onOnboardingStarted()
         currentStepIndex = 0
-        showStep(activity)
+        showStep()
     }
 
     /**
      * Forces onboarding to start (for manual trigger from settings)
      */
-    fun forceStartOnboarding(activity: FragmentActivity) {
+    fun forceStartOnboarding() {
         listener?.onOnboardingStarted()
         currentStepIndex = 0
-        showStep(activity)
+        showStep()
     }
 
     /**
      * Proceeds to the next onboarding step
      */
-    fun nextStep(activity: FragmentActivity) {
+    fun nextStep() {
         currentStepIndex++
         if (currentStepIndex >= steps.size) {
             completeOnboarding()
         } else {
-            showStep(activity)
+            showStep()
         }
     }
 
@@ -136,7 +134,7 @@ class OnboardingManager(context: Context) {
      * Marks onboarding as completed
      */
     private fun completeOnboarding() {
-        hideCurrentOverlay()
+        listener?.onHideOnboardingOverlay()
         preferences.edit {
             putBoolean(PREF_ONBOARDING_COMPLETED, true)
                 .putInt(PREF_ONBOARDING_VERSION, CURRENT_ONBOARDING_VERSION)
@@ -148,35 +146,11 @@ class OnboardingManager(context: Context) {
     /**
      * Shows the current onboarding step
      */
-    private fun showStep(activity: FragmentActivity) {
-        hideCurrentOverlay()
+    private fun showStep() {
         if (currentStepIndex < steps.size) {
             val step = steps[currentStepIndex]
-            val fragment = OnboardingOverlayFragment.newInstance(step)
-            fragment.setOnboardingManager(this)
-            currentOverlay = fragment
-            val fm = activity.supportFragmentManager
-            fm.beginTransaction()
-                .add(android.R.id.content, fragment, "OnboardingOverlay")
-                .commitAllowingStateLoss()
+            listener?.onShowOnboardingStep(step)
         }
-    }
-
-    /**
-     * Hides the current overlay if it exists
-     */
-    private fun hideCurrentOverlay() {
-        val fragment = currentOverlay ?: return
-        val activity = fragment.activity ?: run { currentOverlay = null; return }
-        val fm = activity.supportFragmentManager
-        fragment.animateOut {
-            if (!fm.isStateSaved) {
-                fm.beginTransaction()
-                    .remove(fragment)
-                    .commitAllowingStateLoss()
-            }
-        }
-        currentOverlay = null
     }
 
     /**

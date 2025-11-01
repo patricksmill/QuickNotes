@@ -20,8 +20,8 @@ import com.example.quicknotes.R
 import com.example.quicknotes.databinding.FragmentSearchNotesBinding
 import com.example.quicknotes.databinding.ListNoteBinding
 import com.example.quicknotes.databinding.TagChipBinding
-import com.example.quicknotes.model.Note
-import com.example.quicknotes.model.Tag
+import com.example.quicknotes.model.note.Note
+import com.example.quicknotes.model.tag.Tag
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import java.text.SimpleDateFormat

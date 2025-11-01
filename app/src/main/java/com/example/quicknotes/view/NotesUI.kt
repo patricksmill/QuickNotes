@@ -1,9 +1,9 @@
 package com.example.quicknotes.view
 
-import com.example.quicknotes.model.Note
-import com.example.quicknotes.model.Tag
-import com.example.quicknotes.model.TagColorManager.ColorOption
-import com.example.quicknotes.model.TagManager
+import com.example.quicknotes.model.note.Note
+import com.example.quicknotes.model.tag.Tag
+import com.example.quicknotes.model.tag.TagManager
+import com.example.quicknotes.model.tag.TagRepository.ColorOption
 import java.util.Date
 import java.util.function.Consumer
 

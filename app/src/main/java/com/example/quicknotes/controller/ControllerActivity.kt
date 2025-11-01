@@ -15,15 +15,16 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.fragment.app.FragmentManager
 import com.example.quicknotes.R
-import com.example.quicknotes.model.Note
-import com.example.quicknotes.model.NoteLibrary
+import com.example.quicknotes.model.note.Note
+import com.example.quicknotes.model.note.NoteLibrary
 import com.example.quicknotes.model.Notifier
 import com.example.quicknotes.model.OnboardingManager
 import com.example.quicknotes.model.OnboardingManager.OnboardingListener
-import com.example.quicknotes.model.Tag
-import com.example.quicknotes.model.TagColorManager.ColorOption
-import com.example.quicknotes.model.TagManager
-import com.example.quicknotes.model.TagSettingsManager
+import com.example.quicknotes.view.OnboardingOverlayFragment
+import com.example.quicknotes.model.tag.Tag
+import com.example.quicknotes.model.tag.TagManager
+import com.example.quicknotes.model.tag.TagSettingsManager
+import com.example.quicknotes.model.tag.TagRepository.ColorOption
 import com.example.quicknotes.view.MainUI
 import com.example.quicknotes.view.ManageNoteFragment
 import com.example.quicknotes.view.NotesUI
@@ -46,6 +47,7 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
     private var notifier: Notifier? = null
     private var onboardingManager: OnboardingManager? = null
     private var wasWaitingForNotificationPermission = false
+    private var onboardingOverlay: OnboardingOverlayFragment? = null
     private var isOnboardingActive = false
     private val backStackListener = FragmentManager.OnBackStackChangedListener {
         syncFragmentListeners()
@@ -149,16 +151,14 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
         if (onboardingManager!!.shouldShowOnboarding()) {
             // Delay onboarding slightly to ensure UI is fully loaded
             mainUI!!.getRootView().post {
-                onboardingManager!!.startOnboarding(
-                    this
-                )
+                onboardingManager!!.startOnboarding()
             }
         }
     }
 
     // Methods used by SettingsFragment actions
     fun forceStartOnboardingFromSettings() {
-        onboardingManager?.forceStartOnboarding(this)
+        onboardingManager?.forceStartOnboarding()
     }
 
 
@@ -266,7 +266,7 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
                 // Small delay to let the note save animation complete
                 mainUI!!.getRootView().postDelayed({
                     if (onboardingManager != null) {
-                        onboardingManager!!.nextStep(this)
+                        onboardingManager!!.nextStep()
                     }
                 }, 500)
             }
@@ -540,6 +540,41 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
     override fun onShowDemoNotes() {
         // Show demo notes from onboarding
         onAddDemoNotes()
+    }
+
+    override fun onShowOnboardingStep(step: OnboardingManager.OnboardingStep) {
+        // Remove any existing overlay first
+        onHideOnboardingOverlay()
+        val fragment = OnboardingOverlayFragment.newInstance(step)
+        fragment.setCallbacks(object : OnboardingOverlayFragment.Callbacks {
+            override fun onAction(action: OnboardingManager.OnboardingStep.StepAction) {
+                onboardingManager?.executeStepAction(action)
+            }
+
+            override fun onNext() {
+                onboardingManager?.nextStep()
+            }
+
+            override fun onSkip() {
+                onboardingManager?.skipOnboarding()
+            }
+        })
+        onboardingOverlay = fragment
+        supportFragmentManager.beginTransaction()
+            .add(android.R.id.content, fragment, "OnboardingOverlay")
+            .commitAllowingStateLoss()
+    }
+
+    override fun onHideOnboardingOverlay() {
+        val fragment = onboardingOverlay ?: return
+        onboardingOverlay = null
+        fragment.animateOut {
+            if (!supportFragmentManager.isStateSaved) {
+                supportFragmentManager.beginTransaction()
+                    .remove(fragment)
+                    .commitAllowingStateLoss()
+            }
+        }
     }
 
     private fun hasPostNotificationsPermission(): Boolean {
