@@ -7,7 +7,6 @@
     <string name="missing_item_field_error">Missing Item Field Error</string>
 
 
-    <string name="delete">Delete</string>
     <!-- Preference Titles -->
 
 
@@ -21,8 +20,6 @@
     <string name="notification">Notification:</string>
     
     <!-- Onboarding strings -->
-    <string name="alarm_permission_request">Please grant permission to schedule exact alarms for notifications</string>
-    <string name="alarm_permission_error">Unable to schedule exact alarms. Please grant permission in system settings.</string>
     <string name="alarm_service_error">Unable to access alarm service</string>
     <string name="notification_scheduled">Notification scheduled successfully</string>
     <string name="notification_schedule_error">Failed to schedule notification</string>

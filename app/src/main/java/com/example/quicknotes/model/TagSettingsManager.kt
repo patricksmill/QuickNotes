@@ -79,14 +79,6 @@ class TagSettingsManager(ctx: Context) {
             DEFAULT_AI_MODEL
         )!!
 
-    fun setSelectedAiModel(key: String) {
-        preferences.edit { putString(PREF_AI_MODEL, key) }
-    }
-
-    fun getSelectedAiModelName(): String {
-        // For now, use key as name; could map to human-readable names via resources
-        return selectedAiModelKey
-    }
     val isAiTaggingConfigured: Boolean
         get() = this.isAiMode && hasValidApiKey()
 
