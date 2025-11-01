@@ -31,4 +31,5 @@
     <string name="skip">Skip</string>
     <string name="next">Next</string>
     <string name="try_it">Try it!</string>
+    <string name="notifications">Notification Enabled</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.example.quicknotes.view
 
 import android.content.res.ColorStateList
+import android.icu.text.RelativeDateTimeFormatter
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.LayoutInflater
@@ -26,6 +27,7 @@ import com.google.android.material.snackbar.Snackbar
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 /**
  * Fragment responsible for displaying and managing the main notes view.
@@ -406,18 +408,12 @@ class SearchNotesFragment : Fragment(), NotesUI {
             fun bind(note: RenderNote) {
                 binding.noteNameText.text = note.title
                 binding.noteContentText.text = note.content
-                binding.noteDateText.text = DATE_FORMAT.format(note.lastModified)
+                binding.noteDateText.text = formatNoteTimestamp(note.lastModified)
                 binding.noteTagsText.text = TextUtils.join(", ", note.tagNames)
                 setupPins(binding.notePinIcon, note.source)
                 
                 val showNotif = listener?.onShouldShowNotificationIcon(note.source) == true
-                if (showNotif) {
-                    binding.noteTagsText.setCompoundDrawablesWithIntrinsicBounds(
-                        R.drawable.ic_bell, 0, 0, 0
-                    )
-                } else {
-                    binding.noteTagsText.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0)
-                }
+                binding.noteNotifIcon.visibility = if (showNotif) View.VISIBLE else View.GONE
                 
                 binding.root.setOnClickListener {
                     listener?.onManageNotes(note.source)
@@ -427,6 +423,31 @@ class SearchNotesFragment : Fragment(), NotesUI {
     }
 
     companion object {
-        private val DATE_FORMAT = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
+        private val DATE_ONLY_FORMAT = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+    }
+
+    private fun formatNoteTimestamp(date: Date): String {
+        val nowMs = System.currentTimeMillis()
+        val diffMs = date.time - nowMs // negative means past
+        val absMs = kotlin.math.abs(diffMs)
+
+        val weekMs = TimeUnit.DAYS.toMillis(7)
+        if (absMs >= weekMs) {
+            return DATE_ONLY_FORMAT.format(date)
+        }
+
+        val fmt = RelativeDateTimeFormatter.getInstance(Locale.getDefault())
+
+        val days = TimeUnit.MILLISECONDS.toDays(diffMs)
+        if (days != 0L) return fmt.format(days.toDouble(), RelativeDateTimeFormatter.RelativeDateTimeUnit.DAY)
+
+        val hours = TimeUnit.MILLISECONDS.toHours(diffMs)
+        if (hours != 0L) return fmt.format(hours.toDouble(), RelativeDateTimeFormatter.RelativeDateTimeUnit.HOUR)
+
+        val minutes = TimeUnit.MILLISECONDS.toMinutes(diffMs)
+        if (minutes != 0L) return fmt.format(minutes.toDouble(), RelativeDateTimeFormatter.RelativeDateTimeUnit.MINUTE)
+
+        val seconds = TimeUnit.MILLISECONDS.toSeconds(diffMs)
+        return fmt.format(seconds.toDouble(), RelativeDateTimeFormatter.RelativeDateTimeUnit.SECOND)
     }
 }
