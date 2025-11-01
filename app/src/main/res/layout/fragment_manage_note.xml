@@ -7,7 +7,6 @@
     android:padding="16dp">
 
     <LinearLayout
-        android:id="@+id/buttonContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -34,7 +33,6 @@
     </LinearLayout>
 
     <androidx.core.widget.NestedScrollView
-        android:id="@+id/scrollContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fillViewport="true"
@@ -63,7 +61,6 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/contentInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingBottom="16dp">
@@ -87,7 +84,6 @@
                 android:paddingBottom="16dp">
 
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tagsInputLayout"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -144,7 +140,6 @@
             </HorizontalScrollView>
 
             <LinearLayout
-                android:id="@+id/notificationLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"

@@ -21,12 +21,6 @@
         <item>Grey</item>
         <item>Blue Grey</item>
     </string-array>
-    <string-array name="ai_model_names">
-        <item>Auto-discover from OpenAI</item>
-    </string-array>
-    <string-array name="ai_model_values">
-        <item>auto</item>
-    </string-array>
 
     <array name="tag_color_resources">
         <item>@color/tag_color_red</item>

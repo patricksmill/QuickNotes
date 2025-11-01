@@ -78,6 +78,7 @@ dependencies {
     implementation(libs.androidx.espresso.contrib)
     implementation(libs.androidx.preference)
     implementation(libs.androidx.media3.common)
+    implementation(libs.androidx.uiautomator)
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.jupiter.engine)

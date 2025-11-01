@@ -112,7 +112,7 @@ class SearchNotesFragmentTest {
         Espresso.onView(withId(androidx.appcompat.R.id.search_src_text))
             .perform(ViewActions.typeText(secondNoteName), ViewActions.pressImeActionButton())
         Espresso.onView(
-            Matchers.allOf<View?>(
+            Matchers.allOf(
                 withId(R.id.noteNameText),
                 ViewMatchers.withText(secondNoteName)
             )
@@ -132,7 +132,7 @@ class SearchNotesFragmentTest {
             .perform(ViewActions.typeText(secondNoteContent), ViewActions.pressImeActionButton())
 
         Espresso.onView(
-            Matchers.allOf<View?>(
+            Matchers.allOf(
                 withId(R.id.noteNameText),
                 ViewMatchers.withText(secondNoteName)
             )
@@ -158,14 +158,14 @@ class SearchNotesFragmentTest {
         Espresso.onView(withId(R.id.notesRecyclerView))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
         Espresso.onView(
-            Matchers.allOf<View?>(
+            Matchers.allOf(
                 withId(R.id.noteNameText),
                 ViewMatchers.withText(noteName)
             )
         )
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
         Espresso.onView(
-            Matchers.allOf<View?>(
+            Matchers.allOf(
                 withId(R.id.noteNameText),
                 ViewMatchers.withText(secondNoteName)
             )
@@ -179,14 +179,14 @@ class SearchNotesFragmentTest {
         Espresso.onView(withId(R.id.notesRecyclerView))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
         Espresso.onView(
-            Matchers.allOf<View?>(
+            Matchers.allOf(
                 withId(R.id.noteNameText),
                 ViewMatchers.withText(noteName)
             )
         )
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
         Espresso.onView(
-            Matchers.allOf<View?>(
+            Matchers.allOf(
                 withId(R.id.noteNameText),
                 ViewMatchers.withText(secondNoteName)
             )

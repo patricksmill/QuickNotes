@@ -19,6 +19,7 @@ espressoContrib = "3.7.0"
 testRules = "1.7.0"
 media3Common = "1.8.0"
 securityCrypto = "1.1.0"
+uiautomator = "2.3.0"
 
 
 [libraries]
@@ -43,6 +44,7 @@ androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "
 androidx-media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3Common" }
 junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junitJupiter" }
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
+androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
