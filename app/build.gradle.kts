@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.quicknotes"
         minSdk = 30
         targetSdk = 36
-        versionCode = 100001
-        versionName = "1.0.1"
+        versionCode = 100005
+        versionName = "1.0.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
