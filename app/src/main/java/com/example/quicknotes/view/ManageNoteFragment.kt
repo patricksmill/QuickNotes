@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import com.example.quicknotes.R
 import com.example.quicknotes.databinding.FragmentManageNoteBinding
 import com.example.quicknotes.model.note.Note
+import com.example.quicknotes.model.tag.TagSettingsManager
 import com.example.quicknotes.view.adapters.TagSuggestion
 import com.example.quicknotes.view.adapters.TagSuggestionAdapter
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -259,9 +260,14 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
 
 	private fun suggestTagsWithLoading(aiBtn: View?, progress: View?) {
 		listener ?: return
-		val aiConfigured = listener!!.onIsAiTaggingConfigured()
-		if (!aiConfigured) {
-			showError("AI tagging is not configured")
+		
+		// Check AI configuration conditions separately
+		val settingsManager = TagSettingsManager(requireContext())
+		val isAiModeEnabled = settingsManager.isAiMode
+		val hasApiKey = settingsManager.hasValidApiKey()
+		
+		if (!isAiModeEnabled || !hasApiKey) {
+			showAiConfigurationWarning(!isAiModeEnabled, !hasApiKey)
 			return
 		}
 
@@ -293,6 +299,74 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
             }
         )
     }
+	
+	/**
+	 * Shows a warning dialog when AI tagging is not properly configured.
+	 * @param aiModeDisabled Whether AI mode is disabled
+	 * @param apiKeyMissing Whether the API key is missing
+	 */
+	private fun showAiConfigurationWarning(aiModeDisabled: Boolean, apiKeyMissing: Boolean) {
+		val issues = mutableListOf<String>()
+		if (aiModeDisabled) {
+			issues.add("AI auto-tagging is disabled")
+		}
+		if (apiKeyMissing) {
+			issues.add("No OpenAI API key is configured")
+		}
+		
+		val message = "Please fix the following in Settings:\n\n• ${issues.joinToString("\n• ")}"
+		
+		MaterialAlertDialogBuilder(requireContext())
+			.setTitle("AI Tagging Not Configured")
+			.setMessage(message)
+			.setPositiveButton("Open Settings") { _, _ ->
+				saveAndOpenSettings()
+			}
+			.setNegativeButton(android.R.string.cancel, null)
+			.show()
+	}
+	
+	/**
+	 * Saves the current note and opens settings.
+	 */
+	private fun saveAndOpenSettings() {
+		if (currentNote == null || listener == null) {
+			listener?.onOpenSettings()
+			dismiss()
+			return
+		}
+		
+		// Update note with current field values
+		val title = getText(binding!!.noteTitleText).trim()
+		val content = getText(binding!!.noteContentText).trim()
+		
+		currentNote!!.title = title
+		currentNote!!.content = content
+		
+		// Save tags if they've been modified
+		if (tagsDirty) {
+			persistSelectedTags()
+		}
+		
+		// Update last modified date when saving
+		currentNote!!.lastModified = Date()
+		
+		// Handle notifications
+		val enabled = binding!!.notificationsEnabled.isChecked
+		var selectedDate: Date? = null
+		if (enabled) {
+			val date = this.selectedDate
+			if (listener!!.onValidateNotificationDate(date)) {
+				selectedDate = date
+			}
+		}
+		listener?.onSetNotification(currentNote!!, enabled, selectedDate)
+		
+		// Save the note and navigate
+		listener!!.onSaveNote(currentNote!!, isNewNote)
+		dismiss()
+		listener?.onOpenSettings()
+	}
 
 	private fun showSuggestionDialog(suggestions: List<String>) {
 		val items = suggestions.toTypedArray()
@@ -338,6 +412,9 @@ class ManageNoteFragment : BottomSheetDialogFragment(), NotesUI {
 		if (tagsDirty) {
 			persistSelectedTags()
 		}
+
+        // Update last modified date when saving
+        currentNote!!.lastModified = Date()
 
         // If AI confirmation is enabled and this is a new note, show suggestions dialog instead of auto-applying
         if (isNewNote && listener!!.onShouldConfirmAiSuggestions() && listener!!.onIsAiTaggingConfigured()) {

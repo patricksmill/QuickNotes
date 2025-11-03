@@ -21,11 +21,10 @@ class Note(
     var isPinned: Boolean = false
 
     /**
-     * Adds a tag to the note and updates the last modified date.
+     * Adds a tag to the note.
      */
     fun setTag(tag: Tag) {
         tags.add(tag)
-        this.lastModified = Date()
     }
 
     /**
