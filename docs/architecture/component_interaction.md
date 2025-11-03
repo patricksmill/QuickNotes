@@ -26,7 +26,7 @@ graph LR
     B --> X
     C --> X
     D --> X
-    E --> K
+    E --> X
 
     X --> F
     X --> G
