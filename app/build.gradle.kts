@@ -5,11 +5,11 @@ plugins {
 
 android {
 
-    namespace = "com.example.quicknotes"
+    namespace = "io.github.patricksmill.quicknotes"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.quicknotes"
+        applicationId = "io.github.patricksmill.quicknotes"
         minSdk = 30
         targetSdk = 36
         versionCode = 100005
