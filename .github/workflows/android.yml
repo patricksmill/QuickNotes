@@ -141,14 +141,14 @@ jobs:
       - name: Upload Release AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: quicknotes-release-v${{ github.ref_name }}-aab
+          name: quicknotes-release-${{ github.ref_name }}-aab
           path: app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
 
       - name: Upload Release APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: quicknotes-release-v${{ github.ref_name }}-apk
+          name: quicknotes-release-${{ github.ref_name }}-apk
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 

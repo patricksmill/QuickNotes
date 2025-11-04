@@ -1,40 +1,40 @@
+# Component Interaction Diagram
+
+This diagram shows how components interact across the application layers.
+
 ```mermaid
-graph LR
-    subgraph "UI Components"
-        A[SearchNotesFragment]
-        B[ManageNoteFragment]
-        C[SettingsFragment]
-        D[ManageTagsFragment]
-        E[OnboardingOverlayFragment]
-    end
+flowchart TB
+ subgraph View["View"]
+    direction TB
+        SF["SearchNotesFragment"]
+        MF["ManageNoteFragment"]
+        SETF["SettingsFragment"]
+        TF["ManageTagsFragment"]
+        TOF["TutorialOverlayFragment"]
+  end
+ subgraph Controller["Controller"]
+        CA["ControllerActivity"]
+        NR["NotificationReceiver"]
+  end
+        TM["TagManager"]
+        UM["TutorialManager"]
+        NOT["Notifier"]
 
-    subgraph "Controller"
-        X[ControllerActivity]
-    end
+        AM["AlarmManager"]
 
-    subgraph "Business Logic"
-        F[NoteLibrary]
-        G[TagManager]
-        H[AutoTaggingService]
-        I[TagSettingsManager]
-        J[Notifier]
-        K[OnboardingManager]
-        L[Persistence]
-    end
+        ATS["AutoTaggingService"]
+        TSM["TagSettingsManager"]
 
-    A --> X
-    B --> X
-    C --> X
-    D --> X
-    E --> X
+        NL["NoteLibrary"]
+        PERS["Persistence"]
+  
+    View --> CA
+    CA --> NR & TM & UM & NOT & NL
+    TM --> ATS & TSM
+    NL --> PERS
+    ATS -- calls --> OAI["OpenAI API"]
+    NOT -- schedules --> AM
+    AM -. triggers .-> NR
+    NR -. calls .-> NL
 
-    X --> F
-    X --> G
-    X --> J
-    X --> K
-
-    F --> L
-    G --> H
-    G --> I
-    H --> OpenAI[(OpenAI)]
 ```

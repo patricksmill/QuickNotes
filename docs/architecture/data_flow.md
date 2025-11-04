@@ -5,6 +5,7 @@ sequenceDiagram
     participant Controller as ControllerActivity
     participant NoteLibrary
     participant TagManager
+    participant AutoTaggingService
     participant Persistence
     participant OpenAI
 
@@ -18,8 +19,12 @@ sequenceDiagram
     User->>Fragment: AI Tag Request
     Fragment->>Controller: onAiSuggestTags(note, limit)
     Controller->>TagManager: aiSuggestTags(note, limit)
-    TagManager->>OpenAI: request suggestions
-    OpenAI-->>TagManager: tag list
+    TagManager->>AutoTaggingService: performAiSuggest()
+    AutoTaggingService->>OpenAI: API request
+    OpenAI-->>AutoTaggingService: tag list
+    AutoTaggingService-->>TagManager: suggestions
     TagManager-->>Controller: suggestions
     Controller-->>Fragment: show suggestion dialog
+
+    Note over OpenAI: External Service
 ```

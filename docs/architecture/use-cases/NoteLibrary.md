@@ -42,7 +42,7 @@ Please be sure indicate what level of detail the workflow you include represents
 ```plantuml
 @startuml
 
-skin rose
+!theme cerulean
 
 title browseNotes (casual level)
 
@@ -95,7 +95,7 @@ stop
 ```plantuml
 @startuml
 hide footbox
-skin rose
+!theme cerulean
 actor User as user
 participant "SearchNotesFragment" as view
 participant "ControllerActivity" as controller
@@ -173,6 +173,3 @@ view -> view: displayNotes()
 view --> user: shows updated note list with pinned note at top
 @enduml
 ```
-
-
-
