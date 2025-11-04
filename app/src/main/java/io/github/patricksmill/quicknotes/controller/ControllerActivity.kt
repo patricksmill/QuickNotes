@@ -274,6 +274,8 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
                 mainUI!!.getRootView().postDelayed({
                     if (tutorialManager != null) {
                         tutorialManager!!.nextStep()
+                    if (tutorialManager != null) {
+                        tutorialManager!!.nextStep()
                     }
                 }, 500)
             }
@@ -546,9 +548,15 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
 
 
 
+
+    override fun onShowOnboardingStep(step: TutorialManager.OnboardingStep) {
     override fun onShowOnboardingStep(step: TutorialManager.OnboardingStep) {
         // Remove any existing overlay first
         onHideOnboardingOverlay()
+        val fragment = TutorialOverlayFragment.newInstance(step)
+        fragment.setCallbacks(object : TutorialOverlayFragment.Callbacks {
+            override fun onAction(action: TutorialManager.OnboardingStep.StepAction) {
+                tutorialManager?.executeStepAction(action)
         val fragment = TutorialOverlayFragment.newInstance(step)
         fragment.setCallbacks(object : TutorialOverlayFragment.Callbacks {
             override fun onAction(action: TutorialManager.OnboardingStep.StepAction) {
@@ -557,9 +565,11 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
 
             override fun onNext() {
                 tutorialManager?.nextStep()
+                tutorialManager?.nextStep()
             }
 
             override fun onSkip() {
+                tutorialManager?.skipOnboarding()
                 tutorialManager?.skipOnboarding()
             }
         })
