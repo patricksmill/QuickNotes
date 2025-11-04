@@ -546,6 +546,7 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
 
 
 
+
     override fun onShowOnboardingStep(step: TutorialManager.OnboardingStep) {
         // Remove any existing overlay first
         onHideOnboardingOverlay()
