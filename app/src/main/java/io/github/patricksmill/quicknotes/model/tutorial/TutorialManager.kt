@@ -11,7 +11,7 @@ import androidx.preference.PreferenceManager
  * OnboardingManager handles the interactive tutorial system for first-time users.
  * It provides a spotlight-style overlay that guides users through key app features.
  */
-class OnboardingManager(context: Context) {
+class TutorialManager(context: Context) {
     companion object {
         private const val PREF_ONBOARDING_COMPLETED = "onboarding_completed"
         private const val PREF_ONBOARDING_VERSION = "onboarding_version"
@@ -30,7 +30,6 @@ class OnboardingManager(context: Context) {
         fun onOnboardingStarted()
         fun onOnboardingCompleted()
         fun onCreateFirstNote()
-        fun onShowDemoNotes()
         fun onShowOnboardingStep(step: OnboardingStep)
         fun onHideOnboardingOverlay()
     }
@@ -48,7 +47,6 @@ class OnboardingManager(context: Context) {
         enum class StepAction {
             NONE,
             CREATE_NOTE,
-            SHOW_DEMO_NOTES,
             OPEN_SETTINGS,
             HIGHLIGHT_SEARCH,
             HIGHLIGHT_TAGS
@@ -161,7 +159,6 @@ class OnboardingManager(context: Context) {
 
         when (action) {
             OnboardingStep.StepAction.CREATE_NOTE -> listener?.onCreateFirstNote()
-            OnboardingStep.StepAction.SHOW_DEMO_NOTES -> listener?.onShowDemoNotes()
             OnboardingStep.StepAction.OPEN_SETTINGS -> {
                 // Settings action will be handled separately if needed
             }
@@ -213,16 +210,7 @@ class OnboardingManager(context: Context) {
                 OnboardingStep.StepAction.HIGHLIGHT_TAGS,
                 false
             ),
-            
-            // Demo notes
-            OnboardingStep(
-                "Try Demo Notes",
-                "Want to see the app in action? Long-press the + button to add some example notes you can play with.",
-                io.github.patricksmill.quicknotes.R.id.addNoteFab,
-                OnboardingStep.StepAction.SHOW_DEMO_NOTES,
-                false
-            ),
-            
+
             // Settings and advanced features
             OnboardingStep(
                 "Explore Advanced Features",

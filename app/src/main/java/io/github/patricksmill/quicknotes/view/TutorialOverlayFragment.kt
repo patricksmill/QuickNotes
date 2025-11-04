@@ -20,11 +20,11 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import io.github.patricksmill.quicknotes.R
-import io.github.patricksmill.quicknotes.model.OnboardingManager
+import io.github.patricksmill.quicknotes.model.TutorialManager
 
-class OnboardingOverlayFragment : Fragment() {
+class TutorialOverlayFragment : Fragment() {
 
-    private lateinit var step: OnboardingManager.OnboardingStep
+    private lateinit var step: TutorialManager.OnboardingStep
     private var callbacks: Callbacks? = null
     private var overlayView: OverlayView? = null
 
@@ -40,7 +40,7 @@ class OnboardingOverlayFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val targetView = if (step.targetViewId != -1) requireActivity().findViewById(step.targetViewId) else null
+        val targetView = if (step.targetViewId != -1) requireActivity().findViewById<View>(step.targetViewId) else null
         overlayView = OverlayView(requireContext(), targetView)
 
         val tutorialCard = inflater.inflate(R.layout.onboarding_card, overlayView, false)
@@ -180,8 +180,8 @@ class OnboardingOverlayFragment : Fragment() {
     companion object {
         private const val ARG_STEP = "step"
 
-        fun newInstance(step: OnboardingManager.OnboardingStep): OnboardingOverlayFragment {
-            return OnboardingOverlayFragment().apply {
+        fun newInstance(step: TutorialManager.OnboardingStep): TutorialOverlayFragment {
+            return TutorialOverlayFragment().apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_STEP, step)
                 }
@@ -190,7 +190,7 @@ class OnboardingOverlayFragment : Fragment() {
     }
 
     interface Callbacks {
-        fun onAction(action: OnboardingManager.OnboardingStep.StepAction)
+        fun onAction(action: TutorialManager.OnboardingStep.StepAction)
         fun onNext()
         fun onSkip()
     }
