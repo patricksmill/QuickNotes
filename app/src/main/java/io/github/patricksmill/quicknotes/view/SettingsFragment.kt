@@ -54,7 +54,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private fun setupReplayTutorialPref() {
         findPreference<Preference>("pref_replay_tutorial")?.setOnPreferenceClickListener {
-            (activity as? io.github.patricksmill.quicknotes.controller.ControllerActivity)?.forceStartOnboardingFromSettings()
+            (activity as? io.github.patricksmill.quicknotes.controller.ControllerActivity)?.forceStartTutorialFromSettings()
             true
         }
     }

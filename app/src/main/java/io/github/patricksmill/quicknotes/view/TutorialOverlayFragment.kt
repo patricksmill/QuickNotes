@@ -24,7 +24,7 @@ import io.github.patricksmill.quicknotes.model.TutorialManager
 
 class TutorialOverlayFragment : Fragment() {
 
-    private lateinit var step: TutorialManager.OnboardingStep
+    private lateinit var step: TutorialManager.TutorialStep
     private var callbacks: Callbacks? = null
     private var overlayView: OverlayView? = null
 
@@ -43,7 +43,7 @@ class TutorialOverlayFragment : Fragment() {
         val targetView = if (step.targetViewId != -1) requireActivity().findViewById<View>(step.targetViewId) else null
         overlayView = OverlayView(requireContext(), targetView)
 
-        val tutorialCard = inflater.inflate(R.layout.onboarding_card, overlayView, false)
+        val tutorialCard = inflater.inflate(R.layout.tutorial_card, overlayView, false)
         setupTutorialCard(tutorialCard)
 
         overlayView!!.addView(tutorialCard)
@@ -53,10 +53,10 @@ class TutorialOverlayFragment : Fragment() {
     }
 
     private fun setupTutorialCard(card: View) {
-        val titleText = card.findViewById<TextView>(R.id.onboarding_title)
-        val descriptionText = card.findViewById<TextView>(R.id.onboarding_description)
-        val nextButton = card.findViewById<Button>(R.id.onboarding_next)
-        val skipButton = card.findViewById<Button>(R.id.onboarding_skip)
+        val titleText = card.findViewById<TextView>(R.id.tutorial_title)
+        val descriptionText = card.findViewById<TextView>(R.id.tutorial_description)
+        val nextButton = card.findViewById<Button>(R.id.tutorial_next)
+        val skipButton = card.findViewById<Button>(R.id.tutorial_skip)
 
         titleText.text = step.title
         descriptionText.text = step.description
@@ -180,7 +180,7 @@ class TutorialOverlayFragment : Fragment() {
     companion object {
         private const val ARG_STEP = "step"
 
-        fun newInstance(step: TutorialManager.OnboardingStep): TutorialOverlayFragment {
+        fun newInstance(step: TutorialManager.TutorialStep): TutorialOverlayFragment {
             return TutorialOverlayFragment().apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_STEP, step)
@@ -190,7 +190,7 @@ class TutorialOverlayFragment : Fragment() {
     }
 
     interface Callbacks {
-        fun onAction(action: TutorialManager.OnboardingStep.StepAction)
+        fun onAction(action: TutorialManager.TutorialStep.StepAction)
         fun onNext()
         fun onSkip()
     }

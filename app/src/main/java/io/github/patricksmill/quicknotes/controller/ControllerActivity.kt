@@ -19,7 +19,7 @@ import com.google.android.material.snackbar.Snackbar
 import io.github.patricksmill.quicknotes.R
 import io.github.patricksmill.quicknotes.model.Notifier
 import io.github.patricksmill.quicknotes.model.TutorialManager
-import io.github.patricksmill.quicknotes.model.TutorialManager.OnboardingListener
+import io.github.patricksmill.quicknotes.model.TutorialManager.TutorialListener
 import io.github.patricksmill.quicknotes.model.note.Note
 import io.github.patricksmill.quicknotes.model.note.NoteLibrary
 import io.github.patricksmill.quicknotes.model.tag.Tag
@@ -40,15 +40,15 @@ import java.util.function.Consumer
  * It mediates between the NoteLibrary (Model) and the various UI Fragments (View),
  * handling user actions and updating the model or view as appropriate.
  */
-class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingListener {
+class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListener {
     private var mainUI: MainUI? = null
     private var noteLibrary: NoteLibrary? = null
     private var currentSearchFragment: SearchNotesFragment? = null
     private var notifier: Notifier? = null
     private var tutorialManager: TutorialManager? = null
     private var wasWaitingForNotificationPermission = false
-    private var onboardingOverlay: TutorialOverlayFragment? = null
-    private var isOnboardingActive = false
+    private var tutorialOverlay: TutorialOverlayFragment? = null
+    private var isTutorialActive = false
     private val backStackListener = FragmentManager.OnBackStackChangedListener {
         syncFragmentListeners()
     }
@@ -100,7 +100,7 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
         this.notifier!!.setRootView(this.mainUI!!.getRootView())
 
 
-        // Set up onboarding listener
+        // Set up tutorial listener
         this.tutorialManager!!.setListener(this)
 
         supportFragmentManager.addOnBackStackChangedListener(backStackListener)
@@ -111,8 +111,8 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
         handleNotificationIntent(intent)
 
 
-        // Start onboarding for first-time users (after UI is set up)
-        checkAndStartOnboarding()
+        // Start tutorial for first-time users (after UI is set up)
+        checkAndStartTutorial()
 
         // Notify if offline and AI tagging enabled: fallback will be used
         notifyOfflineIfAiEnabled()
@@ -145,26 +145,26 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
         }
 
     /**
-     * Checks if onboarding should be shown and starts it if needed.
+     * Checks if tutorial should be shown and starts it if needed.
      */
-    private fun checkAndStartOnboarding() {
-        if (tutorialManager!!.shouldShowOnboarding()) {
-            // Delay onboarding slightly to ensure UI is fully loaded
+    private fun checkAndStartTutorial() {
+        if (tutorialManager!!.shouldShowTutorial()) {
+            // Delay tutorial slightly to ensure UI is fully loaded
             mainUI!!.getRootView().post {
-                tutorialManager!!.startOnboarding()
+                tutorialManager!!.startTutorial()
             }
         }
     }
 
     // Methods used by SettingsFragment actions
-    fun forceStartOnboardingFromSettings() {
+    fun forceStartTutorialFromSettings() {
         // Navigate back to SearchNotesFragment first
         supportFragmentManager.popBackStack()
         showSearchFragment()
         
-        // Start onboarding after fragment is displayed
+        // Start tutorial after fragment is displayed
         mainUI!!.getRootView().postDelayed({
-            tutorialManager?.forceStartOnboarding()
+            tutorialManager?.forceStartTutorial()
         }, 300)
     }
 
@@ -268,8 +268,8 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
             noteLibrary!!.manageTags.cleanupUnusedTags()
 
 
-            // If onboarding is active and this is the user's first note, advance to next step
-            if (isOnboardingActive && noteLibrary!!.getNotes().size == 1) {
+            // If tutorial is active and this is the user's first note, advance to next step
+            if (isTutorialActive && noteLibrary!!.getNotes().size == 1) {
                 // Small delay to let the note save animation complete
                 mainUI!!.getRootView().postDelayed({
                     if (tutorialManager != null) {
@@ -525,14 +525,14 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
         updateNotesView()
     }
 
-    // OnboardingListener implementation
-    override fun onOnboardingStarted() {
-        isOnboardingActive = true
+    // Tutorial implementation
+    override fun onOnTutorialStarted() {
+        isTutorialActive = true
     }
 
-    override fun onOnboardingCompleted() {
-        isOnboardingActive = false
-        // Onboarding finished - user can now use the app normally
+    override fun onTutorialCompleted() {
+        isTutorialActive = false
+        // Tutorial finished - user can now use the app normally
         Snackbar.make(
             mainUI!!.getRootView(), "Tutorial complete! You're ready to start taking notes.",
             Snackbar.LENGTH_LONG
@@ -540,18 +540,18 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
     }
 
     override fun onCreateFirstNote() {
-        // Trigger note creation from onboarding
+        // Trigger note creation from tutorial
         onNewNote()
     }
 
 
 
-    override fun onShowOnboardingStep(step: TutorialManager.OnboardingStep) {
+    override fun onShowTutorialStep(step: TutorialManager.TutorialStep) {
         // Remove any existing overlay first
-        onHideOnboardingOverlay()
+        onHideTutorialOverlay()
         val fragment = TutorialOverlayFragment.newInstance(step)
         fragment.setCallbacks(object : TutorialOverlayFragment.Callbacks {
-            override fun onAction(action: TutorialManager.OnboardingStep.StepAction) {
+            override fun onAction(action: TutorialManager.TutorialStep.StepAction) {
                 tutorialManager?.executeStepAction(action)
             }
 
@@ -560,18 +560,18 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, OnboardingList
             }
 
             override fun onSkip() {
-                tutorialManager?.skipOnboarding()
+                tutorialManager?.skipTutorial()
             }
         })
-        onboardingOverlay = fragment
+        tutorialOverlay = fragment
         supportFragmentManager.beginTransaction()
-            .add(android.R.id.content, fragment, "OnboardingOverlay")
+            .add(android.R.id.content, fragment, "Tutorial ")
             .commitAllowingStateLoss()
     }
 
-    override fun onHideOnboardingOverlay() {
-        val fragment = onboardingOverlay ?: return
-        onboardingOverlay = null
+    override fun onHideTutorialOverlay() {
+        val fragment = tutorialOverlay ?: return
+        tutorialOverlay = null
         fragment.animateOut {
             if (!supportFragmentManager.isStateSaved) {
                 supportFragmentManager.beginTransaction()

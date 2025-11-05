@@ -8,36 +8,36 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 
 /**
- * OnboardingManager handles the interactive tutorial system for first-time users.
+ * Tutorial handles the interactive tutorial system for first-time users.
  * It provides a spotlight-style overlay that guides users through key app features.
  */
 class TutorialManager(context: Context) {
     companion object {
-        private const val PREF_ONBOARDING_COMPLETED = "onboarding_completed"
-        private const val PREF_ONBOARDING_VERSION = "onboarding_version"
-        private const val CURRENT_ONBOARDING_VERSION = 1
+        private const val PREF_TUTORIAL_COMPLETED = "tutorial_completed"
+        private const val PREF_TUTORIAL_VERSION = "tutorial_version"
+        private const val CURRENT_TUTORIAL_VERSION = 1
     }
 
     private val preferences: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
-    private val steps: List<OnboardingStep> = createOnboardingSteps()
-    private var listener: OnboardingListener? = null
+    private val steps: List<TutorialStep> = createTutorialSteps()
+    private var listener: TutorialListener? = null
     private var currentStepIndex = 0
 
     /**
-     * Interface for listening to onboarding events
+     * Interface for listening to tutorial events
      */
-    interface OnboardingListener {
-        fun onOnboardingStarted()
-        fun onOnboardingCompleted()
+    interface TutorialListener {
+        fun onOnTutorialStarted()
+        fun onTutorialCompleted()
         fun onCreateFirstNote()
-        fun onShowOnboardingStep(step: OnboardingStep)
-        fun onHideOnboardingOverlay()
+        fun onShowTutorialStep(step: TutorialStep)
+        fun onHideTutorialOverlay()
     }
 
     /**
-     * Represents a single step in the onboarding process
+     * Represents a single step in the tutorial process
      */
-    data class OnboardingStep(
+    data class TutorialStep(
         val title: String,
         val description: String,
         val targetViewId: Int,
@@ -70,153 +70,153 @@ class TutorialManager(context: Context) {
 
         override fun describeContents(): Int = 0
 
-        companion object CREATOR : Parcelable.Creator<OnboardingStep> {
-            override fun createFromParcel(parcel: Parcel): OnboardingStep = OnboardingStep(parcel)
-            override fun newArray(size: Int): Array<OnboardingStep?> = arrayOfNulls(size)
+        companion object CREATOR : Parcelable.Creator<TutorialStep> {
+            override fun createFromParcel(parcel: Parcel): TutorialStep = TutorialStep(parcel)
+            override fun newArray(size: Int): Array<TutorialStep?> = arrayOfNulls(size)
         }
     }
 
     /**
-     * Sets the listener for onboarding events
+     * Sets the listener for tutorial events
      */
-    fun setListener(listener: OnboardingListener?) {
+    fun setListener(listener: TutorialListener?) {
         this.listener = listener
     }
 
     /**
-     * Checks if onboarding should be shown for first-time users
+     * Checks if tutorial should be shown for first-time users
      */
-    fun shouldShowOnboarding(): Boolean {
-        return !preferences.getBoolean(PREF_ONBOARDING_COMPLETED, false) ||
-               preferences.getInt(PREF_ONBOARDING_VERSION, 0) < CURRENT_ONBOARDING_VERSION
+    fun shouldShowTutorial(): Boolean {
+        return !preferences.getBoolean(PREF_TUTORIAL_COMPLETED, false) ||
+               preferences.getInt(PREF_TUTORIAL_VERSION, 0) < CURRENT_TUTORIAL_VERSION
     }
 
     /**
-     * Starts the onboarding flow
+     * Starts the tutorial flow
      */
-    fun startOnboarding() {
-        listener?.onOnboardingStarted()
+    fun startTutorial() {
+        listener?.onOnTutorialStarted()
         currentStepIndex = 0
         showStep()
     }
 
     /**
-     * Forces onboarding to start (for manual trigger from settings)
+     * Forces tutorial to start (for manual trigger from settings)
      */
-    fun forceStartOnboarding() {
-        listener?.onOnboardingStarted()
+    fun forceStartTutorial() {
+        listener?.onOnTutorialStarted()
         currentStepIndex = 0
         showStep()
     }
 
     /**
-     * Proceeds to the next onboarding step
+     * Proceeds to the next tutorial step
      */
     fun nextStep() {
         currentStepIndex++
         if (currentStepIndex >= steps.size) {
-            completeOnboarding()
+            completeTutorial()
         } else {
             showStep()
         }
     }
 
     /**
-     * Skips the entire onboarding flow
+     * Skips the entire tutorial flow
      */
-    fun skipOnboarding() {
-        completeOnboarding()
+    fun skipTutorial() {
+        completeTutorial()
     }
 
     /**
-     * Marks onboarding as completed
+     * Marks tutorial as completed
      */
-    private fun completeOnboarding() {
-        listener?.onHideOnboardingOverlay()
+    private fun completeTutorial() {
+        listener?.onHideTutorialOverlay()
         preferences.edit {
-            putBoolean(PREF_ONBOARDING_COMPLETED, true)
-                .putInt(PREF_ONBOARDING_VERSION, CURRENT_ONBOARDING_VERSION)
+            putBoolean(PREF_TUTORIAL_COMPLETED, true)
+                .putInt(PREF_TUTORIAL_VERSION, CURRENT_TUTORIAL_VERSION)
         }
         
-        listener?.onOnboardingCompleted()
+        listener?.onTutorialCompleted()
     }
 
     /**
-     * Shows the current onboarding step
+     * Shows the current tutorial step
      */
     private fun showStep() {
         if (currentStepIndex < steps.size) {
             val step = steps[currentStepIndex]
-            listener?.onShowOnboardingStep(step)
+            listener?.onShowTutorialStep(step)
         }
     }
 
     /**
      * Handles step-specific actions
      */
-    fun executeStepAction(action: OnboardingStep.StepAction) {
+    fun executeStepAction(action: TutorialStep.StepAction) {
         listener ?: return
 
         when (action) {
-            OnboardingStep.StepAction.CREATE_NOTE -> listener?.onCreateFirstNote()
-            OnboardingStep.StepAction.OPEN_SETTINGS -> {
+            TutorialStep.StepAction.CREATE_NOTE -> listener?.onCreateFirstNote()
+            TutorialStep.StepAction.OPEN_SETTINGS -> {
                 // Settings action will be handled separately if needed
             }
-            OnboardingStep.StepAction.NONE,
-            OnboardingStep.StepAction.HIGHLIGHT_SEARCH,
-            OnboardingStep.StepAction.HIGHLIGHT_TAGS -> {
+            TutorialStep.StepAction.NONE,
+            TutorialStep.StepAction.HIGHLIGHT_SEARCH,
+            TutorialStep.StepAction.HIGHLIGHT_TAGS -> {
                 // No action needed for highlighting steps
             }
         }
     }
 
     /**
-     * Creates the list of onboarding steps
+     * Creates the list of tutorial steps
      */
-    private fun createOnboardingSteps(): List<OnboardingStep> {
+    private fun createTutorialSteps(): List<TutorialStep> {
         return listOf(
             // Welcome step
-            OnboardingStep(
+            TutorialStep(
                 "Welcome to QuickNotes!",
                 "Your intelligent note companion. Let's get you started with a quick tour of the key features.",
                 -1, // No specific target view
-                OnboardingStep.StepAction.NONE,
+                TutorialStep.StepAction.NONE,
                 false
             ),
             
             // Create first note step
-            OnboardingStep(
+            TutorialStep(
                 "Create Your First Note",
                 "Tap the + button to create a new note. You can add a title, content, and tags to organize your thoughts.",
                 io.github.patricksmill.quicknotes.R.id.addNoteFab,
-                OnboardingStep.StepAction.CREATE_NOTE,
+                TutorialStep.StepAction.CREATE_NOTE,
                 true
             ),
             
             // Search and organization
-            OnboardingStep(
+            TutorialStep(
                 "Search Your Notes",
                 "Use the search bar to quickly find notes by title, content, or tags. As you create more notes, this becomes invaluable!",
                 io.github.patricksmill.quicknotes.R.id.search_bar,
-                OnboardingStep.StepAction.HIGHLIGHT_SEARCH,
+                TutorialStep.StepAction.HIGHLIGHT_SEARCH,
                 false
             ),
             
             // Tag filtering
-            OnboardingStep(
+            TutorialStep(
                 "Filter with Tags",
                 "Tags appear here when you add them to notes. Tap any tag to filter your notes and stay organized.",
                 io.github.patricksmill.quicknotes.R.id.tagRecyclerView,
-                OnboardingStep.StepAction.HIGHLIGHT_TAGS,
+                TutorialStep.StepAction.HIGHLIGHT_TAGS,
                 false
             ),
 
             // Settings and advanced features
-            OnboardingStep(
+            TutorialStep(
                 "Explore Advanced Features",
                 "Visit Settings to enable AI-powered auto-tagging, customize tag colors, and set up note reminders!",
                 io.github.patricksmill.quicknotes.R.id.settingsButton,
-                OnboardingStep.StepAction.NONE,
+                TutorialStep.StepAction.NONE,
                 false
             )
         )
