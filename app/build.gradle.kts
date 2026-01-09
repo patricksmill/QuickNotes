@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.patricksmill.quicknotes"
         minSdk = 30
         targetSdk = 36
-        versionCode = 100006
-        versionName = "1.0.6"
+        versionCode = 100007
+        versionName = "1.0.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
