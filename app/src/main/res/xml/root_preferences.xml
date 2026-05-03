@@ -30,6 +30,15 @@
         android:key="pref_category_AI"
         android:title="AI Features">
 
+        <ListPreference
+            android:key="pref_ai_provider"
+            android:title="AI Provider"
+            android:summary="OpenAI"
+            android:entries="@array/ai_provider_entries"
+            android:entryValues="@array/ai_provider_values"
+            android:defaultValue="openai"
+            android:icon="@drawable/ic_autotag" />
+
         <SwitchPreferenceCompat
             android:key="pref_ai_auto_tag"
             android:title="AI-powered Auto-Tagging"
@@ -46,12 +55,34 @@
             android:icon="@drawable/ic_check" />
 
         <EditTextPreference
-            android:key="openai_api_key"
-            android:title="OpenAI API Key"
-            android:summary="Required for AI features"
-            android:dialogTitle="Enter OpenAI API Key"
+            android:key="pref_ai_api_key"
+            android:title="API Key"
+            android:summary="Required for the selected provider"
+            android:dialogTitle="Enter API Key"
             android:inputType="textPassword"
             android:icon="@drawable/ic_key" />
+
+        <Preference
+            android:key="pref_ai_model_suggestions"
+            android:title="Model Library"
+            android:summary="Recommended models, plus live API refresh when available"
+            android:icon="@drawable/ic_autotag" />
+
+        <EditTextPreference
+            android:key="pref_ai_base_url"
+            android:title="Custom API Base URL"
+            android:summary="Only used for Custom"
+            android:dialogTitle="Enter Custom API Base URL"
+            android:inputType="textUri"
+            android:icon="@drawable/ic_key" />
+
+        <EditTextPreference
+            android:key="pref_ai_model"
+            android:title="Model"
+            android:summary="Model ID used for AI tagging"
+            android:dialogTitle="Enter model ID"
+            android:inputType="text"
+            android:icon="@drawable/ic_autotag" />
 
     </PreferenceCategory>
 

@@ -43,4 +43,18 @@
         <item>@color/tag_color_grey</item>
         <item>@color/tag_color_blue_grey</item>
     </array>
+
+    <string-array name="ai_provider_entries">
+        <item>OpenAI</item>
+        <item>Claude</item>
+        <item>Google</item>
+        <item>Custom</item>
+    </string-array>
+
+    <string-array name="ai_provider_values">
+        <item>openai</item>
+        <item>anthropic</item>
+        <item>google</item>
+        <item>custom</item>
+    </string-array>
 </resources>

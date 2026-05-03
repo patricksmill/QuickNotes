@@ -5,11 +5,14 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
-import com.openai.client.OpenAIClient
-import com.openai.client.okhttp.OpenAIOkHttpClient
-import com.openai.models.responses.Response
-import com.openai.models.responses.ResponseCreateParams
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import io.github.patricksmill.quicknotes.model.note.Note
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.Executors
 
 /**
@@ -71,9 +74,7 @@ class AutoTaggingService(
         executor.execute {
             try {
                 val tagCsv = requestAiTags(note, limit, apiKey, existingTags)
-                val tagNames = tagCsv.split("\\s*,\\s*".toRegex())
-                    .filter { it.isNotBlank() }
-                    .map { it.trim() }
+                val tagNames = parseTagList(tagCsv)
                 
                 if (tagNames.isNotEmpty()) {
                     Log.d(TAG, "AI suggested tags: $tagNames")
@@ -114,9 +115,7 @@ class AutoTaggingService(
         executor.execute {
             try {
                 val tagCsv = requestAiTags(note, limit, apiKey, existingTags)
-                val tagNames = tagCsv.split("\\s*,\\s*".toRegex())
-                    .filter { it.isNotBlank() }
-                    .map { it.trim() }
+                val tagNames = parseTagList(tagCsv)
                 
                 uiHandler.post { callback.onSuggestions(tagNames) }
             } catch (e: Exception) {
@@ -217,53 +216,45 @@ class AutoTaggingService(
         apiKey: String?,
         existingTags: Set<String>
     ): String {
-        val client = OpenAIOkHttpClient.builder()
-            .apiKey(apiKey.toString())
-            .build()
-
-        val prompt = buildAiPrompt(note, limit, existingTags)
-
-        // Resolve model dynamically: if settings uses "auto", fetch first chat model from OpenAI; otherwise honor selected key
         val settings = TagSettingsManager(ctx)
-        val key = settings.selectedAiModelKey
-
-        val modelId = if (key.equals("auto", ignoreCase = true)) {
-            try {
-                // Fetch models and pick a viable chat model id
-                val ids = fetchChatModelIds(client)
-                if (ids.isEmpty()) "gpt-4o-mini" else ids[0]
-            } catch (_: Exception) {
-                "gpt-4o-mini"
-            }
-        } else {
-            key
+        val config = settings.currentConfiguration()
+        val effectiveApiKey = apiKey?.takeIf { it.isNotBlank() } ?: config.apiKey
+        val prompt = buildAiPrompt(note, limit, existingTags)
+        if (effectiveApiKey.isNullOrBlank()) {
+            throw IllegalStateException("Missing API key for ${config.provider.displayName}")
         }
 
-        val params = ResponseCreateParams.builder()
-            .input(prompt)
-            .model(modelId)
-            .build()
+        val response = when (config.provider) {
+            TagSettingsManager.AiProvider.OPENAI,
+            TagSettingsManager.AiProvider.CUSTOM -> requestOpenAiResponses(
+                endpoint = config.endpoint,
+                apiKey = effectiveApiKey,
+                model = config.model,
+                prompt = prompt
+            )
 
-        val response = client.responses().create(params)
-        return extractResponseText(response)
-    }
+            TagSettingsManager.AiProvider.ANTHROPIC -> requestAnthropicMessages(
+                endpoint = config.endpoint,
+                apiKey = effectiveApiKey,
+                model = config.model,
+                prompt = prompt
+            )
 
-    // Fetch list of available chat-capable model ids from OpenAI client
-    private fun fetchChatModelIds(client: OpenAIClient): List<String> {
-        val ids = mutableListOf<String>()
-        try {
-            // New OpenAI SDK: list models via client.models().list()
-            val list = client.models().list()
-            for (m in list.data()) {
-                val id = m.id()
-                if (id.startsWith("gpt-") || id.contains("chat")) {
-                    ids.add(id)
-                }
-            }
-        } catch (_: Exception) {
-            // Ignore errors ;)
+            TagSettingsManager.AiProvider.GOOGLE -> requestOpenAiChatCompletions(
+                endpoint = config.endpoint,
+                apiKey = effectiveApiKey,
+                model = config.model,
+                prompt = prompt
+            )
         }
-        return ids
+
+        return when (config.provider) {
+            TagSettingsManager.AiProvider.OPENAI,
+            TagSettingsManager.AiProvider.CUSTOM -> extractOpenAiResponsesText(response)
+
+            TagSettingsManager.AiProvider.ANTHROPIC -> extractAnthropicText(response)
+            TagSettingsManager.AiProvider.GOOGLE -> extractOpenAiChatText(response)
+        }
     }
 
     /**
@@ -280,33 +271,174 @@ class AutoTaggingService(
         existingTags: Set<String>
     ): String {
         return buildString {
-            appendLine("system: You are a tag suggestion assistant that outputs a comma-separated list of tag names.")
+            appendLine("You are a tag suggestion assistant that outputs a comma-separated list of tag names.")
             appendLine("Use existing tags when appropriate. Do not explain or output anything other than the tag list.")
             appendLine("Existing tags: ${existingTags.joinToString(", ")}")
-            appendLine("user: Extract up to $limit tags from the following text:")
+            appendLine("Extract up to $limit tags from the following text:")
             appendLine("Title: ${note.title}")
             appendLine("Content: ${note.content}")
         }
     }
 
-    /**
-     * Extracts text from OpenAI API response.
-     *
-     * @param response The API response
-     * @return Extracted text content
-     */
-    private fun extractResponseText(response: Response): String {
-        val sb = StringBuilder()
-        for (item in response.output()) {
-            if (!item.isMessage()) continue
+    private fun parseTagList(raw: String): List<String> {
+        return raw.split(Regex("[,\\n]"))
+            .map { it.trim() }
+            .map { it.replace(Regex("^\\s*[-*•\\d.]+\\s*"), "") }
+            .map { it.trim('"', '\'') }
+            .filter { it.isNotBlank() }
+    }
 
-            val msg = item.asMessage()
-            for (content in msg.content()) {
-                if (content.isOutputText()) {
-                    sb.append(content.asOutputText().text())
+    private fun requestOpenAiResponses(
+        endpoint: String,
+        apiKey: String,
+        model: String,
+        prompt: String
+    ): JsonObject {
+        val payload = JsonObject().apply {
+            addProperty("model", model)
+            addProperty("input", prompt)
+            addProperty("max_output_tokens", 128)
+        }
+        return postJson(
+            url = joinUrl(endpoint, "responses"),
+            headers = mapOf("Authorization" to "Bearer $apiKey"),
+            payload = payload
+        )
+    }
+
+    private fun requestOpenAiChatCompletions(
+        endpoint: String,
+        apiKey: String,
+        model: String,
+        prompt: String
+    ): JsonObject {
+        val messages = JsonArray().apply {
+            add(JsonObject().apply {
+                addProperty("role", "user")
+                addProperty("content", prompt)
+            })
+        }
+        val payload = JsonObject().apply {
+            addProperty("model", model)
+            add("messages", messages)
+            addProperty("temperature", 0.2)
+        }
+        return postJson(
+            url = joinUrl(endpoint, "chat/completions"),
+            headers = mapOf("Authorization" to "Bearer $apiKey"),
+            payload = payload
+        )
+    }
+
+    private fun requestAnthropicMessages(
+        endpoint: String,
+        apiKey: String,
+        model: String,
+        prompt: String
+    ): JsonObject {
+        val messages = JsonArray().apply {
+            add(JsonObject().apply {
+                addProperty("role", "user")
+                add("content", JsonArray().apply {
+                    add(JsonObject().apply {
+                        addProperty("type", "text")
+                        addProperty("text", prompt)
+                    })
+                })
+            })
+        }
+        val payload = JsonObject().apply {
+            addProperty("model", model)
+            addProperty("max_tokens", 128)
+            add("messages", messages)
+        }
+        return postJson(
+            url = joinUrl(endpoint, "messages"),
+            headers = mapOf(
+                "x-api-key" to apiKey,
+                "anthropic-version" to "2023-06-01"
+            ),
+            payload = payload
+        )
+    }
+
+    private fun postJson(
+        url: String,
+        headers: Map<String, String>,
+        payload: JsonObject
+    ): JsonObject {
+        val connection = (URL(url).openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = 30_000
+            readTimeout = 30_000
+            doInput = true
+            doOutput = true
+            setRequestProperty("Content-Type", "application/json; charset=utf-8")
+            headers.forEach { (name, value) -> setRequestProperty(name, value) }
+        }
+
+        try {
+            connection.outputStream.use { output ->
+                output.write(payload.toString().toByteArray(StandardCharsets.UTF_8))
+            }
+
+            val code = connection.responseCode
+            val body = readBody(connection, code)
+            if (code !in 200..299) {
+                throw IllegalStateException("HTTP $code ${connection.responseMessage}: $body")
+            }
+
+            return JsonParser.parseString(body).asJsonObject
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    private fun readBody(connection: HttpURLConnection, code: Int): String {
+        val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+        if (stream == null) return ""
+        return InputStreamReader(stream, StandardCharsets.UTF_8).use { it.readText() }
+    }
+
+    private fun joinUrl(baseUrl: String, path: String): String {
+        val trimmed = baseUrl.trim().trimEnd('/')
+        val suffix = path.trimStart('/')
+        return "$trimmed/$suffix"
+    }
+
+    private fun extractOpenAiResponsesText(response: JsonObject): String {
+        val output = response.getAsJsonArray("output") ?: return ""
+        val sb = StringBuilder()
+        output.forEach { item ->
+            val itemObj = item.asJsonObject
+            if (itemObj.get("type")?.asString != "message") return@forEach
+            val content = itemObj.getAsJsonArray("content") ?: return@forEach
+            content.forEach { part ->
+                val partObj = part.asJsonObject
+                if (partObj.get("type")?.asString == "output_text") {
+                    sb.append(partObj.get("text")?.asString.orEmpty())
                 }
             }
-            break
+        }
+        return sb.toString().trim()
+    }
+
+    private fun extractOpenAiChatText(response: JsonObject): String {
+        val choices = response.getAsJsonArray("choices") ?: return ""
+        if (choices.size() == 0) return ""
+        val choice = choices[0].asJsonObject
+        val message = choice.getAsJsonObject("message") ?: return ""
+        return message.get("content")?.takeIf { !it.isJsonNull }?.asString.orEmpty().trim()
+    }
+
+    private fun extractAnthropicText(response: JsonObject): String {
+        val content = response.getAsJsonArray("content") ?: return ""
+        val sb = StringBuilder()
+        content.forEach { part ->
+            val partObj = part.asJsonObject
+            if (partObj.get("type")?.asString == "text") {
+                sb.append(partObj.get("text")?.asString.orEmpty())
+            }
         }
         return sb.toString().trim()
     }

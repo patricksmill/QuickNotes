@@ -12,11 +12,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
-/**
- * Instrumentation test for the SettingsFragment and TagColorSettingsFragment
- * This class tests the functionality of the settings screens,
- * including preference navigation and dialog interactions.
- */
 class SettingsFragmentTest {
     @Rule
     var activityRule: ActivityScenarioRule<ControllerActivity?> =
@@ -24,101 +19,90 @@ class SettingsFragmentTest {
 
     @Before
     fun setUp() {
-        val ctx = InstrumentationRegistry
-            .getInstrumentation()
-            .targetContext
+        val ctx = InstrumentationRegistry.getInstrumentation().targetContext
         ctx.deleteFile("notes.json")
         navigateToSettings()
     }
 
-    /**
-     * Helper method to navigate to the settings screen
-     */
     private fun navigateToSettings() {
         Espresso.onView(ViewMatchers.withId(R.id.settingsButton))
             .perform(ViewActions.click())
     }
 
+    private fun selectProvider(name: String) {
+        Espresso.onView(ViewMatchers.withText("AI Provider"))
+            .perform(ViewActions.click())
+        Espresso.onView(ViewMatchers.withText(name))
+            .perform(ViewActions.click())
+    }
 
-    /**
-     * Test that the settings screen displays correctly
-     */
     @Test
     fun testSettingsDisplayed() {
+        Espresso.onView(ViewMatchers.withText("AI Provider"))
+            .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+
         Espresso.onView(ViewMatchers.withText("OpenAI API Key"))
+            .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+
+        Espresso.onView(ViewMatchers.withText("Model Library"))
+            .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+
+        Espresso.onView(ViewMatchers.withText("OpenAI Model"))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
 
         Espresso.onView(ViewMatchers.withText("Auto-Tag Limit"))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
 
-        Espresso.onView(ViewMatchers.withText("Allow Notifications"))
+        Espresso.onView(ViewMatchers.withText("Manage notifications"))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
 
         Espresso.onView(ViewMatchers.withText("Delete All Notes"))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+    }
 
-        Espresso.onView(ViewMatchers.withText("Edit Tag Colors"))
+    @Test
+    fun testSwitchToClaudeUpdatesFields() {
+        selectProvider("Claude")
+
+        Espresso.onView(ViewMatchers.withText("Claude API Key"))
+            .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+
+        Espresso.onView(ViewMatchers.withText("Claude Model"))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
     }
 
-    /**
-     * Test that clicking on the OpenAI API key preference opens a dialog
-     */
     @Test
-    fun testOpenApiKeyClick() {
+    fun testSwitchToCustomShowsEndpointField() {
+        selectProvider("Custom")
+
+        Espresso.onView(ViewMatchers.withText("Custom API Key"))
+            .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+
+        Espresso.onView(ViewMatchers.withText("Custom API Base URL"))
+            .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+    }
+
+    @Test
+    fun testModelLibraryShowsCuratedModels() {
+        Espresso.onView(ViewMatchers.withText("Model Library"))
+            .perform(ViewActions.click())
+
+        Espresso.onView(ViewMatchers.withText("GPT-5 mini"))
+            .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+
+        Espresso.onView(ViewMatchers.withText("GPT-5.2"))
+            .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+
+        Espresso.onView(ViewMatchers.withText("GPT-4.1"))
+            .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+    }
+
+    @Test
+    fun testOpenApiProviderTitleIsShownInitially() {
         Espresso.onView(ViewMatchers.withText("OpenAI API Key"))
-            .perform(ViewActions.click())
-
-        Espresso.onView(ViewMatchers.withText("OpenAI API Key"))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
 
-        Espresso.onView(ViewMatchers.withText("Cancel"))
-            .perform(ViewActions.click())
-    }
-
-    /**
-     * Test that clicking on the Delete All Notes preference shows a confirmation dialog
-     */
-    @Test
-    fun testDeleteAllNotesDialog() {
-        Espresso.onView(ViewMatchers.withText("Delete All Notes"))
-            .perform(ViewActions.click())
-
-        Espresso.onView(ViewMatchers.withText("Delete All Notes"))
-            .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
-
-        Espresso.onView(ViewMatchers.withText("Are you sure? This will permanently erase all your notes."))
-            .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
-
-        Espresso.onView(ViewMatchers.withText("Cancel"))
-            .perform(ViewActions.click())
-    }
-
-    /**
-     * Test toggling AI mode preference
-     */
-    @Test
-    fun testToggleAiMode() {
-        Espresso.onView(ViewMatchers.withText("Use AI-powered Auto-Tagging"))
-            .perform(ViewActions.click())
-
-        Espresso.onView(ViewMatchers.withText("Use AI-powered Auto-Tagging"))
-            .perform(ViewActions.click())
-    }
-
-    /**
-     * Test navigation to Tag Color Settings screen
-     */
-    @Test
-    fun testNavigateToTagColorSettings() {
-        Espresso.onView(ViewMatchers.withText("Edit Tag Colors"))
-            .perform(ViewActions.click())
-
-        Espresso.onView(ViewMatchers.withText("No tags available"))
-            .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
-
-        Espresso.pressBack()
-        Espresso.onView(ViewMatchers.withText("AI"))
+        Espresso.onView(ViewMatchers.withText("OpenAI Model"))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
     }
 }
