@@ -6,10 +6,8 @@ import android.net.Uri
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.google.gson.JsonParser
-import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
-import java.nio.charset.StandardCharsets
 import java.util.Locale
 
 /**
@@ -275,18 +273,6 @@ class AiModelCatalog(context: Context) {
         } finally {
             connection.disconnect()
         }
-    }
-
-    private fun readBody(connection: HttpURLConnection, code: Int): String {
-        val stream = if (code in 200..299) connection.inputStream else connection.errorStream
-        if (stream == null) return ""
-        return InputStreamReader(stream, StandardCharsets.UTF_8).use { it.readText() }
-    }
-
-    private fun joinUrl(baseUrl: String, path: String): String {
-        val trimmed = baseUrl.trim().trimEnd('/')
-        val suffix = path.trimStart('/')
-        return "$trimmed/$suffix"
     }
 
     companion object {

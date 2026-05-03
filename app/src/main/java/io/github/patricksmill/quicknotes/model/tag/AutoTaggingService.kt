@@ -9,7 +9,6 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import io.github.patricksmill.quicknotes.model.note.Note
-import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
@@ -392,18 +391,6 @@ class AutoTaggingService(
         } finally {
             connection.disconnect()
         }
-    }
-
-    private fun readBody(connection: HttpURLConnection, code: Int): String {
-        val stream = if (code in 200..299) connection.inputStream else connection.errorStream
-        if (stream == null) return ""
-        return InputStreamReader(stream, StandardCharsets.UTF_8).use { it.readText() }
-    }
-
-    private fun joinUrl(baseUrl: String, path: String): String {
-        val trimmed = baseUrl.trim().trimEnd('/')
-        val suffix = path.trimStart('/')
-        return "$trimmed/$suffix"
     }
 
     private fun extractOpenAiResponsesText(response: JsonObject): String {

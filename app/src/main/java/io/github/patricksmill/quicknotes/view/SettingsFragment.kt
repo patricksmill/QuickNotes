@@ -228,14 +228,17 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private fun refreshModelSuggestionsFromApi() {
         val provider = tagSettingsManager.selectedProvider
         val apiKey = tagSettingsManager.apiKeyFor(provider)
+        val toastContext = context?.applicationContext
 
         if (apiKey.isNullOrBlank()) {
-            aiSettingsHandler.post {
-                Toast.makeText(
-                    requireContext(),
-                    "Add an API key to refresh live model suggestions.",
-                    Toast.LENGTH_SHORT
-                ).show()
+            if (toastContext != null) {
+                aiSettingsHandler.post {
+                    Toast.makeText(
+                        toastContext,
+                        "Add an API key to refresh live model suggestions.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
             return
         }
@@ -252,6 +255,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 }
 
                 aiSettingsHandler.post {
+                    val currentContext = context?.applicationContext ?: return@post
                     if (provider == tagSettingsManager.selectedProvider) {
                         currentModelSuggestions = modelCatalog.mergedSuggestions(
                             provider = provider,
@@ -262,7 +266,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     }
 
                     Toast.makeText(
-                        requireContext(),
+                        currentContext,
                         if (fetched.isEmpty()) {
                             "No additional models were returned."
                         } else {
@@ -273,8 +277,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 }
             } catch (e: Exception) {
                 aiSettingsHandler.post {
+                    val currentContext = context?.applicationContext ?: return@post
                     Toast.makeText(
-                        requireContext(),
+                        currentContext,
                         "Could not refresh models: ${e.message}",
                         Toast.LENGTH_LONG
                     ).show()

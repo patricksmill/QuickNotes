@@ -247,12 +247,7 @@ class TagSettingsManager(ctx: Context) {
     }
 
     private fun parseProvider(value: String): AiProvider {
-        return when (value.lowercase(Locale.US)) {
-            AiProvider.ANTHROPIC.storageKey -> AiProvider.ANTHROPIC
-            AiProvider.GOOGLE.storageKey -> AiProvider.GOOGLE
-            AiProvider.CUSTOM.storageKey -> AiProvider.CUSTOM
-            else -> AiProvider.OPENAI
-        }
+        return providerForStorageKey(value)
     }
 
     private val orCreateSecretKey: SecretKey?
