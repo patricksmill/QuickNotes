@@ -3,6 +3,22 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
+private val appVersionName = "1.0.7" // x-release-please-version
+
+private fun androidVersionCode(versionName: String): Int {
+    val parts = versionName.split(".").map { it.toInt() }
+    require(parts.size == 3) {
+        "Android versionName must use major.minor.patch format."
+    }
+
+    val (major, minor, patch) = parts
+    require(minor in 0..99 && patch in 0..999) {
+        "Android versionName supports minor 0..99 and patch 0..999 for versionCode generation."
+    }
+
+    return major * 100_000 + minor * 1_000 + patch
+}
+
 android {
 
     namespace = "io.github.patricksmill.quicknotes"
@@ -12,8 +28,8 @@ android {
         applicationId = "io.github.patricksmill.quicknotes"
         minSdk = 30
         targetSdk = 36
-        versionCode = 100007
-        versionName = "1.0.7"
+        versionCode = androidVersionCode(appVersionName)
+        versionName = appVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
