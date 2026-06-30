@@ -19,7 +19,11 @@ Fix all lint **errors**. Unit tests must pass.
 - `app/src/main/java/.../view/` — Fragments and UI
 - `app/src/main/java/.../controller/` — Activity, notifications
 
-Views + View Binding (no Compose). No DI framework yet.
+Views + View Binding (no Compose yet). No DI framework yet.
+
+## Deferred plans
+
+After Compose migration, see [docs/plans/](docs/plans/) — e.g. native tag color swatch picker + tonal chips.
 
 ## Key conventions
 
