@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
 }
 
 private val appVersionName = "1.1.0" // x-release-please-version
@@ -74,11 +73,6 @@ android {
 
 
 
-kotlin {
-    compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-    }
-}
 dependencies {
     implementation(libs.openai.java)
     implementation(libs.gson)
