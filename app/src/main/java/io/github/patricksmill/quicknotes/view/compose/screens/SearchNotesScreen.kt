@@ -64,7 +64,7 @@ fun SearchNotesScreen(
     var selectedTag by remember { mutableStateOf<String?>(null) }
     var showSortDialog by remember { mutableStateOf(false) }
 
-    val filteredNotes = remember(notes, selectedTag, sortByDate) {
+    val filteredNotes = remember(notes, selectedTag, sortByDate, notes.map { it.isPinned }) {
         var result = notes.toList()
         selectedTag?.let { tag ->
             result = result.filter { note -> note.tags.any { it.name == tag } }
@@ -168,7 +168,7 @@ fun SearchNotesScreen(
                     contentPadding = PaddingValues(8.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(filteredNotes, key = { it.id }) { note ->
+                    items(filteredNotes, key = { "${it.id}-${it.isPinned}" }) { note ->
                         SwipeNoteRow(
                             note = note,
                             listener = listener,

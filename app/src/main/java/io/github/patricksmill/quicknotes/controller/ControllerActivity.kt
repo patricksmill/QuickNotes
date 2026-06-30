@@ -46,7 +46,9 @@ import java.util.function.Consumer
 class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListener {
     private data class NotesUiState(
         val notes: List<Note> = emptyList(),
-        val tags: List<Tag> = emptyList()
+        val tags: List<Tag> = emptyList(),
+        /** Bumped on each refresh so in-place note mutations trigger recomposition. */
+        val revision: Int = 0
     )
 
     private var noteLibrary: NoteLibrary? = null
@@ -55,6 +57,7 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
     private var isTutorialActive = false
 
     private var uiState by mutableStateOf(NotesUiState())
+    private var lastSearchQuery: String = ""
     private var noteToEdit by mutableStateOf<Note?>(null)
     private var tutorialStep by mutableStateOf<TutorialManager.TutorialStep?>(null)
     private var showManageTags by mutableStateOf(false)
@@ -130,9 +133,15 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
     }
 
     fun refreshNotes() {
+        val notes = if (lastSearchQuery.isEmpty()) {
+            noteLibrary!!.getNotes()
+        } else {
+            noteLibrary!!.searchNotes(lastSearchQuery, title = true, content = true, tag = true)
+        }
         uiState = NotesUiState(
-            notes = noteLibrary!!.getNotes(),
-            tags = noteLibrary!!.manageTags.allTags.sortedBy { it.name }
+            notes = notes,
+            tags = noteLibrary!!.manageTags.allTags.sortedBy { it.name },
+            revision = uiState.revision + 1
         )
     }
 
@@ -303,7 +312,11 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
         note.isNotificationsEnabled && note.notificationDate != null && note.notificationDate!!.after(Date())
 
     override fun onSearchNotes(query: String, title: Boolean, content: Boolean, tag: Boolean) {
-        uiState = uiState.copy(notes = noteLibrary!!.searchNotes(query, title, content, tag))
+        lastSearchQuery = query.trim()
+        uiState = uiState.copy(
+            notes = noteLibrary!!.searchNotes(query, title, content, tag),
+            revision = uiState.revision + 1
+        )
     }
 
     override fun onOpenSettings() {

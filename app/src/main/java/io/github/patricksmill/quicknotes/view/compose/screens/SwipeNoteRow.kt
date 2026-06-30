@@ -60,10 +60,11 @@ fun SwipeNoteRow(
                 ),
                 onClick = { onNoteClick(note) },
                 onPinClick = {
+                    val wasPinned = note.isPinned
                     listener.onTogglePin(note)
                     scope.launch {
                         snackbarHostState.showSnackbar(
-                            "Note ${if (note.isPinned) "unpinned" else "pinned"}"
+                            "Note ${if (wasPinned) "unpinned" else "pinned"}"
                         )
                     }
                 }
