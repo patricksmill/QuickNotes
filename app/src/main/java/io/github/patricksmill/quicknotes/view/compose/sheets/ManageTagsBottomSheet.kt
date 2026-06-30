@@ -66,7 +66,7 @@ fun ManageTagsBottomSheet(
                 }
             }
             LazyColumn {
-                items(tags, key = { it.name }) { tag ->
+                items(tags, key = { "${it.name}-${it.colorResId}" }) { tag ->
                     ManageTagRow(
                         name = tag.name,
                         colorResId = tag.colorResId,

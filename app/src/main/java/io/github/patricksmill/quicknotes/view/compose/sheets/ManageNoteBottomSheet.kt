@@ -48,6 +48,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.patricksmill.quicknotes.R
 import io.github.patricksmill.quicknotes.model.note.Note
+import io.github.patricksmill.quicknotes.model.tag.Tag
 import io.github.patricksmill.quicknotes.model.tag.TagSettingsManager
 import io.github.patricksmill.quicknotes.view.NotesUI
 import io.github.patricksmill.quicknotes.view.compose.components.TagColorPickerSheet
@@ -61,6 +62,7 @@ import java.util.Date
 @Composable
 fun ManageNoteBottomSheet(
     note: Note,
+    allTags: List<Tag>,
     isNewNote: Boolean,
     listener: NotesUI.Listener,
     onDismiss: () -> Unit,
@@ -103,7 +105,7 @@ fun ManageNoteBottomSheet(
     }
 
     fun tagColorRes(name: String): Int? =
-        listener.onManageTags()?.allTags?.firstOrNull { it.name.equals(name, true) }?.colorResId
+        allTags.firstOrNull { it.name.equals(name, true) }?.colorResId
 
     fun persistTags() {
         if (!tagsDirty) return

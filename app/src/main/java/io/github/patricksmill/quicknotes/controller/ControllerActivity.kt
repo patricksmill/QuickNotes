@@ -48,6 +48,7 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
     private var isTutorialActive = false
 
     private val notesState = mutableStateOf<List<Note>>(emptyList())
+    private val tagsState = mutableStateOf<List<Tag>>(emptyList())
     private val noteToEditState = mutableStateOf<Note?>(null)
     private val tutorialStepState = mutableStateOf<TutorialManager.TutorialStep?>(null)
     private val showManageTagsState = mutableStateOf(false)
@@ -84,6 +85,7 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
                 Box(modifier = Modifier.fillMaxSize()) {
                     QuickNotesNavHost(
                         notes = notesState.value,
+                        tags = tagsState.value,
                         listener = this@ControllerActivity,
                         snackbarHostState = snackbarHostState,
                         tagSettingsManager = tagSettingsManager,
@@ -123,6 +125,7 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
 
     private fun refreshNotes() {
         notesState.value = noteLibrary!!.getNotes()
+        tagsState.value = noteLibrary!!.manageTags.allTags.sortedBy { it.name }
     }
 
     private fun notifyOfflineIfAiEnabled() {

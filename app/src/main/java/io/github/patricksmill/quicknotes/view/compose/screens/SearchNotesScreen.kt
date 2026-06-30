@@ -15,17 +15,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Label
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SearchBar
-import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -33,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,13 +47,11 @@ import io.github.patricksmill.quicknotes.view.compose.components.NoteListItemDat
 import io.github.patricksmill.quicknotes.view.compose.components.TagLabelChip
 import io.github.patricksmill.quicknotes.view.compose.theme.QuickNotesTheme
 import io.github.patricksmill.quicknotes.view.compose.util.tutorialTarget
-import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchNotesScreen(
     notes: List<Note>,
-    tags: Collection<Tag>,
+    tags: List<Tag>,
     listener: NotesUI.Listener,
     snackbarHostState: SnackbarHostState,
     onManageTags: () -> Unit,
@@ -64,11 +60,9 @@ fun SearchNotesScreen(
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    var searchActive by remember { mutableStateOf(false) }
     var sortByDate by remember { mutableStateOf(true) }
     var selectedTag by remember { mutableStateOf<String?>(null) }
     var showSortDialog by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
 
     val filteredNotes = remember(notes, selectedTag, sortByDate) {
         var result = notes.toList()
@@ -104,33 +98,27 @@ fun SearchNotesScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SearchBar(
-                    inputField = {
-                        SearchBarDefaults.InputField(
-                            query = searchQuery,
-                            onQueryChange = {
-                                searchQuery = it
-                                listener.onSearchNotes(it, true, true, true)
-                            },
-                            onSearch = {
-                                listener.onSearchNotes(it, true, true, true)
-                                searchActive = false
-                            },
-                            expanded = searchActive,
-                            onExpandedChange = { searchActive = it },
-                            placeholder = { Text("Search notes") },
-                            modifier = Modifier.testTag("search_notes_field")
-                        )
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = {
+                        searchQuery = it
+                        listener.onSearchNotes(it, true, true, true)
                     },
-                    expanded = searchActive,
-                    onExpandedChange = { searchActive = it },
                     modifier = Modifier
                         .weight(1f)
+                        .padding(end = 4.dp)
                         .tutorialTarget(R.id.search_bar, "search_bar")
-                ) {}
+                        .testTag("search_bar"),
+                    placeholder = { Text("Search notes") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Search, contentDescription = null)
+                    },
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.large
+                )
                 IconButton(onClick = { showSortDialog = true }) {
                     Icon(Icons.Filled.Sort, contentDescription = stringResource(R.string.sort))
                 }
@@ -152,7 +140,7 @@ fun SearchNotesScreen(
                     .tutorialTarget(R.id.tagRecyclerView, "tagRecyclerView"),
                 horizontalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                items(tags.toList(), key = { it.name }) { tag ->
+                items(tags, key = { "${it.name}-${it.colorResId}" }) { tag ->
                     TagLabelChip(
                         name = tag.name,
                         colorResId = tag.colorResId,

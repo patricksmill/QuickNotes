@@ -22,6 +22,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import io.github.patricksmill.quicknotes.model.note.Note
 import io.github.patricksmill.quicknotes.model.tag.AiModelCatalog
+import io.github.patricksmill.quicknotes.model.tag.Tag
 import io.github.patricksmill.quicknotes.model.tag.TagSettingsManager
 import io.github.patricksmill.quicknotes.view.NotesUI
 import io.github.patricksmill.quicknotes.view.compose.screens.SearchNotesScreen
@@ -37,6 +38,7 @@ object Routes {
 @Composable
 fun QuickNotesNavHost(
     notes: List<Note>,
+    tags: List<Tag>,
     listener: NotesUI.Listener,
     snackbarHostState: SnackbarHostState,
     tagSettingsManager: TagSettingsManager,
@@ -102,7 +104,7 @@ fun QuickNotesNavHost(
                 composable(Routes.SEARCH) {
                     SearchNotesScreen(
                         notes = notes,
-                        tags = listener.onGetAllTags(),
+                        tags = tags,
                         listener = listener,
                         snackbarHostState = snackbarHostState,
                         onManageTags = { manageTagsVisible = true },
@@ -132,6 +134,7 @@ fun QuickNotesNavHost(
         val isNew = note.title.isEmpty() && note.content.isEmpty()
         ManageNoteBottomSheet(
             note = note,
+            allTags = tags,
             isNewNote = isNew,
             listener = listener,
             onDismiss = onNoteToEditConsumed,
@@ -147,7 +150,7 @@ fun QuickNotesNavHost(
 
     if (manageTagsVisible) {
         ManageTagsBottomSheet(
-            tags = listener.onGetAllTags().sortedBy { it.name },
+            tags = tags,
             listener = listener,
             onDismiss = {
                 manageTagsVisible = false

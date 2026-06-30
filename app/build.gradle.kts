@@ -66,10 +66,6 @@ android {
         compose = true
     }
 
-    tasks.withType<Test> {
-        useJUnitPlatform()
-    }
-
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -77,6 +73,10 @@ android {
         }
     }
 
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
 
 
@@ -116,6 +116,8 @@ dependencies {
 }
 
 tasks.register<JacocoReport>("jacocoTestReport") {
+    description = "Generates JaCoCo coverage report from debug unit tests."
+    group = "verification"
     dependsOn("testDebugUnitTest")
 
     reports {

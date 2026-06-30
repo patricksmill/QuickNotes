@@ -50,9 +50,11 @@ class TagRepository(
     }
 
     fun setTagColor(tagName: String, @ColorRes resId: Int) {
-        if (tagName.trim { it <= ' ' }.isEmpty()) return
-        colorMap[tagName.trim { it <= ' ' }] = resId
+        val key = tagName.trim { it <= ' ' }
+        if (key.isEmpty()) return
+        colorMap[key] = resId
         saveColorMap()
+        refreshTagColorOnNotes(key, resId)
     }
 
     fun cleanupUnusedColors(usedTagNames: MutableSet<String?>) {
@@ -232,6 +234,20 @@ class TagRepository(
             .filter { it.isNotBlank() }
             .map { name -> Tag(name, getTagColorRes(name)) }
             .toMutableSet()
+    }
+
+    private fun refreshTagColorOnNotes(tagName: String, @ColorRes resId: Int) {
+        var changed = false
+        for (note in noteLibrary.getNotes()) {
+            val stale = note.tags.filter { it.name.equals(tagName, ignoreCase = true) }
+            if (stale.isEmpty()) continue
+            note.tags.removeAll(stale.toSet())
+            note.setTag(Tag(tagName, resId))
+            changed = true
+        }
+        if (changed) {
+            Persistence.saveNotes(appContext, noteLibrary.getNotes())
+        }
     }
 }
 
