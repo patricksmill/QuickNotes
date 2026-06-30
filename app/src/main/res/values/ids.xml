@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tutorial spotlight targets (Compose test tags map to these view ids) -->
+    <item name="addNoteFab" type="id" />
+    <item name="search_bar" type="id" />
+    <item name="tagRecyclerView" type="id" />
+    <item name="settingsButton" type="id" />
+    <item name="empty_state" type="id" />
+    <item name="notesRecyclerView" type="id" />
+    <item name="noteNameText" type="id" />
+</resources>

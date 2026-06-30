@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+### Features
+
+- Full UI migration from XML Views to Jetpack Compose with Navigation Compose
+- Native tag color swatch picker (`TagColorPickerSheet`) with curated 12-color palette
+- Tonal tag chips (AssistChip + color dot) across search filters, note editor, and manage-tags
+
+### Removed
+
+- All `res/layout/*` XML layouts and View Binding
+- PreferenceFragment-based settings (replaced by Compose `SettingsScreen`)
+
 ## [1.2.0](https://github.com/patricksmill/QuickNotes/compare/QuickNotes-v1.1.0...QuickNotes-v1.2.0) (2026-06-30)
 
 

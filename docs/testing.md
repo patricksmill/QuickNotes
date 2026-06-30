@@ -1,6 +1,6 @@
 # Testing Strategy
 
-QuickNotes uses a layered testing approach: fast JVM unit tests (with Robolectric where Android APIs are needed), instrumented Espresso behavior tests on device/emulator, and Dropshots for screenshot regression.
+QuickNotes uses a layered testing approach: fast JVM unit tests (with Robolectric where Android APIs are needed), Compose UI instrumented tests on device/emulator, and Dropshots for screenshot regression.
 
 See [testing-analysis.md](testing-analysis.md) for the full stack audit and gaps.
 
@@ -38,6 +38,9 @@ app/src/
         │   ├── SearchNotesFragmentTest.kt
         │   ├── SearchNotesScreenshotTest.kt
         │   └── SettingsFragmentTest.kt
+        └── compose/
+            ├── components/TagFilterChipTest.kt
+            └── theme/QuickNotesThemeTest.kt
     └── screenshots/               # Dropshots reference images (after record)
 ```
 
@@ -46,8 +49,8 @@ app/src/
 - **JUnit 5** — pure unit tests (`TagTest`)
 - **JUnit 4 + Vintage engine** — Robolectric tests (`@RunWith(RobolectricTestRunner::class)`)
 - **Robolectric 4.16** — Android framework fakes on JVM (`@Config(sdk = [33])`)
-- **Espresso** — UI behavior (`androidTest/`; can also run in `test/` with Robolectric)
-- **UI Automator** — system dialogs in `SearchNotesFragmentTest`
+- **Compose UI Test** — instrumented composable and screen tests (`createAndroidComposeRule`, `createComposeRule`)
+- **UI Automator** — system dialogs (legacy; reduced after Compose migration)
 - **Dropshots** — instrumented screenshot comparison
 - **JaCoCo** — unit test coverage
 

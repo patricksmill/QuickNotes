@@ -16,10 +16,10 @@ Fix all lint **errors**. Unit tests must pass.
 ## Project structure
 
 - `app/src/main/java/.../model/` — business logic (notes, tags, persistence, AI settings)
-- `app/src/main/java/.../view/` — Fragments and UI
+- `app/src/main/java/.../view/compose/` — Jetpack Compose UI (theme, components, screens, sheets, navigation)
 - `app/src/main/java/.../controller/` — Activity, notifications
 
-Views + View Binding (no Compose yet). No DI framework yet.
+Jetpack Compose + Navigation Compose (Material 3). No View Binding. No DI framework yet.
 
 ## Deferred plans
 

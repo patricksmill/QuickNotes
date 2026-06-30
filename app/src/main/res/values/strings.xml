@@ -29,4 +29,7 @@
     <string name="next">Next</string>
     <string name="try_it">Try it!</string>
     <string name="notifications">Notification Enabled</string>
+    <string name="select_color_for">Select color for %1$s</string>
+    <string name="manage_tags_title">Manage Tags</string>
+    <string name="empty_state">empty_state</string>
 </resources>
