@@ -8,7 +8,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-class TagSettingsManagerTest {
+/**
+ * API key persistence uses Android Keystore encryption and must run on device/emulator.
+ */
+class TagSettingsManagerInstrumentedTest {
     private val context = InstrumentationRegistry.getInstrumentation()
         .targetContext.applicationContext
 
@@ -54,31 +57,6 @@ class TagSettingsManagerTest {
         assertEquals("custom-key", reloaded.apiKeyFor(TagSettingsManager.AiProvider.CUSTOM))
         assertEquals("https://example.com/v1", reloaded.endpointFor(TagSettingsManager.AiProvider.CUSTOM))
         assertEquals("custom-model", reloaded.modelFor(TagSettingsManager.AiProvider.CUSTOM))
-    }
-
-    @Test
-    fun legacyCustomEndpointPromotesCustomProvider() {
-        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        prefs.edit()
-            .putString("openai_api_base_url", "https://example.com/v1")
-            .putString("pref_ai_model", "legacy-model")
-            .commit()
-
-        val settings = TagSettingsManager(context)
-
-        assertEquals(TagSettingsManager.AiProvider.CUSTOM, settings.selectedProvider)
-        assertEquals("https://example.com/v1", settings.selectedAiEndpoint)
-        assertEquals("legacy-model", settings.selectedAiModelKey)
-    }
-
-    @Test
-    fun defaultModelsAreProviderAppropriate() {
-        val settings = TagSettingsManager(context)
-
-        assertEquals("gpt-5-mini", settings.modelFor(TagSettingsManager.AiProvider.OPENAI))
-        assertEquals("claude-sonnet-4-20250514", settings.modelFor(TagSettingsManager.AiProvider.ANTHROPIC))
-        assertEquals("gemini-2.5-flash", settings.modelFor(TagSettingsManager.AiProvider.GOOGLE))
-        assertEquals("gpt-5-mini", settings.modelFor(TagSettingsManager.AiProvider.CUSTOM))
     }
 
     private fun clearPrefs() {

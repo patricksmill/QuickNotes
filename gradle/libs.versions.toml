@@ -13,6 +13,9 @@ junitJupiter = "6.0.0"
 espressoContrib = "3.7.0"
 testRules = "1.7.0"
 uiautomator = "2.3.0"
+robolectric = "4.16.1"
+dropshots = "0.6.0"
+androidxTestCore = "1.7.0"
 
 
 [libraries]
@@ -32,7 +35,12 @@ androidx-espresso-contrib = { group = "androidx.test.espresso", name = "espresso
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "testRules" }
 junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junitJupiter" }
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+dropshots = { group = "com.dropbox.dropshots", name = "dropshots", version.ref = "dropshots" }
+androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+junit-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+dropshots = { id = "com.dropbox.dropshots", version.ref = "dropshots" }
 
