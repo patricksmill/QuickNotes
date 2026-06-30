@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import io.github.patricksmill.quicknotes.model.note.Note
 import io.github.patricksmill.quicknotes.view.NotesUI
 import io.github.patricksmill.quicknotes.view.compose.components.NoteListItem
-import io.github.patricksmill.quicknotes.view.compose.components.NoteListItemData
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,14 +49,8 @@ fun SwipeNoteRow(
         modifier = modifier,
         content = {
             NoteListItem(
-                note = NoteListItemData(
-                    title = note.title,
-                    content = note.content,
-                    tagNames = note.tagNames.toList(),
-                    lastModified = note.lastModified,
-                    isPinned = note.isPinned,
-                    showNotificationIcon = listener.onShouldShowNotificationIcon(note)
-                ),
+                note = note,
+                showNotificationIcon = listener.onShouldShowNotificationIcon(note),
                 onClick = { onNoteClick(note) },
                 onPinClick = {
                     val wasPinned = note.isPinned

@@ -1,8 +1,6 @@
 package io.github.patricksmill.quicknotes.view.compose.screens
 
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -25,9 +23,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,21 +35,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.patricksmill.quicknotes.R
 import io.github.patricksmill.quicknotes.model.note.Note
 import io.github.patricksmill.quicknotes.model.tag.Tag
 import io.github.patricksmill.quicknotes.view.NotesUI
-import io.github.patricksmill.quicknotes.view.compose.components.NoteListItemData
 import io.github.patricksmill.quicknotes.view.compose.components.TagLabelChip
-import io.github.patricksmill.quicknotes.view.compose.theme.QuickNotesTheme
 import io.github.patricksmill.quicknotes.view.compose.util.tutorialTarget
 
 @Composable
 fun SearchNotesScreen(
     notes: List<Note>,
     tags: List<Tag>,
+    revision: Int,
+    searchQuery: String,
     listener: NotesUI.Listener,
     snackbarHostState: SnackbarHostState,
     onManageTags: () -> Unit,
@@ -59,12 +56,11 @@ fun SearchNotesScreen(
     onNoteClick: (Note) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var searchQuery by remember { mutableStateOf("") }
     var sortByDate by remember { mutableStateOf(true) }
     var selectedTag by remember { mutableStateOf<String?>(null) }
     var showSortDialog by remember { mutableStateOf(false) }
 
-    val filteredNotes = remember(notes, selectedTag, sortByDate, notes.map { it.isPinned }) {
+    val filteredNotes = remember(notes, selectedTag, sortByDate, revision) {
         var result = notes.toList()
         selectedTag?.let { tag ->
             result = result.filter { note -> note.tags.any { it.name == tag } }
@@ -80,7 +76,6 @@ fun SearchNotesScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { listener.onNewNote() },
@@ -104,7 +99,6 @@ fun SearchNotesScreen(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = {
-                        searchQuery = it
                         listener.onSearchNotes(it, true, true, true)
                     },
                     modifier = Modifier
@@ -168,7 +162,7 @@ fun SearchNotesScreen(
                     contentPadding = PaddingValues(8.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(filteredNotes, key = { "${it.id}-${it.isPinned}" }) { note ->
+                    items(filteredNotes, key = { it.id }) { note ->
                         SwipeNoteRow(
                             note = note,
                             listener = listener,
@@ -193,7 +187,7 @@ fun SearchNotesScreen(
             },
             confirmButton = {},
             dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { showSortDialog = false }) {
+                TextButton(onClick = { showSortDialog = false }) {
                     Text("Cancel")
                 }
             }
@@ -203,17 +197,7 @@ fun SearchNotesScreen(
 
 @Composable
 private fun TextButtonRow(label: String, onClick: () -> Unit) {
-    androidx.compose.material3.TextButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+    TextButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Text(label)
-    }
-}
-
-@Preview
-@Composable
-private fun SearchNotesScreenPreview() {
-    QuickNotesTheme {
-        Box {
-            Text("Preview requires listener")
-        }
     }
 }

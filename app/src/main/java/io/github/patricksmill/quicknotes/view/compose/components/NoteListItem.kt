@@ -22,22 +22,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.github.patricksmill.quicknotes.model.note.Note
 import io.github.patricksmill.quicknotes.view.compose.theme.QuickNotesTheme
 import io.github.patricksmill.quicknotes.view.compose.util.formatNoteTimestamp
 import java.util.Date
 
-data class NoteListItemData(
-    val title: String,
-    val content: String,
-    val tagNames: List<String>,
-    val lastModified: Date,
-    val isPinned: Boolean,
-    val showNotificationIcon: Boolean
-)
-
 @Composable
 fun NoteListItem(
-    note: NoteListItemData,
+    note: Note,
+    showNotificationIcon: Boolean,
     onClick: () -> Unit,
     onPinClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -63,7 +56,7 @@ fun NoteListItem(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
-                if (note.showNotificationIcon) {
+                if (showNotificationIcon) {
                     Icon(
                         imageVector = Icons.Filled.Notifications,
                         contentDescription = null,
@@ -125,14 +118,11 @@ fun NoteListItem(
 private fun NoteListItemPreview() {
     QuickNotesTheme {
         NoteListItem(
-            note = NoteListItemData(
-                title = "Meeting notes",
-                content = "Discuss project timeline and deliverables.",
-                tagNames = listOf("work", "urgent"),
-                lastModified = Date(),
-                isPinned = true,
-                showNotificationIcon = true
-            ),
+            note = Note("Meeting notes", "Discuss project timeline and deliverables.", null).apply {
+                isPinned = true
+                lastModified = Date()
+            },
+            showNotificationIcon = true,
             onClick = {},
             onPinClick = {}
         )

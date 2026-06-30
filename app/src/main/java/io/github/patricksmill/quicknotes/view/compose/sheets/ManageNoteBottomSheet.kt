@@ -111,7 +111,7 @@ fun ManageNoteBottomSheet(
 
     fun addTag(name: String) {
         val trimmed = name.trim()
-        if (trimmed.isEmpty() || selectedTags.contains(trimmed)) return
+        if (trimmed.isEmpty() || selectedTags.any { it.equals(trimmed, ignoreCase = true) }) return
         selectedTags.add(trimmed)
         tagsDirty = true
         tagInput = ""
@@ -149,7 +149,6 @@ fun ManageNoteBottomSheet(
                         }
                         if (handleNotificationSave(notificationsEnabled, cal, listener, note, showMessage)) {
                             listener.onSaveNote(note, isNewNote)
-                            listener.onBrowseNotes()
                             onSaved()
                             onDismiss()
                         }

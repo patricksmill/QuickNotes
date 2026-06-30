@@ -4,8 +4,6 @@ import android.Manifest
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -57,10 +55,9 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
     private var isTutorialActive = false
 
     private var uiState by mutableStateOf(NotesUiState())
-    private var lastSearchQuery: String = ""
+    private var searchQuery by mutableStateOf("")
     private var noteToEdit by mutableStateOf<Note?>(null)
     private var tutorialStep by mutableStateOf<TutorialManager.TutorialStep?>(null)
-    private var showManageTags by mutableStateOf(false)
     private var openSettingsRequest by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -95,17 +92,17 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
                     QuickNotesNavHost(
                         notes = uiState.notes,
                         tags = uiState.tags,
+                        revision = uiState.revision,
+                        searchQuery = searchQuery,
                         listener = this@ControllerActivity,
                         snackbarHostState = snackbarHostState,
                         tagSettingsManager = tagSettingsManager,
                         modelCatalog = modelCatalog,
                         appVersion = appVersion,
                         noteToEdit = noteToEdit,
-                        showManageTags = showManageTags,
                         openSettingsRequest = openSettingsRequest,
                         onOpenSettingsConsumed = { openSettingsRequest = false },
                         onNoteToEditConsumed = { noteToEdit = null },
-                        onManageTagsDismiss = { showManageTags = false },
                         onRefresh = { refreshNotes() },
                         onReplayTutorial = { forceStartTutorial() },
                         onOpenNotificationSettings = { openSystemNotificationSettings() },
@@ -129,14 +126,13 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
         if (tutorialManager!!.shouldShowTutorial()) {
             window.decorView.post { tutorialManager!!.startTutorial() }
         }
-        notifyOfflineIfAiEnabled()
     }
 
     fun refreshNotes() {
-        val notes = if (lastSearchQuery.isEmpty()) {
+        val notes = if (searchQuery.isEmpty()) {
             noteLibrary!!.getNotes()
         } else {
-            noteLibrary!!.searchNotes(lastSearchQuery, title = true, content = true, tag = true)
+            noteLibrary!!.searchNotes(searchQuery, title = true, content = true, tag = true)
         }
         uiState = NotesUiState(
             notes = notes,
@@ -144,26 +140,6 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
             revision = uiState.revision + 1
         )
     }
-
-    private fun notifyOfflineIfAiEnabled() {
-        try {
-            if (noteLibrary!!.manageTags.isAiMode &&
-                TagSettingsManager(this).hasValidApiKey() &&
-                !isOnline
-            ) {
-                // Offline banner omitted; model falls back to keywords
-            }
-        } catch (_: Exception) {
-        }
-    }
-
-    private val isOnline: Boolean
-        get() {
-            val cm = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager? ?: return false
-            val network = cm.activeNetwork ?: return false
-            val caps = cm.getNetworkCapabilities(network)
-            return caps != null && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-        }
 
     fun forceStartTutorial() {
         tutorialManager?.forceStartTutorial()
@@ -225,8 +201,6 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
         noteLibrary!!.togglePin(note)
         refreshNotes()
     }
-
-    override fun onBrowseNotes() {}
 
     override fun onGetNotes(): List<Note> = noteLibrary!!.getNotes()
 
@@ -312,9 +286,9 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
         note.isNotificationsEnabled && note.notificationDate != null && note.notificationDate!!.after(Date())
 
     override fun onSearchNotes(query: String, title: Boolean, content: Boolean, tag: Boolean) {
-        lastSearchQuery = query.trim()
+        searchQuery = query.trim()
         uiState = uiState.copy(
-            notes = noteLibrary!!.searchNotes(query, title, content, tag),
+            notes = noteLibrary!!.searchNotes(searchQuery, title, content, tag),
             revision = uiState.revision + 1
         )
     }

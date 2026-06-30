@@ -24,7 +24,7 @@ private fun androidVersionCode(versionName: String): Int {
 android {
 
     namespace = "io.github.patricksmill.quicknotes"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "io.github.patricksmill.quicknotes"

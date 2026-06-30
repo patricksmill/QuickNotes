@@ -37,9 +37,7 @@ import io.github.patricksmill.quicknotes.view.compose.theme.QuickNotesTheme
 private val CURATED_COLOR_INDICES = listOf(0, 1, 2, 5, 6, 8, 9, 11, 13, 14, 16, 18)
 
 fun curatedColorOptions(all: List<TagRepository.ColorOption?>): List<TagRepository.ColorOption> {
-    return CURATED_COLOR_INDICES.mapNotNull { index ->
-        all.getOrNull(index)?.let { option -> option }
-    }
+    return CURATED_COLOR_INDICES.mapNotNull { index -> all.getOrNull(index) }
 }
 
 @Composable

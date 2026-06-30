@@ -29,6 +29,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,7 +37,9 @@ import androidx.compose.ui.unit.dp
 import io.github.patricksmill.quicknotes.model.tag.AiModelCatalog
 import io.github.patricksmill.quicknotes.model.tag.TagSettingsManager
 import io.github.patricksmill.quicknotes.view.compose.theme.QuickNotesTheme
-import java.util.concurrent.Executors
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,6 +53,7 @@ fun SettingsScreen(
     onOpenNotificationSettings: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var autoTagLimit by remember { mutableIntStateOf(tagSettingsManager.autoTagLimit) }
     var aiMode by remember { mutableStateOf(tagSettingsManager.isAiMode) }
     var confirmAi by remember { mutableStateOf(tagSettingsManager.isAiConfirmationEnabled) }
@@ -70,8 +74,6 @@ fun SettingsScreen(
             )
         )
     }
-    val executor = remember { Executors.newSingleThreadExecutor() }
-
     fun refreshModels() {
         modelSuggestions = modelCatalog.mergedSuggestions(
             tagSettingsManager.selectedProvider,
@@ -123,11 +125,11 @@ fun SettingsScreen(
             ) {
                 showProviderDialog = true
             }
-            SettingsSwitch("AI-powered Auto-Tagging", aiMode) {
+            RowSwitch("AI-powered Auto-Tagging", aiMode) {
                 aiMode = it
                 tagSettingsManager.setAiMode(it)
             }
-            SettingsSwitch("Confirm AI tag suggestions", confirmAi) {
+            RowSwitch("Confirm AI tag suggestions", confirmAi) {
                 confirmAi = it
                 tagSettingsManager.setAiConfirmationEnabled(it)
             }
@@ -277,34 +279,30 @@ fun SettingsScreen(
                         Toast.makeText(context, "Add an API key to refresh live model suggestions.", Toast.LENGTH_SHORT).show()
                         return@TextButton
                     }
-                    executor.execute {
+                    scope.launch {
                         try {
-                            val fetched = modelCatalog.fetchSuggestions(
-                                provider = provider,
-                                endpoint = tagSettingsManager.endpointFor(provider),
-                                apiKey = key
-                            )
-                            if (fetched.isNotEmpty()) {
-                                modelCatalog.let {
-                                    AiModelCatalog(context).saveCachedSuggestions(provider, fetched)
-                                }
-                            }
-                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                modelSuggestions = modelCatalog.mergedSuggestions(
-                                    provider,
-                                    tagSettingsManager.selectedAiModelKey,
-                                    fetched
+                            val fetched = withContext(Dispatchers.IO) {
+                                modelCatalog.fetchSuggestions(
+                                    provider = provider,
+                                    endpoint = tagSettingsManager.endpointFor(provider),
+                                    apiKey = key
                                 )
-                                Toast.makeText(
-                                    context,
-                                    if (fetched.isEmpty()) "No additional models were returned." else "Model suggestions updated.",
-                                    Toast.LENGTH_SHORT
-                                ).show()
                             }
+                            if (fetched.isNotEmpty()) {
+                                modelCatalog.saveCachedSuggestions(provider, fetched)
+                            }
+                            modelSuggestions = modelCatalog.mergedSuggestions(
+                                provider,
+                                tagSettingsManager.selectedAiModelKey,
+                                fetched
+                            )
+                            Toast.makeText(
+                                context,
+                                if (fetched.isEmpty()) "No additional models were returned." else "Model suggestions updated.",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         } catch (e: Exception) {
-                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                Toast.makeText(context, "Could not refresh models: ${e.message}", Toast.LENGTH_LONG).show()
-                            }
+                            Toast.makeText(context, "Could not refresh models: ${e.message}", Toast.LENGTH_LONG).show()
                         }
                     }
                 }) { Text("Refresh from API") }
@@ -338,11 +336,6 @@ private fun SettingsRow(title: String, summary: String, onClick: () -> Unit) {
         Text(title, style = MaterialTheme.typography.bodyLarge)
         Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
-}
-
-@Composable
-private fun SettingsSwitch(title: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    RowSwitch(title, checked, onCheckedChange)
 }
 
 @Composable

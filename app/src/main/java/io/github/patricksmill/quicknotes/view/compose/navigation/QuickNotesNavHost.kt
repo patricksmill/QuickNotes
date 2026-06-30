@@ -27,17 +27,17 @@ import io.github.patricksmill.quicknotes.view.compose.sheets.ManageTagsBottomShe
 fun QuickNotesNavHost(
     notes: List<Note>,
     tags: List<Tag>,
+    revision: Int,
+    searchQuery: String,
     listener: NotesUI.Listener,
     snackbarHostState: SnackbarHostState,
     tagSettingsManager: TagSettingsManager,
     modelCatalog: AiModelCatalog,
     appVersion: String,
     noteToEdit: Note?,
-    showManageTags: Boolean,
     openSettingsRequest: Boolean,
     onOpenSettingsConsumed: () -> Unit,
     onNoteToEditConsumed: () -> Unit,
-    onManageTagsDismiss: () -> Unit,
     onRefresh: () -> Unit,
     onReplayTutorial: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
@@ -45,9 +45,7 @@ fun QuickNotesNavHost(
     modifier: Modifier = Modifier
 ) {
     var showSettings by remember { mutableStateOf(false) }
-    var manageTagsVisible by remember { mutableStateOf(showManageTags) }
-
-    if (showManageTags) manageTagsVisible = true
+    var manageTagsVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(openSettingsRequest) {
         if (openSettingsRequest) {
@@ -78,6 +76,8 @@ fun QuickNotesNavHost(
                 SearchNotesScreen(
                     notes = notes,
                     tags = tags,
+                    revision = revision,
+                    searchQuery = searchQuery,
                     listener = listener,
                     snackbarHostState = snackbarHostState,
                     onManageTags = { manageTagsVisible = true },
@@ -109,10 +109,7 @@ fun QuickNotesNavHost(
         ManageTagsBottomSheet(
             tags = tags,
             listener = listener,
-            onDismiss = {
-                manageTagsVisible = false
-                onManageTagsDismiss()
-            }
+            onDismiss = { manageTagsVisible = false }
         )
     }
 }

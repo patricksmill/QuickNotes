@@ -29,11 +29,6 @@ interface NotesUI {
         fun onSaveNote(note: Note, isNewNote: Boolean)
 
         /**
-         * Navigates to the main notes browsing view.
-         */
-        fun onBrowseNotes()
-
-        /**
          * Retrieves all user notes.
          * @return a list of all notes
          */

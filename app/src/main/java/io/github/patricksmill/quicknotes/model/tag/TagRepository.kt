@@ -9,8 +9,6 @@ import io.github.patricksmill.quicknotes.model.note.NoteLibrary
 import java.util.Collections
 import java.util.Locale
 import java.util.Random
-import java.util.function.Supplier
-import java.util.stream.Collectors
 
 /**
  * TagRepository centralizes tag operations and color management.
@@ -93,10 +91,8 @@ class TagRepository(
             val trimmed = name.trim { it <= ' ' }
             if (trimmed.isEmpty()) continue
             val colorRes = getTagColorRes(trimmed)
-            val tag = Tag(trimmed, colorRes)
-            val before = note.tags.size
-            note.setTag(tag)
-            if (note.tags.size != before) changed = true
+            note.setTag(Tag(trimmed, colorRes))
+            changed = true
         }
         if (changed) {
             Persistence.saveNotes(appContext, noteLibrary.getNotes())
@@ -191,7 +187,7 @@ class TagRepository(
             var noteChanged = false
             val toRemove = mutableListOf<Tag>()
             for (t in note.tags) {
-                if (sources.contains(t.name)) toRemove.add(t)
+                if (sources.any { it.equals(t.name, ignoreCase = true) }) toRemove.add(t)
             }
             if (toRemove.isNotEmpty()) {
                 note.tags.removeAll(toRemove)
@@ -235,10 +231,11 @@ class TagRepository(
     }
 
     private fun extractAllTagNames(): MutableSet<String?> {
-        return noteLibrary.getNotes().stream()
-            .flatMap { note: Note -> note.tags.stream() }
-            .map(Tag::name)
-            .collect(Collectors.toCollection(Supplier { LinkedHashSet() }))
+        return noteLibrary.getNotes()
+            .asSequence()
+            .flatMap { note -> note.tags.asSequence() }
+            .map { it.name }
+            .toCollection(LinkedHashSet())
     }
 
     private fun createTagsWithColors(tagNames: MutableSet<String?>): MutableSet<Tag> {
