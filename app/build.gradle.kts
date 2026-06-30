@@ -4,7 +4,7 @@ plugins {
     jacoco
 }
 
-private val appVersionName = "1.1.0" // x-release-please-version
+private val appVersionName = "1.2.0" // x-release-please-version
 
 private fun androidVersionCode(versionName: String): Int {
     val parts = versionName.split(".").map { it.toInt() }

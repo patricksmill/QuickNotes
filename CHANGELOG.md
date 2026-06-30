@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/patricksmill/QuickNotes/compare/QuickNotes-v1.1.0...QuickNotes-v1.2.0) (2026-06-30)
+
+
+### Features
+
+* improve build reliability and test infrastructure ([2f0d207](https://github.com/patricksmill/QuickNotes/commit/2f0d207c61dcff5918a8937055f82e52c1e8a214))
+
 ## [1.1.0](https://github.com/patricksmill/QuickNotes/compare/QuickNotes-v1.0.7...QuickNotes-v1.1.0) (2026-05-05)
 
 
