@@ -1,6 +1,6 @@
 package io.github.patricksmill.quicknotes.view.compose.screens
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Label
@@ -133,17 +133,17 @@ fun SearchNotesScreen(
                 }
             }
 
-            LazyRow(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 4.dp)
-                    .tutorialTarget(R.id.tagRecyclerView, "tagRecyclerView"),
-                horizontalArrangement = Arrangement.spacedBy(0.dp)
+                    .tutorialTarget(R.id.tagRecyclerView, "tagRecyclerView")
             ) {
-                items(tags, key = { "${it.name}-${it.colorResId}" }) { tag ->
+                tags.forEach { tag ->
                     TagLabelChip(
                         name = tag.name,
-                        colorResId = tag.colorResId,
+                        colorResId = listener.onGetTagColor(tag.name),
                         onClick = {
                             selectedTag = if (selectedTag == tag.name) null else tag.name
                         },

@@ -4,8 +4,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
@@ -42,14 +42,17 @@ import io.github.patricksmill.quicknotes.view.compose.theme.QuickNotesTheme
 fun ManageTagsBottomSheet(
     tags: List<Tag>,
     listener: NotesUI.Listener,
-    onDismiss: () -> Unit,
-    onTagsChanged: () -> Unit
+    onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var actionTag by remember { mutableStateOf<Tag?>(null) }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-        Column(modifier = Modifier.padding(bottom = 24.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(bottom = 24.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -65,15 +68,13 @@ fun ManageTagsBottomSheet(
                     Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.settings))
                 }
             }
-            LazyColumn {
-                items(tags, key = { "${it.name}-${it.colorResId}" }) { tag ->
-                    ManageTagRow(
-                        name = tag.name,
-                        colorResId = tag.colorResId,
-                        onClick = { actionTag = tag },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+            tags.forEach { tag ->
+                ManageTagRow(
+                    name = tag.name,
+                    colorResId = listener.onGetTagColor(tag.name),
+                    onClick = { actionTag = tag },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }
@@ -117,10 +118,9 @@ fun ManageTagsBottomSheet(
         TagColorPickerSheet(
             tagName = tag.name,
             options = colorOptions,
-            selectedResId = tag.colorResId,
+            selectedResId = listener.onGetTagColor(tag.name),
             onColorSelected = { resId ->
                 listener.onSetTagColor(tag.name, resId)
-                onTagsChanged()
             },
             onDismiss = { colorPickerTag = null }
         )
@@ -149,7 +149,6 @@ fun ManageTagsBottomSheet(
                     val newName = renameText.trim()
                     if (newName.isNotEmpty() && !newName.equals(tag.name, true)) {
                         listener.onRenameTag(tag.name, newName)
-                        onTagsChanged()
                     }
                     renameTag = null
                 }) { Text("Rename") }
@@ -171,7 +170,6 @@ fun ManageTagsBottomSheet(
             confirmButton = {
                 TextButton(onClick = {
                     listener.onDeleteTag(tag.name)
-                    onTagsChanged()
                     deleteTag = null
                 }) { Text("Delete") }
             },

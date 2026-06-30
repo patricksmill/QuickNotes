@@ -14,9 +14,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -42,17 +44,21 @@ import java.util.Date
 import java.util.function.Consumer
 
 class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListener {
+    private data class NotesUiState(
+        val notes: List<Note> = emptyList(),
+        val tags: List<Tag> = emptyList()
+    )
+
     private var noteLibrary: NoteLibrary? = null
     private var notifier: Notifier? = null
     private var tutorialManager: TutorialManager? = null
     private var isTutorialActive = false
 
-    private val notesState = mutableStateOf<List<Note>>(emptyList())
-    private val tagsState = mutableStateOf<List<Tag>>(emptyList())
-    private val noteToEditState = mutableStateOf<Note?>(null)
-    private val tutorialStepState = mutableStateOf<TutorialManager.TutorialStep?>(null)
-    private val showManageTagsState = mutableStateOf(false)
-    private val openSettingsRequest = mutableStateOf(false)
+    private var uiState by mutableStateOf(NotesUiState())
+    private var noteToEdit by mutableStateOf<Note?>(null)
+    private var tutorialStep by mutableStateOf<TutorialManager.TutorialStep?>(null)
+    private var showManageTags by mutableStateOf(false)
+    private var openSettingsRequest by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,26 +90,26 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     QuickNotesNavHost(
-                        notes = notesState.value,
-                        tags = tagsState.value,
+                        notes = uiState.notes,
+                        tags = uiState.tags,
                         listener = this@ControllerActivity,
                         snackbarHostState = snackbarHostState,
                         tagSettingsManager = tagSettingsManager,
                         modelCatalog = modelCatalog,
                         appVersion = appVersion,
-                        noteToEdit = noteToEditState.value,
-                        showManageTags = showManageTagsState.value,
-                        openSettingsRequest = openSettingsRequest.value,
-                        onOpenSettingsConsumed = { openSettingsRequest.value = false },
-                        onNoteToEditConsumed = { noteToEditState.value = null },
-                        onManageTagsDismiss = { showManageTagsState.value = false },
+                        noteToEdit = noteToEdit,
+                        showManageTags = showManageTags,
+                        openSettingsRequest = openSettingsRequest,
+                        onOpenSettingsConsumed = { openSettingsRequest = false },
+                        onNoteToEditConsumed = { noteToEdit = null },
+                        onManageTagsDismiss = { showManageTags = false },
                         onRefresh = { refreshNotes() },
                         onReplayTutorial = { forceStartTutorial() },
                         onOpenNotificationSettings = { openSystemNotificationSettings() },
                         showMessage = ::showMessage
                     )
 
-                    tutorialStepState.value?.let { step ->
+                    tutorialStep?.let { step ->
                         TutorialOverlay(
                             step = step,
                             onAction = { tutorialManager?.executeStepAction(it) },
@@ -123,9 +129,11 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
         notifyOfflineIfAiEnabled()
     }
 
-    private fun refreshNotes() {
-        notesState.value = noteLibrary!!.getNotes()
-        tagsState.value = noteLibrary!!.manageTags.allTags.sortedBy { it.name }
+    fun refreshNotes() {
+        uiState = NotesUiState(
+            notes = noteLibrary!!.getNotes(),
+            tags = noteLibrary!!.manageTags.allTags.sortedBy { it.name }
+        )
     }
 
     private fun notifyOfflineIfAiEnabled() {
@@ -180,7 +188,7 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
     }
 
     override fun onNewNote() {
-        noteToEditState.value = Note("", "", null)
+        noteToEdit = Note("", "", null)
     }
 
     override fun onSaveNote(note: Note, isNewNote: Boolean) {
@@ -214,7 +222,7 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
     override fun onGetNotes(): List<Note> = noteLibrary!!.getNotes()
 
     override fun onManageNotes(note: Note) {
-        noteToEditState.value = note
+        noteToEdit = note
     }
 
     override fun onManageTags(): TagManager? = noteLibrary!!.manageTags
@@ -255,6 +263,9 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
         refreshNotes()
     }
 
+    override fun onGetTagColor(tagName: String): Int =
+        noteLibrary!!.manageTags.getTagColorRes(tagName)
+
     override fun onRenameTag(oldName: String, newName: String) {
         noteLibrary!!.manageTags.renameTag(oldName, newName)
         refreshNotes()
@@ -292,15 +303,11 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
         note.isNotificationsEnabled && note.notificationDate != null && note.notificationDate!!.after(Date())
 
     override fun onSearchNotes(query: String, title: Boolean, content: Boolean, tag: Boolean) {
-        notesState.value = noteLibrary!!.searchNotes(query, title, content, tag)
+        uiState = uiState.copy(notes = noteLibrary!!.searchNotes(query, title, content, tag))
     }
 
     override fun onOpenSettings() {
-        openSettingsRequest.value = true
-    }
-
-    fun refreshNotesAndTags() {
-        refreshNotes()
+        openSettingsRequest = true
     }
 
     override fun onOnTutorialStarted() {
@@ -309,7 +316,7 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
 
     override fun onTutorialCompleted() {
         isTutorialActive = false
-        tutorialStepState.value = null
+        tutorialStep = null
     }
 
     override fun onCreateFirstNote() {
@@ -317,11 +324,11 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
     }
 
     override fun onShowTutorialStep(step: TutorialManager.TutorialStep) {
-        tutorialStepState.value = step
+        tutorialStep = step
     }
 
     override fun onHideTutorialOverlay() {
-        tutorialStepState.value = null
+        tutorialStep = null
     }
 
     fun openSystemNotificationSettings() {

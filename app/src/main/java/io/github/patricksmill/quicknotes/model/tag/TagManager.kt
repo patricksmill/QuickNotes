@@ -63,6 +63,8 @@ class TagManager(noteLibrary: NoteLibrary) {
         repository.setTagColor(tagName, resId)
     }
 
+    fun getTagColorRes(tagName: String): Int = repository.getTagColorRes(tagName)
+
     /**
      * Sets multiple tags for the given note in a single operation.
      * @param note The note to tag

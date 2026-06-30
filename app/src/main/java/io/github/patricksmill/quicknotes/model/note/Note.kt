@@ -21,9 +21,10 @@ class Note(
     var isPinned: Boolean = false
 
     /**
-     * Adds a tag to the note.
+     * Adds or replaces a tag on the note (matched by name, case-insensitive).
      */
     fun setTag(tag: Tag) {
+        tags.removeIf { it.name.equals(tag.name, ignoreCase = true) }
         tags.add(tag)
     }
 

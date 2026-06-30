@@ -7,6 +7,7 @@ import io.github.patricksmill.quicknotes.model.Persistence
 import io.github.patricksmill.quicknotes.model.note.Note
 import io.github.patricksmill.quicknotes.model.note.NoteLibrary
 import java.util.Collections
+import java.util.Locale
 import java.util.Random
 import java.util.function.Supplier
 import java.util.stream.Collectors
@@ -34,12 +35,13 @@ class TagRepository(
 
     init {
         this.availableColors = loadAvailableColors()
-        this.colorMap = Persistence.loadTagMap(appContext)
+        this.colorMap = migrateColorMap(Persistence.loadTagMap(appContext))
     }
 
     // ----- Public API: Colors -----
     fun getTagColorRes(tagName: String): Int {
-        val key = tagName.trim { it <= ' ' }
+        val key = normalizeTagName(tagName)
+        if (key.isEmpty()) return assignRandomColor()
         var res = colorMap[key]
         if (res == null || res == 0) {
             res = assignRandomColor()
@@ -50,15 +52,26 @@ class TagRepository(
     }
 
     fun setTagColor(tagName: String, @ColorRes resId: Int) {
-        val key = tagName.trim { it <= ' ' }
+        val key = normalizeTagName(tagName)
         if (key.isEmpty()) return
+        val displayName = tagName.trim { it <= ' ' }
         colorMap[key] = resId
         saveColorMap()
-        refreshTagColorOnNotes(key, resId)
+        var changed = false
+        for (note in noteLibrary.getNotes()) {
+            if (note.tags.any { it.name.equals(displayName, ignoreCase = true) }) {
+                note.setTag(Tag(displayName, resId))
+                changed = true
+            }
+        }
+        if (changed) {
+            Persistence.saveNotes(appContext, noteLibrary.getNotes())
+        }
     }
 
     fun cleanupUnusedColors(usedTagNames: MutableSet<String?>) {
-        if (colorMap.keys.removeIf { k: String? -> !usedTagNames.contains(k) }) {
+        val normalizedUsed = usedTagNames.mapNotNull { it?.let(::normalizeTagName) }.toSet()
+        if (colorMap.keys.removeIf { k -> k != null && !normalizedUsed.contains(k) }) {
             saveColorMap()
         }
     }
@@ -236,18 +249,15 @@ class TagRepository(
             .toMutableSet()
     }
 
-    private fun refreshTagColorOnNotes(tagName: String, @ColorRes resId: Int) {
-        var changed = false
-        for (note in noteLibrary.getNotes()) {
-            val stale = note.tags.filter { it.name.equals(tagName, ignoreCase = true) }
-            if (stale.isEmpty()) continue
-            note.tags.removeAll(stale.toSet())
-            note.setTag(Tag(tagName, resId))
-            changed = true
+    private fun normalizeTagName(name: String): String =
+        name.trim { it <= ' ' }.lowercase(Locale.getDefault())
+
+    private fun migrateColorMap(loaded: MutableMap<String?, Int?>): MutableMap<String?, Int?> {
+        val migrated = mutableMapOf<String?, Int?>()
+        loaded.forEach { (key, value) ->
+            key?.let { migrated[normalizeTagName(it)] = value }
         }
-        if (changed) {
-            Persistence.saveNotes(appContext, noteLibrary.getNotes())
-        }
+        return migrated
     }
 }
 

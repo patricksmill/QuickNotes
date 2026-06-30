@@ -128,6 +128,11 @@ interface NotesUI {
         fun onSetTagColor(tagName: String, colorResId: Int)
 
         /**
+         * Gets the color resource ID for a tag name from the authoritative color map.
+         */
+        fun onGetTagColor(tagName: String): Int
+
+        /**
          * Validates if a notification date is valid (not in the past).
          * @param date the date to validate
          * @return true if the date is valid, false otherwise
