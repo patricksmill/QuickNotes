@@ -1,0 +1,18 @@
+---
+description: Run Android Lint before finishing Gradle or Kotlin changes
+alwaysApply: true
+---
+
+# Android Lint verification
+
+Before claiming Android build or Kotlin work is complete, run:
+
+```bash
+./gradlew :app:lintDebug --stacktrace
+```
+
+- Fix all **errors**; do not leave lint failing when CI runs the same task.
+- Lint report: `app/build/reports/lint-results-debug.html`
+- Common checks: manifest permissions for APIs used in code (e.g. `ACCESS_NETWORK_STATE` for `ConnectivityManager`), exported components, and deprecated APIs.
+
+When adding network connectivity checks, declare `android.permission.ACCESS_NETWORK_STATE` in `AndroidManifest.xml`.
