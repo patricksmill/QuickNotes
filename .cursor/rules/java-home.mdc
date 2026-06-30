@@ -1,0 +1,9 @@
+# Java / Gradle on this machine
+
+When running `./gradlew` or other Java tooling in this workspace, set:
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
+```
+
+This is Android Studio’s bundled JBR (JDK 17). The system `PATH` does not include Java by default.
