@@ -32,7 +32,7 @@ jobs:
 
       - name: Install Android SDK components (API 37)
         run: |
-          sdkmanager --install "platform-tools" "platforms;android-37" "build-tools;36.0.0"
+          sdkmanager --install "platform-tools" "platforms;android-37.0" "build-tools;36.0.0"
           yes | sdkmanager --licenses || true
 
       - name: Setup Gradle and cache
@@ -105,7 +105,7 @@ jobs:
 
       - name: Install Android SDK components (API 37)
         run: |
-          sdkmanager --install "platform-tools" "platforms;android-37" "build-tools;36.0.0"
+          sdkmanager --install "platform-tools" "platforms;android-37.0" "build-tools;36.0.0"
           yes | sdkmanager --licenses || true
 
       - name: Setup Gradle and cache
