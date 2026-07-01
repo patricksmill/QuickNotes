@@ -1,15 +1,16 @@
 package io.github.patricksmill.quicknotes.controller
 
 import android.Manifest
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,10 +21,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.github.patricksmill.quicknotes.model.Notifier
 import io.github.patricksmill.quicknotes.model.TutorialManager
 import io.github.patricksmill.quicknotes.model.TutorialManager.TutorialListener
@@ -35,6 +34,7 @@ import io.github.patricksmill.quicknotes.model.tag.TagManager
 import io.github.patricksmill.quicknotes.model.tag.TagRepository.ColorOption
 import io.github.patricksmill.quicknotes.model.tag.TagSettingsManager
 import io.github.patricksmill.quicknotes.view.NotesUI
+import io.github.patricksmill.quicknotes.view.compose.components.NotificationPermissionDialog
 import io.github.patricksmill.quicknotes.view.compose.navigation.QuickNotesNavHost
 import io.github.patricksmill.quicknotes.view.compose.overlay.TutorialOverlay
 import io.github.patricksmill.quicknotes.view.compose.theme.QuickNotesTheme
@@ -50,6 +50,12 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
         val revision: Int = 0
     )
 
+    private data class PendingNotification(
+        val note: Note,
+        val enabled: Boolean,
+        val date: Date?
+    )
+
     private var noteLibrary: NoteLibrary? = null
     private var notifier: Notifier? = null
     private var tutorialManager: TutorialManager? = null
@@ -60,6 +66,8 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
     private var noteToEdit by mutableStateOf<Note?>(null)
     private var tutorialStep by mutableStateOf<TutorialManager.TutorialStep?>(null)
     private var openSettingsRequest by mutableStateOf(false)
+    private var showNotificationPermissionDialog by mutableStateOf(false)
+    private var pendingNotification by mutableStateOf<PendingNotification?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,6 +90,18 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
                         packageManager.getPackageInfo(packageName, 0).versionName ?: ""
                     } catch (_: Exception) {
                         ""
+                    }
+                }
+
+                val permissionLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestPermission()
+                ) { granted ->
+                    showNotificationPermissionDialog = false
+                    pendingNotification?.let { pending ->
+                        if (granted) {
+                            applyNotification(pending.note, pending.enabled, pending.date)
+                        }
+                        pendingNotification = null
                     }
                 }
 
@@ -118,6 +138,18 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
                             onNext = { tutorialManager?.nextStep() },
                             onSkip = { tutorialManager?.skipTutorial() },
                             modifier = Modifier.fillMaxSize()
+                        )
+                    }
+
+                    if (showNotificationPermissionDialog) {
+                        NotificationPermissionDialog(
+                            onAllow = {
+                                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            },
+                            onDismiss = {
+                                showNotificationPermissionDialog = false
+                                pendingNotification = null
+                            }
                         )
                     }
                 }
@@ -219,16 +251,14 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
 
     override fun onSetNotification(note: Note, enabled: Boolean, date: Date?) {
         if (enabled && !hasPostNotificationsPermission()) {
-            MaterialAlertDialogBuilder(this)
-                .setTitle("Notifications Permission Required")
-                .setMessage("To show reminders, QuickNotes needs notification permission.")
-                .setPositiveButton("Allow") { _: DialogInterface?, _: Int ->
-                    requestPostNotificationsPermission()
-                }
-                .setNegativeButton("Cancel", null)
-                .show()
+            pendingNotification = PendingNotification(note, enabled, date)
+            showNotificationPermissionDialog = true
             return
         }
+        applyNotification(note, enabled, date)
+    }
+
+    private fun applyNotification(note: Note, enabled: Boolean, date: Date?) {
         notifier!!.updateNotification(note, enabled, date)
         noteLibrary!!.updateNoteNotificationSettings(note, enabled, date)
         refreshNotes()
@@ -341,27 +371,5 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
         if (Build.VERSION.SDK_INT < 33) return true
         return ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
             PackageManager.PERMISSION_GRANTED
-    }
-
-    private fun requestPostNotificationsPermission() {
-        if (Build.VERSION.SDK_INT >= 33) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                REQUEST_CODE_POST_NOTIFICATIONS
-            )
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-    }
-
-    companion object {
-        private const val REQUEST_CODE_POST_NOTIFICATIONS = 1001
     }
 }

@@ -84,10 +84,10 @@ stop
 hide footbox
 skin rose
 actor User as user
-participant "SearchNotesFragment" as searchUI
+participant "SearchNotesScreen" as searchUI
 participant "ControllerActivity" as controller
-participant "SettingsFragment" as settingsUI
-participant "TagColorSettingsFragment" as tagColorUI
+participant "SettingsScreen" as settingsUI
+participant "TagColorPickerSheet" as tagColorUI
 participant "PreferenceManager" as prefManager
 participant "SharedPreferences" as sharedPrefs
 participant "NoteLibrary" as noteLibrary
@@ -96,7 +96,7 @@ participant "File System" as fileSystem
 == Opening Settings ==
 user -> searchUI: clicks settings icon
 searchUI -> controller: onOpenSettings()
-controller -> settingsUI: creates and displays SettingsFragment
+controller -> settingsUI: navigates to SettingsScreen via QuickNotesNavHost
 settingsUI -> prefManager: getDefaultSharedPreferences()
 prefManager --> settingsUI: SharedPreferences instance
 settingsUI -> settingsUI: loadPreferencesFromResource()
@@ -132,7 +132,7 @@ settingsUI --> user: shows masked API key summary
 
 == Configure Tag Colors ==
 user -> settingsUI: taps "Edit Tag Colors"
-settingsUI -> tagColorUI: navigates to TagColorSettingsFragment
+settingsUI -> tagColorUI: opens TagColorPickerSheet
 tagColorUI -> controller: getNoteLibrary()
 controller --> tagColorUI: noteLibrary instance
 tagColorUI -> noteLibrary: getManageTags()
@@ -162,7 +162,7 @@ controller -> user: closes app
 
 == Return to Main Screen ==
 user -> settingsUI: presses back button
-controller -> searchUI: returns to SearchNotesFragment
+controller -> searchUI: returns to SearchNotesScreen
 searchUI -> controller: onResume() triggers onGetNotes()
 controller -> noteLibrary: getNotes()
 noteLibrary --> controller: notes list

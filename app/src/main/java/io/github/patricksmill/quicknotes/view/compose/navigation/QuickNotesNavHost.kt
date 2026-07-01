@@ -90,7 +90,8 @@ fun QuickNotesNavHost(
                     snackbarHostState = snackbarHostState,
                     onManageTags = { manageTagsVisible = true },
                     onOpenSettings = { navController.navigate(QuickNotesRoutes.SETTINGS) },
-                    onNoteClick = { listener.onManageNotes(it) }
+                    onNoteClick = { listener.onManageNotes(it) },
+                    onRefresh = onRefresh
                 )
             }
             composable(QuickNotesRoutes.SETTINGS) {

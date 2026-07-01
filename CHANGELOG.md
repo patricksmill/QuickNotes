@@ -7,11 +7,16 @@
 - Full UI migration from XML Views to Jetpack Compose with Navigation Compose
 - Native tag color swatch picker (`TagColorPickerSheet`) with curated 12-color palette
 - Tonal tag chips (AssistChip + color dot) across search filters, note editor, and manage-tags
+- Pull-to-refresh on note list with animated item placement on sort/filter/pin changes
+- Compose notification permission dialog with Activity Result API
+- Rich empty states (no notes / no search results) and list-style pickers as bottom sheets
+- Back navigation, edge-to-edge insets, and predictive back support
 
 ### Removed
 
-- All `res/layout/*` XML layouts and View Binding
-- PreferenceFragment-based settings (replaced by Compose `SettingsScreen`)
+- Legacy View fragments (`SearchNotesFragment`, `ManageNoteFragment`, etc.), `MainUI`, and View adapters
+- Fragment XML layouts, slide animations, and `root_preferences.xml`
+- Unused `recyclerview` and `constraintlayout` dependencies
 
 ## [1.2.0](https://github.com/patricksmill/QuickNotes/compare/QuickNotes-v1.1.0...QuickNotes-v1.2.0) (2026-06-30)
 

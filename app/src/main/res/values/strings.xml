@@ -33,6 +33,11 @@
     <string name="rename">Rename</string>
     <string name="delete">Delete</string>
     <string name="ai_tag_suggestions_title">AI tag suggestions</string>
+    <string name="notification_permission_title">Notifications permission required</string>
+    <string name="notification_permission_message">To show reminders, QuickNotes needs notification permission.</string>
+    <string name="notification_permission_allow">Allow</string>
+    <string name="notification_permission_cancel">Cancel</string>
+    <string name="pull_to_refresh">Refresh notes</string>
     <string name="sort">sort notes</string>
     <string name="manage_tags">Manage tags</string>
     <string name="notification">Notification:</string>

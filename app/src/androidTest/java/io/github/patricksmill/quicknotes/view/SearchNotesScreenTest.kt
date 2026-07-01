@@ -19,7 +19,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 
-class SearchNotesFragmentTest {
+class SearchNotesScreenTest {
     private val composeRule = createAndroidComposeRule<ControllerActivity>()
 
     @get:Rule

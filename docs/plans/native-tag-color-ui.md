@@ -1,8 +1,8 @@
-# Native tag color UI (deferred)
+# Native tag color UI
 
-**Status:** Stashed — do not start until the app has migrated to Jetpack Compose.
+**Status:** Implemented in Compose (`TagColorPickerSheet`, tonal chips). Legacy View fragments removed.
 
-**Prerequisite:** Full Compose migration (Views/XML → Compose, Navigation 3 when ready).
+**Prerequisite:** Full Compose migration — complete.
 
 **Created:** 2026-06-30
 
@@ -14,12 +14,12 @@ On Android, **tag/label color selection is not a full spectrum picker**. Apps li
 
 | Pattern | Native (M3 / Google apps) | QuickNotes today |
 |---------|---------------------------|------------------|
-| **Picker container** | `ModalBottomSheet` or full-screen bottom panel | `MaterialAlertDialogBuilder.setItems` with text names ("Red", "Blue") |
-| **Picker content** | Grid of **circular color swatches** (typically 8–12 colors) | 19 Material 500 hex values listed by name in `arrays.xml` |
-| **Selection affordance** | Checkmark on swatch, or 2dp `outline` ring | None (text tap only) |
-| **Touch target** | 48dp minimum per swatch | Full-width list row |
-| **Chip appearance** | **Tonal**: neutral chip + colored dot/icon, or muted container tint | Solid saturated fill + manual black/white text |
-| **Accessibility** | Content description per color ("Red label") | Color name only in dialog title |
+| **Picker container** | `ModalBottomSheet` or full-screen bottom panel | `TagColorPickerSheet` (ModalBottomSheet) |
+| **Picker content** | Grid of **circular color swatches** (typically 8–12 colors) | 12 curated colors via `TagColorSwatch` grid |
+| **Selection affordance** | Checkmark on swatch, or 2dp `outline` ring | Checkmark on selected swatch |
+| **Touch target** | 48dp minimum per swatch | 48dp swatch in adaptive grid |
+| **Chip appearance** | **Tonal**: neutral chip + colored dot/icon, or muted container tint | `TagFilterChip` / `TagLabelChip` with color dot |
+| **Accessibility** | Content description per color ("Red label") | `contentDescription` on swatches |
 
 **What is NOT native for tags:** HSV/RGB sliders, `ColorPickerDialog`, Photoshop-style wheels, or plain text lists.
 
@@ -44,14 +44,14 @@ On Android, **tag/label color selection is not a full spectrum picker**. Apps li
 
 ---
 
-## Current duplication to consolidate (after Compose)
+## Consolidated Compose entry points
 
-The same text-list picker appears in four places:
+Color picking and chip rendering now live in:
 
-- `ManageTagsFragment.showColorPicker`
-- `ManageNoteFragment.showColorPickerForTag`
-- `TagColorSettingsFragment.showColorPicker`
-- Tag chip rendering in `SearchNotesFragment`, `ManageNoteFragment`, `item_manage_tag.xml`
+- `TagColorPickerSheet` — used from `ManageTagsBottomSheet` and `ManageNoteBottomSheet`
+- `TagFilterChip` / `TagLabelChip` — search filters, note editor, manage-tags list
+
+Legacy View fragments (`ManageTagsFragment`, `ManageNoteFragment`, `TagColorSettingsFragment`, `SearchNotesFragment`) have been removed.
 
 ---
 

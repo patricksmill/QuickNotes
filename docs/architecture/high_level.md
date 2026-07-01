@@ -2,11 +2,12 @@
 graph TB
     subgraph "View Layer"
         A[ControllerActivity]
-        B[SearchNotesFragment]
-        C[ManageNoteFragment]
-        D[SettingsFragment]
-        E[ManageTagsFragment]
-        F[OnboardingOverlayFragment]
+        B[SearchNotesScreen]
+        C[ManageNoteBottomSheet]
+        D[SettingsScreen]
+        E[ManageTagsBottomSheet]
+        F[TutorialOverlay]
+        G[QuickNotesNavHost]
     end
 
     subgraph "Model/Domain Layer"
@@ -18,7 +19,7 @@ graph TB
         J[AutoTaggingService]
         K[Notifier]
         L[Persistence]
-        O[OnboardingManager]
+        O[TutorialManager]
     end
 
     subgraph "Data/External Layer"
@@ -30,18 +31,18 @@ graph TB
         S[NotificationReceiver]
     end
 
-    %% Controller mediates between View and Model
-    B --> A
-    C --> A
-    D --> A
-    E --> A
+    G --> B
+    G --> D
+    A --> G
+    A --> C
+    A --> E
+    A --> F
     F --> O
     A --> H
     A --> I
     A --> K
     A --> O
 
-    %% Model interactions
     H --> L
     H --> I
     I --> I1
@@ -52,7 +53,6 @@ graph TB
     K --> R
     S --> A
 
-    %% Data layer
     L --> P
     H --> M
     I --> N

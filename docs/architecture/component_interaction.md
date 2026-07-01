@@ -4,19 +4,20 @@ This diagram shows how components interact across the application layers.
 
 ```mermaid
 flowchart TB
- subgraph View["View"]
+ subgraph View["View (Jetpack Compose)"]
     direction TB
-        SF["SearchNotesFragment"]
-        MF["ManageNoteFragment"]
-        SETF["SettingsFragment"]
-        TF["ManageTagsFragment"]
-        TOF["TutorialOverlayFragment"]
+        SNS["SearchNotesScreen"]
+        MNS["ManageNoteBottomSheet"]
+        SETS["SettingsScreen"]
+        MTS["ManageTagsBottomSheet"]
+        TO["TutorialOverlay"]
+        NAV["QuickNotesNavHost"]
   end
         CA["ControllerActivity"]
         NR["NotificationReceiver"]
   
         TM["TagManager"]
-        UM["TutorialManager"]
+        TUT["TutorialManager"]
         NOT["Notifier"]
 
         AM{"AlarmManager"}
@@ -27,8 +28,9 @@ flowchart TB
         NL["NoteLibrary"]
         PERS["Persistence"]
   
-    View --> CA
-    CA --> NR & TM & UM & NOT & NL
+    NAV --> SNS & SETS
+    CA --> NAV & MNS & MTS & TO
+    CA --> NR & TM & TUT & NOT & NL
     TM --> ATS & TSM
     NL --> PERS
     ATS -- calls --> OAI{"OpenAI API"}

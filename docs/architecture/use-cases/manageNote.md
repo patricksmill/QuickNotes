@@ -104,8 +104,8 @@ else (Existing)
 hide footbox
 skin rose
 actor User as user
-participant "SearchNotesFragment" as listUI
-participant "ManageNoteFragment" as noteUI
+participant "SearchNotesScreen" as listUI
+participant "ManageNoteBottomSheet" as noteUI
 participant "ControllerActivity" as controller
 participant "NoteLibrary" as noteLibrary
 participant "ManageTags" as manageTags
@@ -116,7 +116,7 @@ participant "Persistence" as persistence
 user -> listUI: clicks FAB to add note
 listUI -> controller: onNewNote()
 controller -> note: new Note("", "", new LinkedHashSet<>())
-controller -> noteUI: displays ManageNoteFragment with empty note
+controller -> noteUI: displays ManageNoteBottomSheet with empty note
 note right of noteUI: Shows bottom sheet dialog with empty form fields
 noteUI --> user: shows note creation interface
 user -> noteUI: enters title and content
@@ -149,7 +149,7 @@ noteUI --> user: dismisses edit interface
 == Edit Existing Note ==
 user -> listUI: taps on existing note
 listUI -> controller: onManageNotes(note)
-controller -> noteUI: displays ManageNoteFragment with note
+controller -> noteUI: displays ManageNoteBottomSheet with note
 noteUI -> noteUI: bindNoteFields()
 note right of noteUI: Populates form with existing note data
 noteUI --> user: shows note edit interface

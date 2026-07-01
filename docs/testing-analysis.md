@@ -4,7 +4,7 @@ Analysis date: 2026-06-30
 
 ## Summary
 
-QuickNotes is a **Views-based** Android app (XML layouts, View Binding, Fragments) with **no dependency injection framework**. Testing was previously limited to a handful of **instrumented** Espresso tests; **no local unit tests** existed despite CI running `testDebugUnitTest`.
+QuickNotes is a **Jetpack Compose** Android app with **no dependency injection framework**. Testing uses JVM unit tests (Robolectric where Android APIs are needed) and Compose UI instrumented tests on device/emulator.
 
 ## Stack Inventory
 
@@ -14,10 +14,10 @@ QuickNotes is a **Views-based** Android app (XML layouts, View Binding, Fragment
 | **Unit test framework** | JUnit 5 (Jupiter) via `useJUnitPlatform()` |
 | **Mocking** | None |
 | **Robolectric** | Added in this setup (4.16.1) |
-| **UI paradigm** | 100% Views — no Compose |
-| **Behavior UI tests** | Espresso in `androidTest` (device/emulator) |
+| **UI paradigm** | Jetpack Compose (Material 3) |
+| **Behavior UI tests** | Compose UI Test in `androidTest` (device/emulator) |
 | **Screenshot tests** | Dropshots added for instrumented screenshots |
-| **E2E / UI Automator** | UI Automator used in `SearchNotesFragmentTest` for dialog dismissal |
+| **E2E / UI Automator** | Available; Compose UI Test preferred for in-app flows |
 | **Coverage** | JaCoCo added (`jacocoTestReport` task) |
 | **CI** | Runs lint + unit tests; does **not** run instrumented tests |
 
@@ -42,7 +42,7 @@ QuickNotes is a **Views-based** Android app (XML layouts, View Binding, Fragment
 | `AutoTaggingService` | Medium | Keyword tagging — needs refactor or Robolectric |
 | `TagRepository` | Medium | Tag color/name operations — needs Robolectric |
 | `TagManager` | Low | Orchestrates tagging + network |
-| Activities / Fragments | Skip | Covered by Espresso, not unit tests |
+| Activities / Compose screens | Skip | Covered by Compose UI instrumented tests, not unit tests |
 
 ## Gaps and Recommendations
 

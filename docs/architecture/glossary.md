@@ -20,13 +20,13 @@
 
 - **Persistence**: JSON-based read/write of notes and the tag color map to local storage.
 
-- **ControllerActivity**: App controller that mediates between UI fragments and the model layer.
+- **ControllerActivity**: App controller that hosts Compose UI, implements `NotesUI.Listener`, and mediates between screens/sheets and the model layer.
 
 - **NotificationReceiver**: `BroadcastReceiver` that displays scheduled reminders and handles actions (view, delete, dismiss).
 
 - **Notifier**: Schedules/cancels alarms for note reminders and surfaces user feedback.
 
-- **SearchNotesFragment / ManageNoteFragment / SettingsFragment / ManageTagsFragment / OnboardingOverlayFragment / TagColorSettingsFragment**: UI fragments that render screens and forward user actions to `ControllerActivity`.
+- **SearchNotesScreen / ManageNoteBottomSheet / SettingsScreen / ManageTagsBottomSheet / TutorialOverlay**: Jetpack Compose UI that renders screens and sheets and forwards user actions to `ControllerActivity` via `NotesUI.Listener`.
 
 
 

@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,6 +28,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +50,7 @@ import io.github.patricksmill.quicknotes.view.compose.components.PickerItem
 import io.github.patricksmill.quicknotes.view.compose.components.TagFilterChip
 import io.github.patricksmill.quicknotes.view.compose.util.tutorialTarget
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchNotesScreen(
     notes: List<Note>,
@@ -59,11 +62,13 @@ fun SearchNotesScreen(
     onManageTags: () -> Unit,
     onOpenSettings: () -> Unit,
     onNoteClick: (Note) -> Unit,
+    onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var sortByDate by remember { mutableStateOf(true) }
     var selectedTag by remember { mutableStateOf<String?>(null) }
     var showSortSheet by remember { mutableStateOf(false) }
+    var isRefreshing by remember { mutableStateOf(false) }
 
     val filteredNotes = remember(notes, selectedTag, sortByDate, revision) {
         var result = notes.toList()
@@ -184,19 +189,30 @@ fun SearchNotesScreen(
                     }
                 }
                 else -> {
-                    LazyColumn(
-                        contentPadding = PaddingValues(8.dp),
+                    PullToRefreshBox(
+                        isRefreshing = isRefreshing,
+                        onRefresh = {
+                            isRefreshing = true
+                            onRefresh()
+                            isRefreshing = false
+                        },
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
                     ) {
-                        items(filteredNotes, key = { it.id }) { note ->
-                            SwipeNoteRow(
-                                note = note,
-                                listener = listener,
-                                snackbarHostState = snackbarHostState,
-                                onNoteClick = onNoteClick
-                            )
+                        LazyColumn(
+                            contentPadding = PaddingValues(8.dp),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(filteredNotes, key = { it.id }) { note ->
+                                SwipeNoteRow(
+                                    note = note,
+                                    listener = listener,
+                                    snackbarHostState = snackbarHostState,
+                                    onNoteClick = onNoteClick,
+                                    modifier = Modifier.animateItem()
+                                )
+                            }
                         }
                     }
                 }

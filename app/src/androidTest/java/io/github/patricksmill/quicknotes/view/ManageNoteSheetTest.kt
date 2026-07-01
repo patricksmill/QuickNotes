@@ -12,7 +12,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
-class ManageNoteFragmentTest {
+class ManageNoteSheetTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ControllerActivity>()
 

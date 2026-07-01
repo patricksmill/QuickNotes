@@ -34,10 +34,10 @@ app/src/
 └── androidTest/                   # Device/emulator tests
     └── java/.../
         ├── view/
-        │   ├── ManageNoteFragmentTest.kt
-        │   ├── SearchNotesFragmentTest.kt
+        │   ├── ManageNoteSheetTest.kt
+        │   ├── SearchNotesScreenTest.kt
         │   ├── SearchNotesScreenshotTest.kt
-        │   └── SettingsFragmentTest.kt
+        │   └── SettingsScreenTest.kt
         └── compose/
             ├── components/TagFilterChipTest.kt
             └── theme/QuickNotesThemeTest.kt
@@ -60,7 +60,7 @@ app/src/
 
 Use for ViewModels, repositories, model classes, and persistence. Prefer **fakes** over mocks. Use Robolectric when `Context`, `SharedPreferences`, or file I/O is required.
 
-Do **not** unit test Activities, Fragments, or DI modules.
+Do **not** unit test Activities or DI modules. Compose screens are covered by instrumented Compose UI tests.
 
 ### Instrumented tests (`androidTest/`)
 

@@ -92,7 +92,7 @@ stop
 hide footbox
 skin rose
 actor User as user
-participant "ManageNoteFragment" as noteUI
+participant "ManageNoteBottomSheet" as noteUI
 participant "ControllerActivity" as controller
 participant "ManageTags" as manageTags
 participant "Note" as note

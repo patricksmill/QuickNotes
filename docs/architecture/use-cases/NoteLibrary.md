@@ -97,7 +97,7 @@ stop
 hide footbox
 !theme cerulean
 actor User as user
-participant "SearchNotesFragment" as view
+participant "SearchNotesScreen" as view
 participant "ControllerActivity" as controller
 participant "NoteLibrary" as noteLibrary
 participant "TagManager" as tagManager

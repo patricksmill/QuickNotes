@@ -11,7 +11,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
-class SettingsFragmentTest {
+class SettingsScreenTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ControllerActivity>()
 

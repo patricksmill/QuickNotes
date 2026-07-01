@@ -1,7 +1,7 @@
 ```mermaid
 sequenceDiagram
     participant User
-    participant Fragment
+    participant ComposeUI as Compose Screen/Sheet
     participant Controller as ControllerActivity
     participant NoteLibrary
     participant TagManager
@@ -9,22 +9,22 @@ sequenceDiagram
     participant Persistence
     participant OpenAI
 
-    User->>Fragment: Create Note
-    Fragment->>Controller: onSaveNote(note, isNew)
+    User->>ComposeUI: Create Note
+    ComposeUI->>Controller: onSaveNote(note, isNew)
     Controller->>NoteLibrary: addNote(note)
     NoteLibrary->>Persistence: saveNotes()
     Persistence->>Persistence: Write JSON
-    Controller-->>Fragment: updateView(notes)
+    Controller-->>ComposeUI: refreshNotes (recomposition)
 
-    User->>Fragment: AI Tag Request
-    Fragment->>Controller: onAiSuggestTags(note, limit)
+    User->>ComposeUI: AI Tag Request
+    ComposeUI->>Controller: onAiSuggestTags(note, limit)
     Controller->>TagManager: aiSuggestTags(note, limit)
     TagManager->>AutoTaggingService: performAiSuggest()
     AutoTaggingService->>OpenAI: API request
     OpenAI-->>AutoTaggingService: tag list
     AutoTaggingService-->>TagManager: suggestions
     TagManager-->>Controller: suggestions
-    Controller-->>Fragment: show suggestion dialog
+    Controller-->>ComposeUI: MultiSelectBottomSheet
 
     Note over OpenAI: External Service
 ```
