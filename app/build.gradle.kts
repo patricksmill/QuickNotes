@@ -39,6 +39,11 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // F-Droid rejects AGP metadata embedded in release APK signing blocks.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
 
     packaging {
         resources {
@@ -55,6 +60,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            vcsInfo.include = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

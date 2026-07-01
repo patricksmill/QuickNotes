@@ -1,0 +1,1 @@
+AI tagging now supports multiple providers: OpenAI, Claude, Google Gemini, and custom OpenAI-compatible endpoints. Configure your provider, model, and API key in Settings.

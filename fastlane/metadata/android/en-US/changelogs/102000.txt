@@ -1,0 +1,1 @@
+Release APK is about 94% smaller thanks to R8 code shrinking and resource shrinking. Targets Android SDK 36, adds network-state permission for connectivity checks, and improves release build reliability.

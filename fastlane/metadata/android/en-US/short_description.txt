@@ -1,2 +1,1 @@
-Capture and organize notes with AI-assisted tagging and reminders.
-
+Capture notes with search, tags, reminders, and optional AI auto-tagging

@@ -1,10 +1,11 @@
-QuickNotes helps you capture, organize, and review ideas quickly.
+QuickNotes helps you capture, organize, and review ideas quickly on your Android device.
 
 Key features:
-- Create, edit, and delete notes with instant search across titles, content, and tags.
-- Apply tag-based filters to focus on the ideas that matter right now.
-- Enable optional AI-powered auto-tagging by providing your own OpenAI API key.
+- Create, edit, pin, and delete notes with instant search across titles, content, and tags.
+- Filter your list with tag chips to focus on what matters right now.
+- Auto-tag notes from keywords on-device, or enable optional AI suggestions with your own API key.
+- Choose OpenAI, Claude, Google Gemini, or any OpenAI-compatible endpoint in Settings.
 - Schedule reminder notifications so you never miss an important thought.
+- Swipe to delete, pull to refresh, and sort notes the way you work.
 
-QuickNotes is free and open source. Set up goes fast—install the app, add your notes, and personalize reminders in just a few taps. Your data stays on-device unless you choose to use AI-assisted tagging via an external API key that you control.
-
+QuickNotes is free and open source (Apache 2.0). Your notes stay on-device unless you choose to call an external AI API with credentials you control. Internet access is only needed for optional AI-assisted tagging.
