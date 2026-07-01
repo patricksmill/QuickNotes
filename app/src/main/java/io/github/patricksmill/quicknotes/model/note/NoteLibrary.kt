@@ -43,11 +43,6 @@ class NoteLibrary(ctx: Context) {
         val title = note.title.trim()
         if (title.isEmpty()) return
 
-        // Check if a note with the same title already exists
-        if (notes.any { it.title.equals(title, ignoreCase = true) }) {
-            return
-        }
-
         updateNoteDate(note)
 
         val aiMode = manageTags.isAiMode

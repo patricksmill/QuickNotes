@@ -128,7 +128,7 @@ note right of noteUI: Ensures title and content aren't empty
 noteUI -> noteUI: processes tags from text input
 noteUI -> controller: onSaveNote(note, true)
 controller -> noteLibrary: addNote(note)
-note right of noteLibrary: Checks title uniqueness and updates date
+note right of noteLibrary: Updates date
 noteLibrary -> manageTags: isAiMode()
 alt AI Tagging Mode
   manageTags --> noteLibrary: true
