@@ -11,16 +11,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +43,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.patricksmill.quicknotes.R
 import io.github.patricksmill.quicknotes.model.note.Note
@@ -78,7 +78,6 @@ fun ManageNoteBottomSheet(
     }
     var tagsDirty by remember(note.id) { mutableStateOf(false) }
     var tagInput by remember { mutableStateOf("") }
-    var tagMenuExpanded by remember { mutableStateOf(false) }
     var aiLoading by remember { mutableStateOf(false) }
     var notificationsEnabled by remember(note.id) { mutableStateOf(note.isNotificationsEnabled) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -180,34 +179,30 @@ fun ManageNoteBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
-                ExposedDropdownMenuBox(
-                    expanded = tagMenuExpanded,
-                    onExpandedChange = { tagMenuExpanded = it },
-                    modifier = Modifier.weight(1f)
-                ) {
+                Column(modifier = Modifier.weight(1f)) {
                     OutlinedTextField(
                         value = tagInput,
                         onValueChange = { tagInput = it },
                         label = { Text(stringResource(R.string.tags_add_hint)) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(tagMenuExpanded) }
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { addTag(tagInput) })
                     )
-                    DropdownMenu(
-                        expanded = tagMenuExpanded && suggestions.isNotEmpty(),
-                        onDismissRequest = { tagMenuExpanded = false }
-                    ) {
-                        suggestions.forEach { suggestion ->
-                            DropdownMenuItem(
-                                text = { Text(suggestion.label) },
-                                onClick = {
-                                    addTag(suggestion.value)
-                                    tagMenuExpanded = false
-                                }
-                            )
+                    if (tagInput.isNotBlank() && suggestions.isNotEmpty()) {
+                        suggestions.take(6).forEach { suggestion ->
+                            TextButton(
+                                onClick = { addTag(suggestion.value) },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = suggestion.label,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Start
+                                )
+                            }
                         }
                     }
                 }
@@ -452,7 +447,7 @@ private fun buildSuggestions(
     val all = tm.allTags.toList()
     val lower = query.lowercase()
     val filtered = all
-        .filter { !selected.contains(it.name) }
+        .filter { tag -> selected.none { it.equals(tag.name, ignoreCase = true) } }
         .filter { lower.isEmpty() || it.name.lowercase().contains(lower) }
         .sortedBy { it.name }
         .map { TagSuggestionItem(it.name, it.name) }

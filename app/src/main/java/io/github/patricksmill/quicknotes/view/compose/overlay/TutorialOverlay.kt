@@ -18,19 +18,32 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.patricksmill.quicknotes.R
 import io.github.patricksmill.quicknotes.model.TutorialManager
 import io.github.patricksmill.quicknotes.view.compose.theme.QuickNotesTheme
 import io.github.patricksmill.quicknotes.view.compose.util.TutorialTargets
-import kotlin.math.roundToInt
+
+private val SpotlightPadding = 12.dp
+private val CardGap = 16.dp
+private val EdgePadding = 16.dp
+private val EstimatedCardHeight = 220.dp
+
+private data class SpotlightDp(
+    val top: Dp,
+    val bottom: Dp,
+    val left: Dp,
+    val right: Dp
+)
 
 @Composable
 fun TutorialOverlay(
@@ -40,22 +53,41 @@ fun TutorialOverlay(
     onSkip: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val spotlight = if (step.targetViewId != -1) {
+    val density = LocalDensity.current
+    val rawSpotlight = if (step.targetViewId != -1) {
         TutorialTargets.bounds[step.targetViewId]
     } else {
         null
     }
+    val spotlightDp = rawSpotlight?.let { rect ->
+        with(density) {
+            SpotlightDp(
+                top = rect.top.toDp() - SpotlightPadding,
+                bottom = rect.bottom.toDp() + SpotlightPadding,
+                left = rect.left.toDp() - SpotlightPadding,
+                right = rect.right.toDp() + SpotlightPadding
+            )
+        }
+    }
+    val spotlightPx = rawSpotlight?.let { rect ->
+        with(density) {
+            Rect(
+                left = rect.left - SpotlightPadding.toPx(),
+                top = rect.top - SpotlightPadding.toPx(),
+                right = rect.right + SpotlightPadding.toPx(),
+                bottom = rect.bottom + SpotlightPadding.toPx()
+            )
+        }
+    }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val maxW = maxWidth
-        val maxH = maxHeight
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
         ) {
             drawRect(Color.Black.copy(alpha = 0.7f))
-            spotlight?.let { rect ->
+            spotlightPx?.let { rect ->
                 drawRoundRect(
                     color = Color.Transparent,
                     topLeft = rect.topLeft,
@@ -66,23 +98,30 @@ fun TutorialOverlay(
             }
         }
 
+        val cardModifier = if (spotlightDp != null) {
+            val spaceBelow = maxHeight - spotlightDp.bottom - CardGap
+            val spaceAbove = spotlightDp.top - CardGap
+            val placeBelow = spaceBelow >= EstimatedCardHeight ||
+                (spaceBelow >= spaceAbove && spaceBelow >= 80.dp)
+            val yOffset = if (placeBelow) {
+                spotlightDp.bottom + CardGap
+            } else {
+                (spotlightDp.top - EstimatedCardHeight - CardGap).coerceAtLeast(EdgePadding)
+            }
+            Modifier
+                .align(Alignment.TopCenter)
+                .padding(horizontal = EdgePadding)
+                .offset(y = yOffset)
+                .fillMaxWidth(0.9f)
+        } else {
+            Modifier
+                .align(Alignment.Center)
+                .padding(EdgePadding)
+                .fillMaxWidth(0.9f)
+        }
+
         Card(
-            modifier = Modifier
-                .then(
-                    if (spotlight != null) {
-                        Modifier.offset {
-                            IntOffset(
-                                spotlight.left.roundToInt().coerceIn(16, maxW.roundToPx() - 16),
-                                (spotlight.bottom + 16f).roundToInt().coerceAtMost(maxH.roundToPx() - 16)
-                            )
-                        }
-                    } else {
-                        Modifier
-                            .align(Alignment.Center)
-                            .padding(32.dp)
-                    }
-                )
-                .fillMaxWidth(0.9f),
+            modifier = cardModifier,
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
