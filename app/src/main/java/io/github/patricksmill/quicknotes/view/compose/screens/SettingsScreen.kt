@@ -1,7 +1,9 @@
 package io.github.patricksmill.quicknotes.view.compose.screens
 
+import androidx.activity.compose.BackHandler
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -82,6 +84,7 @@ fun SettingsScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = { Text("Settings") },
@@ -192,6 +195,15 @@ fun SettingsScreen(
             SettingsSection("About")
             Text("QuickNotes", style = MaterialTheme.typography.titleMedium)
             Text("Version: $appVersion", style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+
+    val dialogOpen = showProviderDialog || showDeleteDialog || showModelsDialog
+    BackHandler(enabled = dialogOpen) {
+        when {
+            showModelsDialog -> showModelsDialog = false
+            showDeleteDialog -> showDeleteDialog = false
+            showProviderDialog -> showProviderDialog = false
         }
     }
 

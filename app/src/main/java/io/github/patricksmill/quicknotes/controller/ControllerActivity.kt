@@ -7,7 +7,9 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
-import androidx.core.view.WindowCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.github.patricksmill.quicknotes.model.Notifier
 import io.github.patricksmill.quicknotes.model.TutorialManager
@@ -62,7 +63,7 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        enableEdgeToEdge()
         noteLibrary = NoteLibrary(applicationContext)
         notifier = Notifier(this)
         tutorialManager = TutorialManager(this)
@@ -110,6 +111,7 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
                     )
 
                     tutorialStep?.let { step ->
+                        BackHandler { tutorialManager?.skipTutorial() }
                         TutorialOverlay(
                             step = step,
                             onAction = { tutorialManager?.executeStepAction(it) },

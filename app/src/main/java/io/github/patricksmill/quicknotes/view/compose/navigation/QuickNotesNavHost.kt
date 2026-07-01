@@ -1,6 +1,10 @@
 package io.github.patricksmill.quicknotes.view.compose.navigation
 
-import androidx.compose.foundation.layout.Box
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -13,6 +17,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import io.github.patricksmill.quicknotes.model.note.Note
 import io.github.patricksmill.quicknotes.model.tag.AiModelCatalog
 import io.github.patricksmill.quicknotes.model.tag.Tag
@@ -44,35 +51,36 @@ fun QuickNotesNavHost(
     showMessage: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showSettings by remember { mutableStateOf(false) }
+    val navController = rememberNavController()
     var manageTagsVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(openSettingsRequest) {
         if (openSettingsRequest) {
-            showSettings = true
+            navController.navigate(QuickNotesRoutes.SETTINGS)
             onOpenSettingsConsumed()
         }
+    }
+
+    if (manageTagsVisible && noteToEdit == null) {
+        BackHandler { manageTagsVisible = false }
     }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
-            if (showSettings) {
-                SettingsScreen(
-                    tagSettingsManager = tagSettingsManager,
-                    modelCatalog = modelCatalog,
-                    appVersion = appVersion,
-                    onBack = { showSettings = false },
-                    onDeleteAllNotes = { listener.onDeleteAllNotes() },
-                    onReplayTutorial = {
-                        showSettings = false
-                        onReplayTutorial()
-                    },
-                    onOpenNotificationSettings = onOpenNotificationSettings
-                )
-            } else {
+        NavHost(
+            navController = navController,
+            startDestination = QuickNotesRoutes.SEARCH,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            enterTransition = { fadeIn() + slideInHorizontally { it / 4 } },
+            exitTransition = { fadeOut() + slideOutHorizontally { -it / 4 } },
+            popEnterTransition = { fadeIn() + slideInHorizontally { -it / 4 } },
+            popExitTransition = { fadeOut() + slideOutHorizontally { it / 4 } }
+        ) {
+            composable(QuickNotesRoutes.SEARCH) {
                 SearchNotesScreen(
                     notes = notes,
                     tags = tags,
@@ -81,8 +89,22 @@ fun QuickNotesNavHost(
                     listener = listener,
                     snackbarHostState = snackbarHostState,
                     onManageTags = { manageTagsVisible = true },
-                    onOpenSettings = { showSettings = true },
+                    onOpenSettings = { navController.navigate(QuickNotesRoutes.SETTINGS) },
                     onNoteClick = { listener.onManageNotes(it) }
+                )
+            }
+            composable(QuickNotesRoutes.SETTINGS) {
+                SettingsScreen(
+                    tagSettingsManager = tagSettingsManager,
+                    modelCatalog = modelCatalog,
+                    appVersion = appVersion,
+                    onBack = { navController.popBackStack() },
+                    onDeleteAllNotes = { listener.onDeleteAllNotes() },
+                    onReplayTutorial = {
+                        navController.popBackStack()
+                        onReplayTutorial()
+                    },
+                    onOpenNotificationSettings = onOpenNotificationSettings
                 )
             }
         }
@@ -98,7 +120,7 @@ fun QuickNotesNavHost(
             onSaved = onRefresh,
             onOpenSettings = {
                 onNoteToEditConsumed()
-                showSettings = true
+                navController.navigate(QuickNotesRoutes.SETTINGS)
             },
             onRefresh = onRefresh,
             showMessage = showMessage

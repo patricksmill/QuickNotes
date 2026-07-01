@@ -1,5 +1,6 @@
 package io.github.patricksmill.quicknotes.view.compose.sheets
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -85,6 +86,16 @@ fun ManageTagsBottomSheet(
     var renameText by remember { mutableStateOf("") }
     val colorOptions = remember(listener) {
         curatedColorOptions(listener.onGetAvailableColors()?.filterNotNull().orEmpty())
+    }
+
+    BackHandler {
+        when {
+            deleteTag != null -> deleteTag = null
+            renameTag != null -> renameTag = null
+            colorPickerTag != null -> colorPickerTag = null
+            actionTag != null -> actionTag = null
+            else -> onDismiss()
+        }
     }
 
     actionTag?.let { tag ->

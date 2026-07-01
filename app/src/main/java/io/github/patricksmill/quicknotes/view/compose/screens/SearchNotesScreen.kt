@@ -1,6 +1,8 @@
 package io.github.patricksmill.quicknotes.view.compose.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -40,7 +42,7 @@ import io.github.patricksmill.quicknotes.R
 import io.github.patricksmill.quicknotes.model.note.Note
 import io.github.patricksmill.quicknotes.model.tag.Tag
 import io.github.patricksmill.quicknotes.view.NotesUI
-import io.github.patricksmill.quicknotes.view.compose.components.TagLabelChip
+import io.github.patricksmill.quicknotes.view.compose.components.TagFilterChip
 import io.github.patricksmill.quicknotes.view.compose.util.tutorialTarget
 
 @Composable
@@ -76,6 +78,7 @@ fun SearchNotesScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { listener.onNewNote() },
@@ -108,7 +111,7 @@ fun SearchNotesScreen(
                         .testTag("search_bar"),
                     placeholder = { Text("Search notes") },
                     leadingIcon = {
-                        Icon(Icons.Filled.Search, contentDescription = null)
+                        Icon(Icons.Filled.Search, contentDescription = "Search notes")
                     },
                     singleLine = true,
                     shape = MaterialTheme.shapes.large
@@ -135,9 +138,10 @@ fun SearchNotesScreen(
                     .tutorialTarget(R.id.tagRecyclerView, "tagRecyclerView")
             ) {
                 tags.forEach { tag ->
-                    TagLabelChip(
+                    TagFilterChip(
                         name = tag.name,
                         colorResId = listener.onGetTagColor(tag.name),
+                        selected = selectedTag == tag.name,
                         onClick = {
                             selectedTag = if (selectedTag == tag.name) null else tag.name
                         },
@@ -176,6 +180,7 @@ fun SearchNotesScreen(
     }
 
     if (showSortDialog) {
+        BackHandler { showSortDialog = false }
         AlertDialog(
             onDismissRequest = { showSortDialog = false },
             title = { Text("Sort Notes") },

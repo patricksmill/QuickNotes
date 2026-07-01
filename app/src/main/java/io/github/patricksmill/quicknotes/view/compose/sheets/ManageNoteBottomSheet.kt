@@ -1,7 +1,9 @@
 package io.github.patricksmill.quicknotes.view.compose.sheets
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,7 +34,6 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -93,6 +94,7 @@ fun ManageNoteBottomSheet(
     var deleteTag by remember { mutableStateOf<String?>(null) }
     var aiSuggestions by remember { mutableStateOf<List<String>?>(null) }
     var aiConfigDialog by remember { mutableStateOf(false) }
+    var showDiscardDialog by remember { mutableStateOf(false) }
     val colorOptions = remember(listener) {
         curatedColorOptions(listener.onGetAvailableColors()?.filterNotNull().orEmpty())
     }
@@ -117,14 +119,47 @@ fun ManageNoteBottomSheet(
         persistTags()
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+    fun isDirty(): Boolean {
+        if (title.trim() != note.title.trim()) return true
+        if (content.trim() != note.content.trim()) return true
+        val currentTags = selectedTags.map { it.lowercase() }.sorted()
+        val savedTags = note.tagNames.map { it.lowercase() }.sorted()
+        if (currentTags != savedTags) return true
+        if (notificationsEnabled != note.isNotificationsEnabled) return true
+        if (notificationsEnabled) {
+            val saved = note.notificationDate?.time
+            if (saved == null || saved != cal.timeInMillis) return true
+        }
+        return false
+    }
+
+    fun requestDismiss() {
+        if (isDirty()) showDiscardDialog = true else onDismiss()
+    }
+
+    BackHandler {
+        when {
+            aiSuggestions != null -> aiSuggestions = null
+            aiConfigDialog -> aiConfigDialog = false
+            deleteTag != null -> deleteTag = null
+            renameTag != null -> renameTag = null
+            colorPickerTag != null -> colorPickerTag = null
+            showTimePicker -> showTimePicker = false
+            showDatePicker -> showDatePicker = false
+            showDiscardDialog -> showDiscardDialog = false
+            else -> requestDismiss()
+        }
+    }
+
+    ModalBottomSheet(onDismissRequest = { requestDismiss() }, sheetState = sheetState) {
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
+                .imePadding()
                 .padding(16.dp)
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onDismiss, modifier = Modifier.weight(1f)) {
+                Button(onClick = { requestDismiss() }, modifier = Modifier.weight(1f)) {
                     Text(stringResource(android.R.string.cancel))
                 }
                 Button(
@@ -412,6 +447,23 @@ fun ManageNoteBottomSheet(
                 }) { Text("Apply") }
             },
             dismissButton = { TextButton(onClick = { aiSuggestions = null }) { Text("Cancel") } }
+        )
+    }
+
+    if (showDiscardDialog) {
+        AlertDialog(
+            onDismissRequest = { showDiscardDialog = false },
+            title = { Text("Discard changes?") },
+            text = { Text("You have unsaved changes that will be lost.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDiscardDialog = false
+                    onDismiss()
+                }) { Text("Discard") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDiscardDialog = false }) { Text("Keep editing") }
+            }
         )
     }
 
