@@ -58,6 +58,7 @@ fun SettingsScreen(
     appVersion: String,
     onBack: () -> Unit,
     onDeleteAllNotes: () -> Unit,
+    onAddDemoNotes: () -> Unit,
     onReplayTutorial: () -> Unit,
     onOpenNotificationSettings: () -> Unit
 ) {
@@ -193,6 +194,11 @@ fun SettingsScreen(
             SettingsSection("Danger Zone")
             SettingsRow("Delete All Notes", "Permanently remove all notes") {
                 showDeleteDialog = true
+            }
+
+            SettingsSection("Debug")
+            SettingsRow("Add demo notes", "Seed 20 sample notes") {
+                onAddDemoNotes()
             }
 
             SettingsSection("Help")

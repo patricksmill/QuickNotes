@@ -101,6 +101,7 @@ fun QuickNotesNavHost(
                     appVersion = appVersion,
                     onBack = { navController.popBackStack() },
                     onDeleteAllNotes = { listener.onDeleteAllNotes() },
+                    onAddDemoNotes = { listener.onAddDemoNotes() },
                     onReplayTutorial = {
                         navController.popBackStack()
                         onReplayTutorial()

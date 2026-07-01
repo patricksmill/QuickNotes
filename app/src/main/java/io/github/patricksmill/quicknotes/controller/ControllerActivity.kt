@@ -200,8 +200,11 @@ class ControllerActivity : AppCompatActivity(), NotesUI.Listener, TutorialListen
             "call the doctor's office to schedule the a physical",
             "4 sets of 10 push-ups, 10 sit-ups, 10 squats, and 10 lunges."
         )
-        for (i in topics.indices) {
-            noteLibrary!!.addNote(Note(titles[i], topics[i], null))
+        for (i in 0 until 20) {
+            val idx = i % titles.size
+            val batch = i / titles.size
+            val title = if (batch == 0) titles[idx] else "${titles[idx]} (${batch + 1})"
+            noteLibrary!!.addNote(Note(title, topics[idx], null))
         }
         refreshNotes()
     }
