@@ -27,13 +27,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.patricksmill.quicknotes.R
 import io.github.patricksmill.quicknotes.model.tag.Tag
-import io.github.patricksmill.quicknotes.model.tag.TagRepository
 import io.github.patricksmill.quicknotes.view.NotesUI
+import io.github.patricksmill.quicknotes.view.compose.components.ListPickerBottomSheet
 import io.github.patricksmill.quicknotes.view.compose.components.ManageTagRow
+import io.github.patricksmill.quicknotes.view.compose.components.PickerItem
 import io.github.patricksmill.quicknotes.view.compose.components.TagColorPickerSheet
 import io.github.patricksmill.quicknotes.view.compose.components.curatedColorOptions
 import io.github.patricksmill.quicknotes.view.compose.theme.QuickNotesTheme
@@ -69,13 +71,25 @@ fun ManageTagsBottomSheet(
                     Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.settings))
                 }
             }
-            tags.forEach { tag ->
-                ManageTagRow(
-                    name = tag.name,
-                    colorResId = listener.onGetTagColor(tag.name),
-                    onClick = { actionTag = tag },
-                    modifier = Modifier.fillMaxWidth()
+            if (tags.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.manage_tags_empty),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 32.dp)
                 )
+            } else {
+                tags.forEach { tag ->
+                    ManageTagRow(
+                        name = tag.name,
+                        colorResId = listener.onGetTagColor(tag.name),
+                        onClick = { actionTag = tag },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }
@@ -99,29 +113,32 @@ fun ManageTagsBottomSheet(
     }
 
     actionTag?.let { tag ->
-        AlertDialog(
-            onDismissRequest = { actionTag = null },
-            title = { Text(tag.name) },
-            text = {
-                Column {
-                    TextButton(onClick = {
+        ListPickerBottomSheet(
+            title = stringResource(R.string.tag_actions_title),
+            items = listOf(
+                PickerItem(stringResource(R.string.change_color)),
+                PickerItem(stringResource(R.string.rename)),
+                PickerItem(stringResource(R.string.delete))
+            ),
+            onItemClick = { index ->
+                when (index) {
+                    0 -> {
                         actionTag = null
                         colorPickerTag = tag
-                    }) { Text("Change color") }
-                    TextButton(onClick = {
+                    }
+                    1 -> {
                         actionTag = null
                         renameTag = tag
                         renameText = tag.name
-                    }) { Text("Rename") }
-                    TextButton(onClick = {
+                    }
+                    2 -> {
                         actionTag = null
                         deleteTag = tag
-                    }) { Text("Delete") }
+                    }
                 }
             },
-            confirmButton = {
-                TextButton(onClick = { actionTag = null }) { Text("Close") }
-            }
+            onDismiss = { actionTag = null },
+            showSelectionIndicator = false
         )
     }
 
@@ -146,7 +163,7 @@ fun ManageTagsBottomSheet(
                     TextButton(onClick = {
                         renameTag = null
                         colorPickerTag = tag
-                    }) { Text("Change color") }
+                    }) { Text(stringResource(R.string.change_color)) }
                     OutlinedTextField(
                         value = renameText,
                         onValueChange = { renameText = it },
@@ -162,13 +179,13 @@ fun ManageTagsBottomSheet(
                         listener.onRenameTag(tag.name, newName)
                     }
                     renameTag = null
-                }) { Text("Rename") }
+                }) { Text(stringResource(R.string.rename)) }
             },
             dismissButton = {
                 TextButton(onClick = {
                     deleteTag = tag
                     renameTag = null
-                }) { Text("Delete") }
+                }) { Text(stringResource(R.string.delete)) }
             }
         )
     }
@@ -182,7 +199,7 @@ fun ManageTagsBottomSheet(
                 TextButton(onClick = {
                     listener.onDeleteTag(tag.name)
                     deleteTag = null
-                }) { Text("Delete") }
+                }) { Text(stringResource(R.string.delete)) }
             },
             dismissButton = {
                 TextButton(onClick = { deleteTag = null }) { Text("Cancel") }

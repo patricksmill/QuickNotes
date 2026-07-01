@@ -6,13 +6,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -34,10 +37,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.github.patricksmill.quicknotes.R
 import io.github.patricksmill.quicknotes.model.tag.AiModelCatalog
 import io.github.patricksmill.quicknotes.model.tag.TagSettingsManager
+import io.github.patricksmill.quicknotes.view.compose.components.ListPickerBottomSheet
+import io.github.patricksmill.quicknotes.view.compose.components.PickerItem
 import io.github.patricksmill.quicknotes.view.compose.theme.QuickNotesTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -66,8 +73,9 @@ fun SettingsScreen(
         mutableStateOf(tagSettingsManager.selectedProvider.storageKey)
     }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var showModelsDialog by remember { mutableStateOf(false) }
-    var showProviderDialog by remember { mutableStateOf(false) }
+    var showModelsSheet by remember { mutableStateOf(false) }
+    var showProviderSheet by remember { mutableStateOf(false) }
+    var isRefreshingModels by remember { mutableStateOf(false) }
     var modelSuggestions by remember {
         mutableStateOf(
             modelCatalog.mergedSuggestions(
@@ -126,7 +134,7 @@ fun SettingsScreen(
                 "AI Provider",
                 TagSettingsManager.providerDisplayName(tagSettingsManager.selectedProvider)
             ) {
-                showProviderDialog = true
+                showProviderSheet = true
             }
             RowSwitch("AI-powered Auto-Tagging", aiMode) {
                 aiMode = it
@@ -165,7 +173,7 @@ fun SettingsScreen(
                     .padding(vertical = 8.dp)
             )
             SettingsRow("Model Library", modelSuggestions.take(3).joinToString(", ") { it.label }) {
-                showModelsDialog = true
+                showModelsSheet = true
             }
             if (TagSettingsManager.providerForStorageKey(providerKey) == TagSettingsManager.AiProvider.CUSTOM) {
                 OutlinedTextField(
@@ -198,49 +206,44 @@ fun SettingsScreen(
         }
     }
 
-    val dialogOpen = showProviderDialog || showDeleteDialog || showModelsDialog
-    BackHandler(enabled = dialogOpen) {
+    val sheetOpen = showProviderSheet || showModelsSheet
+    BackHandler(enabled = sheetOpen) {
         when {
-            showModelsDialog -> showModelsDialog = false
-            showDeleteDialog -> showDeleteDialog = false
-            showProviderDialog -> showProviderDialog = false
+            showModelsSheet -> showModelsSheet = false
+            showProviderSheet -> showProviderSheet = false
         }
     }
 
-    if (showProviderDialog) {
+    BackHandler(enabled = showDeleteDialog) {
+        showDeleteDialog = false
+    }
+
+    if (showProviderSheet) {
         val providers = listOf(
             TagSettingsManager.AiProvider.OPENAI,
             TagSettingsManager.AiProvider.ANTHROPIC,
             TagSettingsManager.AiProvider.GOOGLE,
             TagSettingsManager.AiProvider.CUSTOM
         )
-        AlertDialog(
-            onDismissRequest = { showProviderDialog = false },
-            title = { Text("AI Provider") },
-            text = {
-                Column {
-                    providers.forEach { provider ->
-                        Text(
-                            text = TagSettingsManager.providerDisplayName(provider),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    tagSettingsManager.setSelectedProvider(provider)
-                                    providerKey = provider.storageKey
-                                    apiKey = tagSettingsManager.apiKey.orEmpty()
-                                    model = tagSettingsManager.selectedAiModelKey
-                                    baseUrl = tagSettingsManager.selectedAiEndpoint
-                                    refreshModels()
-                                    showProviderDialog = false
-                                }
-                                .padding(vertical = 8.dp)
-                        )
-                    }
-                }
+        ListPickerBottomSheet(
+            title = stringResource(R.string.ai_provider_title),
+            items = providers.map { provider ->
+                PickerItem(
+                    label = TagSettingsManager.providerDisplayName(provider),
+                    selected = provider.storageKey == providerKey
+                )
             },
-            confirmButton = {
-                TextButton(onClick = { showProviderDialog = false }) { Text("Close") }
-            }
+            onItemClick = { index ->
+                val provider = providers[index]
+                tagSettingsManager.setSelectedProvider(provider)
+                providerKey = provider.storageKey
+                apiKey = tagSettingsManager.apiKey.orEmpty()
+                model = tagSettingsManager.selectedAiModelKey
+                baseUrl = tagSettingsManager.selectedAiEndpoint
+                refreshModels()
+                showProviderSheet = false
+            },
+            onDismiss = { showProviderSheet = false }
         )
     }
 
@@ -261,66 +264,92 @@ fun SettingsScreen(
         )
     }
 
-    if (showModelsDialog) {
-        AlertDialog(
-            onDismissRequest = { showModelsDialog = false },
-            title = { Text("Model Library") },
-            text = {
-                Column {
-                    modelSuggestions.forEach { option ->
-                        Text(
-                            text = option.label,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    tagSettingsManager.setAiModel(option.id)
-                                    model = option.id
-                                    refreshModels()
-                                    showModelsDialog = false
-                                }
-                                .padding(vertical = 8.dp)
-                        )
-                    }
-                }
+    if (showModelsSheet) {
+        ListPickerBottomSheet(
+            title = stringResource(R.string.model_library_title),
+            items = modelSuggestions.map { option ->
+                PickerItem(
+                    label = option.label,
+                    selected = option.id == model
+                )
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    val provider = tagSettingsManager.selectedProvider
-                    val key = tagSettingsManager.apiKeyFor(provider)
-                    if (key.isNullOrBlank()) {
-                        Toast.makeText(context, "Add an API key to refresh live model suggestions.", Toast.LENGTH_SHORT).show()
-                        return@TextButton
-                    }
-                    scope.launch {
-                        try {
-                            val fetched = withContext(Dispatchers.IO) {
-                                modelCatalog.fetchSuggestions(
-                                    provider = provider,
-                                    endpoint = tagSettingsManager.endpointFor(provider),
-                                    apiKey = key
-                                )
-                            }
-                            if (fetched.isNotEmpty()) {
-                                modelCatalog.saveCachedSuggestions(provider, fetched)
-                            }
-                            modelSuggestions = modelCatalog.mergedSuggestions(
-                                provider,
-                                tagSettingsManager.selectedAiModelKey,
-                                fetched
-                            )
+            onItemClick = { index ->
+                val option = modelSuggestions[index]
+                tagSettingsManager.setAiModel(option.id)
+                model = option.id
+                refreshModels()
+                showModelsSheet = false
+            },
+            onDismiss = { showModelsSheet = false },
+            footer = {
+                TextButton(
+                    onClick = {
+                        if (isRefreshingModels) return@TextButton
+                        val provider = tagSettingsManager.selectedProvider
+                        val key = tagSettingsManager.apiKeyFor(provider)
+                        if (key.isNullOrBlank()) {
                             Toast.makeText(
                                 context,
-                                if (fetched.isEmpty()) "No additional models were returned." else "Model suggestions updated.",
+                                "Add an API key to refresh live model suggestions.",
                                 Toast.LENGTH_SHORT
                             ).show()
-                        } catch (e: Exception) {
-                            Toast.makeText(context, "Could not refresh models: ${e.message}", Toast.LENGTH_LONG).show()
+                            return@TextButton
                         }
+                        scope.launch {
+                            isRefreshingModels = true
+                            try {
+                                val fetched = withContext(Dispatchers.IO) {
+                                    modelCatalog.fetchSuggestions(
+                                        provider = provider,
+                                        endpoint = tagSettingsManager.endpointFor(provider),
+                                        apiKey = key
+                                    )
+                                }
+                                if (fetched.isNotEmpty()) {
+                                    modelCatalog.saveCachedSuggestions(provider, fetched)
+                                }
+                                modelSuggestions = modelCatalog.mergedSuggestions(
+                                    provider,
+                                    tagSettingsManager.selectedAiModelKey,
+                                    fetched
+                                )
+                                Toast.makeText(
+                                    context,
+                                    if (fetched.isEmpty()) {
+                                        "No additional models were returned."
+                                    } else {
+                                        "Model suggestions updated."
+                                    },
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } catch (e: Exception) {
+                                Toast.makeText(
+                                    context,
+                                    "Could not refresh models: ${e.message}",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            } finally {
+                                isRefreshingModels = false
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    enabled = !isRefreshingModels
+                ) {
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        if (isRefreshingModels) {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .padding(end = 8.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                        Text(stringResource(R.string.refresh_from_api))
                     }
-                }) { Text("Refresh from API") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showModelsDialog = false }) { Text("Close") }
+                }
             }
         )
     }

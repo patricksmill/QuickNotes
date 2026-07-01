@@ -2,6 +2,7 @@ package io.github.patricksmill.quicknotes.view.compose.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,7 +19,6 @@ import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sort
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,7 +27,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +41,10 @@ import io.github.patricksmill.quicknotes.R
 import io.github.patricksmill.quicknotes.model.note.Note
 import io.github.patricksmill.quicknotes.model.tag.Tag
 import io.github.patricksmill.quicknotes.view.NotesUI
+import io.github.patricksmill.quicknotes.view.compose.components.ListPickerBottomSheet
+import io.github.patricksmill.quicknotes.view.compose.components.NotesEmptyState
+import io.github.patricksmill.quicknotes.view.compose.components.NotesEmptyStateKind
+import io.github.patricksmill.quicknotes.view.compose.components.PickerItem
 import io.github.patricksmill.quicknotes.view.compose.components.TagFilterChip
 import io.github.patricksmill.quicknotes.view.compose.util.tutorialTarget
 
@@ -60,7 +63,7 @@ fun SearchNotesScreen(
 ) {
     var sortByDate by remember { mutableStateOf(true) }
     var selectedTag by remember { mutableStateOf<String?>(null) }
-    var showSortDialog by remember { mutableStateOf(false) }
+    var showSortSheet by remember { mutableStateOf(false) }
 
     val filteredNotes = remember(notes, selectedTag, sortByDate, revision) {
         var result = notes.toList()
@@ -74,6 +77,13 @@ fun SearchNotesScreen(
                 else -> a.title.compareTo(b.title, ignoreCase = true)
             }
         }
+    }
+
+    val isFiltered = searchQuery.isNotEmpty() || selectedTag != null
+    val emptyStateKind = if (filteredNotes.isEmpty()) {
+        if (notes.isEmpty() && !isFiltered) NotesEmptyStateKind.NoNotes else NotesEmptyStateKind.NoResults
+    } else {
+        null
     }
 
     Scaffold(
@@ -116,7 +126,7 @@ fun SearchNotesScreen(
                     singleLine = true,
                     shape = MaterialTheme.shapes.large
                 )
-                IconButton(onClick = { showSortDialog = true }) {
+                IconButton(onClick = { showSortSheet = true }) {
                     Icon(Icons.Filled.Sort, contentDescription = stringResource(R.string.sort))
                 }
                 IconButton(onClick = onManageTags) {
@@ -150,59 +160,63 @@ fun SearchNotesScreen(
                 }
             }
 
-            if (filteredNotes.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.no_notes_msg),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp)
-                        .testTag("empty_state"),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                )
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(8.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(filteredNotes, key = { it.id }) { note ->
-                        SwipeNoteRow(
-                            note = note,
-                            listener = listener,
-                            snackbarHostState = snackbarHostState,
-                            onNoteClick = onNoteClick
+            when {
+                emptyStateKind != null -> {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        NotesEmptyState(
+                            kind = emptyStateKind,
+                            onCreateNote = { listener.onNewNote() },
+                            onClearFilters = if (isFiltered) {
+                                {
+                                    selectedTag = null
+                                    listener.onSearchNotes("", true, true, true)
+                                }
+                            } else {
+                                null
+                            },
+                            modifier = Modifier.fillMaxWidth()
                         )
+                    }
+                }
+                else -> {
+                    LazyColumn(
+                        contentPadding = PaddingValues(8.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    ) {
+                        items(filteredNotes, key = { it.id }) { note ->
+                            SwipeNoteRow(
+                                note = note,
+                                listener = listener,
+                                snackbarHostState = snackbarHostState,
+                                onNoteClick = onNoteClick
+                            )
+                        }
                     }
                 }
             }
         }
     }
 
-    if (showSortDialog) {
-        BackHandler { showSortDialog = false }
-        AlertDialog(
-            onDismissRequest = { showSortDialog = false },
-            title = { Text("Sort Notes") },
-            text = {
-                Column {
-                    TextButtonRow("Sort by Date") { sortByDate = true; showSortDialog = false }
-                    TextButtonRow("Sort by Title") { sortByDate = false; showSortDialog = false }
-                }
+    if (showSortSheet) {
+        BackHandler { showSortSheet = false }
+        ListPickerBottomSheet(
+            title = stringResource(R.string.sort_notes_title),
+            items = listOf(
+                PickerItem(stringResource(R.string.sort_by_date), selected = sortByDate),
+                PickerItem(stringResource(R.string.sort_by_title), selected = !sortByDate)
+            ),
+            onItemClick = { index ->
+                sortByDate = index == 0
+                showSortSheet = false
             },
-            confirmButton = {},
-            dismissButton = {
-                TextButton(onClick = { showSortDialog = false }) {
-                    Text("Cancel")
-                }
-            }
+            onDismiss = { showSortSheet = false }
         )
-    }
-}
-
-@Composable
-private fun TextButtonRow(label: String, onClick: () -> Unit) {
-    TextButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Text(label)
     }
 }

@@ -51,6 +51,7 @@ import io.github.patricksmill.quicknotes.R
 import io.github.patricksmill.quicknotes.model.note.Note
 import io.github.patricksmill.quicknotes.model.tag.TagSettingsManager
 import io.github.patricksmill.quicknotes.view.NotesUI
+import io.github.patricksmill.quicknotes.view.compose.components.MultiSelectBottomSheet
 import io.github.patricksmill.quicknotes.view.compose.components.TagColorPickerSheet
 import io.github.patricksmill.quicknotes.view.compose.components.TagLabelChip
 import io.github.patricksmill.quicknotes.view.compose.components.curatedColorOptions
@@ -421,32 +422,14 @@ fun ManageNoteBottomSheet(
     }
 
     aiSuggestions?.let { items ->
-        var checked by remember(items) { mutableStateOf(items.map { false }) }
-        AlertDialog(
-            onDismissRequest = { aiSuggestions = null },
-            title = { Text("AI tag suggestions") },
-            text = {
-                Column {
-                    items.forEachIndexed { index, item ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { checked = checked.toMutableList().also { it[index] = !it[index] } }
-                                .padding(8.dp)
-                        ) {
-                            Text(if (checked.getOrElse(index) { false }) "☑" else "☐")
-                            Text(item, modifier = Modifier.padding(start = 8.dp))
-                        }
-                    }
-                }
+        MultiSelectBottomSheet(
+            title = stringResource(R.string.ai_tag_suggestions_title),
+            items = items,
+            onApply = { selected ->
+                selected.forEach { addTag(it) }
+                aiSuggestions = null
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    items.forEachIndexed { index, item -> if (checked.getOrElse(index) { false }) addTag(item) }
-                    aiSuggestions = null
-                }) { Text("Apply") }
-            },
-            dismissButton = { TextButton(onClick = { aiSuggestions = null }) { Text("Cancel") } }
+            onDismiss = { aiSuggestions = null }
         )
     }
 
