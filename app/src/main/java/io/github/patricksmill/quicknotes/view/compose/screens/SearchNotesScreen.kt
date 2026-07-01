@@ -14,11 +14,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -132,10 +132,10 @@ fun SearchNotesScreen(
                     shape = MaterialTheme.shapes.large
                 )
                 IconButton(onClick = { showSortSheet = true }) {
-                    Icon(Icons.Filled.Sort, contentDescription = stringResource(R.string.sort))
+                    Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = stringResource(R.string.sort))
                 }
                 IconButton(onClick = onManageTags) {
-                    Icon(Icons.Filled.Label, contentDescription = stringResource(R.string.manage_tags))
+                    Icon(Icons.AutoMirrored.Filled.Label, contentDescription = stringResource(R.string.manage_tags))
                 }
                 IconButton(
                     onClick = onOpenSettings,

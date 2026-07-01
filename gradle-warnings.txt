@@ -1,0 +1,27 @@
+Starting a Gradle Daemon, 1 busy Daemon could not be reused, use --status for details
+Calculating task graph as no cached configuration is available for tasks: help
+
+> Configure project :app
+Using a Project object as a dependency notation has been deprecated. This will fail with an error in Gradle 10. Please use the project(String) method on DependencyHandler or the createProjectDependency(String) method on DependencyFactory instead. Consult the upgrading guide for further information: https://docs.gradle.org/9.6.0/userguide/upgrading_version_9.html#dependency_project_notation
+
+> Task :help
+
+Welcome to Gradle 9.6.0.
+
+To run a build, run gradlew <task> ...
+
+To see a list of available tasks, run gradlew tasks
+
+To see more detail about a task, run gradlew help --task <task>
+
+To see a list of command-line options, run gradlew --help
+
+For more detail on using Gradle, see https://docs.gradle.org/9.6.0/userguide/command_line_interface.html
+
+For troubleshooting, visit https://help.gradle.org
+
+[Incubating] Problems report is available at: file:///C:/Users/Patri/Projects/QuickNotes/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 29s
+1 actionable task: 1 executed
+Configuration cache entry stored.

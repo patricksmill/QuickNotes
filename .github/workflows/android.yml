@@ -30,25 +30,27 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK components (API 36)
+      - name: Install Android SDK components (API 37)
         run: |
-          sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          sdkmanager --install "platform-tools" "platforms;android-37" "build-tools;36.0.0"
           yes | sdkmanager --licenses || true
 
       - name: Setup Gradle and cache
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: wrapper
 
       - name: Make gradlew executable
         run: chmod +x gradlew
 
       - name: Android Lint (debug)
-        run: ./gradlew :app:lintDebug --stacktrace
+        run: ./gradlew :app:lintDebug --stacktrace --warning-mode all
 
       - name: Unit tests (debug)
-        run: ./gradlew :app:testDebugUnitTest --stacktrace
+        run: ./gradlew :app:testDebugUnitTest --stacktrace --warning-mode all
 
       - name: Assemble Debug APK
-        run: ./gradlew :app:assembleDebug --stacktrace
+        run: ./gradlew :app:assembleDebug --stacktrace --warning-mode all
 
       - name: Upload unit test reports
         if: always()
@@ -101,22 +103,24 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK components (API 36)
+      - name: Install Android SDK components (API 37)
         run: |
-          sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          sdkmanager --install "platform-tools" "platforms;android-37" "build-tools;36.0.0"
           yes | sdkmanager --licenses || true
 
       - name: Setup Gradle and cache
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: wrapper
 
       - name: Make gradlew executable
         run: chmod +x gradlew
 
       - name: Build Release AAB
-        run: ./gradlew :app:bundleRelease --stacktrace
+        run: ./gradlew :app:bundleRelease --stacktrace --warning-mode all
 
       - name: Assemble Release APK
-        run: ./gradlew :app:assembleRelease --stacktrace
+        run: ./gradlew :app:assembleRelease --stacktrace --warning-mode all
 
       - name: Determine if signing is available
         id: signing
