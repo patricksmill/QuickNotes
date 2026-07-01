@@ -2,21 +2,70 @@
 
 ## [Unreleased]
 
+### Headline: Full Jetpack Compose UI
+
+QuickNotes is now entirely Compose-driven. XML layouts, View Binding, and Fragment-based screens are gone. Navigation, sheets, settings, tag management, and the onboarding tutorial all use Material 3 Compose components with proper back handling, edge-to-edge layout, and predictive back.
+
 ### Features
 
-- Full UI migration from XML Views to Jetpack Compose with Navigation Compose
-- Native tag color swatch picker (`TagColorPickerSheet`) with curated 12-color palette
-- Tonal tag chips (AssistChip + color dot) across search filters, note editor, and manage-tags
-- Pull-to-refresh on note list with animated item placement on sort/filter/pin changes
-- Compose notification permission dialog with Activity Result API
-- Rich empty states (no notes / no search results) and list-style pickers as bottom sheets
-- Back navigation, edge-to-edge insets, and predictive back support
+#### Compose UI and navigation
+- Complete migration from XML Views to Jetpack Compose with Navigation Compose (`SearchNotesScreen`, `SettingsScreen`, `QuickNotesNavHost`)
+- Note editor and tag manager as Material 3 bottom sheets (`ManageNoteBottomSheet`, `ManageTagsBottomSheet`)
+- Compose tutorial overlay with spotlight targeting (`TutorialOverlay`)
+- Slide-and-fade transitions between search and settings
+- System back and predictive back: layered `BackHandler` for settings, dialogs, sheets, and tutorial
+- Edge-to-edge display with inset-aware scaffolds and keyboard padding in the note editor
+- Unsaved-changes confirmation when dismissing the note editor with edits
+
+#### Notes list and search
+- Pull-to-refresh on the note list
+- Animated item placement when sorting, filtering, or pinning notes
+- Swipe-to-delete with visible delete affordance and haptic feedback on delete/pin
+- Rich empty states: “No notes yet” with create CTA, and “No matching notes” with clear-filters action
+- Tag filter chips with selected-state styling (`TagFilterChip`)
+
+#### Tags and colors
+- Native tag color swatch picker (`TagColorPickerSheet`) with a curated 12-color palette
+- Tonal tag chips (color dot + label) across search filters, note editor, and manage-tags
+- Tag suggestions as responsive inline buttons in the note editor
+- Tag color updates propagate to all notes using that tag
+
+#### Settings and pickers
+- Settings screen rebuilt in Compose (`SettingsScreen`)
+- List-style dialogs replaced with bottom sheets: sort order, AI provider, model library, tag actions, AI tag suggestions
+- Model library sheet includes “Refresh from API” with loading indicator
+
+#### Notifications
+- Notification permission prompt migrated to Compose (`NotificationPermissionDialog`)
+- Uses Activity Result API; granted permission applies the pending reminder without re-toggling
+
+### Fixed
+
+- Pin toggle regression that prevented notes from staying pinned correctly
+- Tag color management: case-insensitive tag matching and consistent color lookup via `TagRepository`
+- Tag replacement on notes now case-insensitive
+
+### Changed
+
+- Duplicate note titles are allowed (case-insensitive uniqueness check removed)
+- `compileSdk` raised to 37
+- Search query held in reactive Compose state for smoother list updates
+- Note and tag UI state consolidated in `ControllerActivity` for simpler recomposition
 
 ### Removed
 
-- Legacy View fragments (`SearchNotesFragment`, `ManageNoteFragment`, etc.), `MainUI`, and View adapters
-- Fragment XML layouts, slide animations, and `root_preferences.xml`
-- Unused `recyclerview` and `constraintlayout` dependencies
+- Legacy View fragments: `SearchNotesFragment`, `ManageNoteFragment`, `ManageTagsFragment`, `SettingsFragment`, `TagColorSettingsFragment`, `TutorialOverlayFragment`
+- `MainUI` fragment container helper and `TagSuggestion` View adapters
+- All fragment XML layouts, slide transition animations, and `root_preferences.xml`
+- View Binding and unused `recyclerview` / `constraintlayout` dependencies
+
+### Developer / quality
+
+- Instrumented tests renamed and updated for Compose: `SearchNotesScreenTest`, `ManageNoteSheetTest`, `SettingsScreenTest`
+- New Compose component tests: `TagFilterChipTest`, `QuickNotesThemeTest`
+- Unit tests added for note pinning, duplicate titles, and tag set operations
+- Architecture and testing docs updated to reflect Compose screens and removed fragments
+- Cursor rule for `JAVA_HOME` on Windows/Android Studio setups
 
 ## [1.2.0](https://github.com/patricksmill/QuickNotes/compare/QuickNotes-v1.1.0...QuickNotes-v1.2.0) (2026-06-30)
 
@@ -54,5 +103,5 @@ The release build now uses R8 code shrinking plus resource shrinking, with updat
 
 * Add Release Please configuration and workflow for automated rel… ([e0eee75](https://github.com/patricksmill/QuickNotes/commit/e0eee75b9c945d9c28da63e00ab5628fc0b15067))
 * Add Release Please configuration and workflow for automated releases ([8db872a](https://github.com/patricksmill/QuickNotes/commit/8db872aa1424daab994b58909012f68a453b1742))
-* Refactor AI tagging system to support multiple providers and enhance settings ([25c8bbd](https://github.com/patricksmill/QuickNotes/commit/25c8bbdf3b38f7b1a8825759e1f7ca18695c9271))
+* Refactor AI tagging system to support multiple providers and enhance settings ([25c8bbd](https://github.com/patricksmill/quicknotes/commit/25c8bbdf3b38f7b1a8825759e1f7ca18695c9271))
 * Refactor AI tagging system to support multiple providers and enhance settings ([f869889](https://github.com/patricksmill/QuickNotes/commit/f869889bca62343981b1bf78252a761c1e005abe))
