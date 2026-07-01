@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.3.0](https://github.com/patricksmill/QuickNotes/compare/QuickNotes-v1.2.0...QuickNotes-v1.3.0) (2026-07-01)
+
+
+### Features
+
+* add Java home configuration and remove obsolete test file ([0f45e72](https://github.com/patricksmill/QuickNotes/commit/0f45e720403040b4952ba3444e28bff974559d84))
+* complete migration to Jetpack Compose UI ([5e5da73](https://github.com/patricksmill/QuickNotes/commit/5e5da73a67f4e751be1e756adb859ed6e5365640))
+* enhance demo note functionality and settings integration ([33cd178](https://github.com/patricksmill/QuickNotes/commit/33cd178d8bf6102e90a3908df58ffbb7660a5488))
+* enhance note management and UI with Compose features ([ad9f5c3](https://github.com/patricksmill/QuickNotes/commit/ad9f5c383bbfbd8741a2e8122023e522db871663))
+* enhance tag management and search functionality ([ca7f337](https://github.com/patricksmill/QuickNotes/commit/ca7f33716e0e0a7250de65547026c60bc6bd0e01))
+* fix tag color management and UI enhancements ([e39525e](https://github.com/patricksmill/QuickNotes/commit/e39525e73a1ca46eb76d5e78d23511872eb8b1ac))
+* implement navigation and back handling in QuickNotes app ([e502531](https://github.com/patricksmill/QuickNotes/commit/e50253118faa863778a95b9475ab8a2e372e10b5))
+* introduce new UI components for enhanced note management ([cf46b64](https://github.com/patricksmill/QuickNotes/commit/cf46b64dc79d3c8e775ce0aac5c965e66b87869c))
+
+
+### Bug Fixes
+
+* fixed a regression with pinning notes ([48bb4b2](https://github.com/patricksmill/QuickNotes/commit/48bb4b2fee84333d125e1741444354126c2f0770))
+
 ## [Unreleased]
 
 ### Headline: Full Jetpack Compose UI
